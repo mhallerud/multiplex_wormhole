@@ -5,9 +5,9 @@ library(stringr)
 
 
 #### READ IN SEQUENCES
-setwd('/Users/maggiehallerud/Marten_Primer_Design/')
+setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/0_Inputs/')
 # load template sequences
-marten_seq <- read_templates('13A_snps_MAF40.repBaseFiltered.fa') #input fasta file
+marten_seq <- read_templates('13A_snps_MAF30.repBaseFiltered.uniq.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
@@ -50,10 +50,23 @@ marten_seq$Allowed_rev
 # check for enough space for primers
 range(nchar(marten_seq$Allowed_fw))
 range(nchar(marten_seq$Allowed_rev))
-length(which(nchar(marten_seq$Allowed_rev)<19))
+length(which(nchar(marten_seq$Allowed_rev)<18))
 
 # remove any that don't have enough binding space
 marten_seq <- marten_seq[-which(nchar(marten_seq$Allowed_fw)<18 | nchar(marten_seq$Allowed_rev)<18),]
+
+# check that there's only one line per locus
+nrow(marten_seq)
+length(unique(marten_seq$Header))
+
+# double check that microhaps are properly represented
+counts=data.frame(table(marten_fix$CHROM))
+microhaps=counts[counts$Freq>1,]
+marten_fix[marten_fix$CHROM==microhaps$Var1[1],]
+marten_seq[marten_seq$ID==">CLocus_101071",]
+
+# double check that everything looks OK...
+View(marten_seq)
 
 # export IDs, templates, targets as CSV for use with primer3
 target_start <- marten_seq$Allowed_End_fw + 1

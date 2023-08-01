@@ -12,7 +12,7 @@ OUTDIR=$2
 #	OUT1=$OUTDIR/1_InitialPrimers
 #	mkdir $OUT1
 #fi
-mkdir $OUTDIR
+
 OUT1=$OUTDIR/1_InitialPrimers
 mkdir $OUT1
 
