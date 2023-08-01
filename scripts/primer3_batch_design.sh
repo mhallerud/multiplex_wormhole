@@ -17,7 +17,7 @@ OUT1=$OUTDIR/1_InitialPrimers
 mkdir $OUT1
 
 ## load CSV file with SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET in columns
-# use Openprimer.R script lines 1-90 to create this CSV
+# use create_in_templates.R script lines 1-90 to create this CSV
 # read in CSV
 echo "Reading in sequences"
 arr_csv=()
@@ -41,14 +41,14 @@ do
 
 	# run primer3 based on strict settings
 	echo "-Designing primers for " $id
-	./primer3.sh "$id" "$seq" "$SNP" primer3_Base_NoSecondaryFilters.txt $OUT1
+	./scripts/primer3.sh "$id" "$seq" "$SNP" ./primer3_settings/primer3_Base_NoSecondaryFilters.txt $OUT1
 
 	# rerun with broad settings if no primers were found
 	primers="$(grep PRIMER_PAIR_NUM_RETURNED=0 $OUT1/$id.out)"
 	if [ "$primers" != "" ]
 	then
 		echo ".....Retrying with broader parameters"
-		./primer3.sh $id $seq $SNP primer3_Broad_NoSecondaryFilters.txt $OUT1
+		./scripts/primer3.sh $id $seq $SNP ./primer3_settings/primer3_Broad_NoSecondaryFilters.txt $OUT1
 	fi
 
 	# raise message if no primers were found for broad settings either

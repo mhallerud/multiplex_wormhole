@@ -4,7 +4,6 @@ TEMPLATES=$1 #template sequences that primers are designed from
 OUTDIR=$2 #directory where all output files will be stored
 NAME=$3 #prefix for naming outputs
 
-
 numIn="$(wc -l $TEMPLATES | awk '{print $1-1}')"
 echo "# loci in input file: " $numIn
 
@@ -15,7 +14,7 @@ echo "# loci in input file: " $numIn
 echo " "
 echo "Designing initial primers...."
 echo "      (see primer3_batch.log for details)"
-./primer3_batch_design.sh "$TEMPLATES" "$OUTDIR" > primer3_batch.log
+./scripts/primer3_batch_design.sh "$TEMPLATES" "$OUTDIR" > primer3_batch.log
 numMissing="$(grep 'No primers found' primer3_batch.log | wc -l | awk '{print $1}')"
 numWithPrimers=$(($numIn-$numMissing))
 echo "      # loci primers could be designed for: " $numWithPrimers
@@ -28,7 +27,7 @@ echo "      # loci primers could be designed for: " $numWithPrimers
 ## deltaG <= -10 kcal/mole in the middle of primers where steric hindrance makes structures difficult to form - also for pair heterodimers in middle
 echo " "
 echo "Filtering primers based on delta G and melting temp (Tm)........" 
-./filter_primers_Tm_dG.sh 45 -3000 -5000 -10000 "$OUTDIR" "$NAME"_filteredPrimers > filter_primers.log
+./scripts/filter_primers_Tm_dG.sh 45 -3000 -5000 -10000 "$OUTDIR" "$NAME"_filteredPrimers > filter_primers.log
 numfiltered="$(wc -l "$OUTDIR"/"$NAME"_filteredPrimers_LocusIDs.txt | awk '{print $1}')"
 echo "      # loci with primers after filtering:" $numfiltered
 
@@ -36,7 +35,7 @@ echo "      # loci with primers after filtering:" $numfiltered
 # check primer specificity, remove any non-specific primer pairs
 echo " "
 echo "Checking specificity of remaining primers......." 
-./check_specificity.sh "$OUTDIR"/"$NAME"_filteredPrimers.csv "$OUTDIR"/"$NAME"_specificityCheck "$TEMPLATES"
+./scripts/check_specificity.sh "$OUTDIR"/"$NAME"_filteredPrimers.csv "$OUTDIR"/"$NAME"_specificityCheck "$TEMPLATES"
 echo "      Number of primer pairs that failed specificity check: " "$(sort "$OUTDIR"/"$NAME"_specificityCheck_failedIDs.txt | wc -l | awk '{print $1}')"
 echo "      Number of unique primer sequences that failed specificity check: " "$(sort "$OUTDIR"/"$NAME"_specificityCheck_failedSeqs.txt | uniq | wc -l | awk '{print $1}')"
 echo "      Loci represented in non-specific primers: " 
@@ -45,11 +44,11 @@ echo "$(cat "$OUTDIR"/"$NAME"_specificityCheck_failedIDs.txt| tr "_" " " | awk '
 
 # add adapters - this is already done in primer3 with the PRIMER_*_OVERHANG settings!
 #cd $OUTDIR
-#./add_adapters.sh $NAME_filteredPrimers.csv $NAME_primerAdapters.fa
+#./scripts/add_adapters.sh $NAME_filteredPrimers.csv $NAME_primerAdapters.fa
 
 
 # convert checkSpecificity CSV to fasta format
-./convert_CSV_to_fasta.sh "$OUTDIR"/"$NAME"_specificityCheck_passed.csv 1 5
+./scripts/convert_CSV_to_fasta.sh "$OUTDIR"/"$NAME"_specificityCheck_passed.csv 1 5
 echo " " 
 echo "NEXT STEP: Input to PrimerSuite PrimerDimer (http://www.primer-dimer.com/): " "$OUTDIR"/"$NAME"_specificityCheck_passed.csv
 
