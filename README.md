@@ -2,7 +2,7 @@
 Optimizing PCR primer design for multiplex amplicon sequencing.
 
 # setup
-This pipeline relies on primer3 for primer design. Primer3 can be downloaded (here)[https://github.com/primer3-org/primer3/releases]. The path to primer3_core on line will need to be updated on line 18 of scripts/primer3.sh will need to be updated to reflect your local version.
+This pipeline relies on primer3 for primer design. Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). The path to primer3_core on line will need to be updated on line 18 of scripts/primer3.sh will need to be updated to reflect your local version.
 
 # Steps to run the pipeline
 1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position (following primer3 <start bp>,<length> format). For SNPs, the create_in_templates.R file takes the input VCF and matching FASTA and outputs the templates CSV.
@@ -15,7 +15,7 @@ This pipeline relies on primer3 for primer design. Primer3 can be downloaded (he
    To specify filtering criteria: Line 30 in the primer_design_STEP1.sh file can be edited to specify different filtering parameters. The format is:
    ./scripts/filter_primers_Tm_dG.sh <max_Tm> <min_hairpin_dG> <min_ends_dG> <min_self_dG> <OUTPUT_DIRECTORY> <RESULTS_PREFIX> > <LOGFILE>
    
-3. Copy the *_specificityCheck_passed.csv file into (primer-dimer.com)[https://primer-dimer.com], select 'Multiplex Analysis' and 'Dimer Structure Report', and click Submit. Depending on how many loci you provided, this step may take awhile (~20 minutes for primers for 50 loci, ~xx hours for 1200 loci).
+3. Copy the *_specificityCheck_passed.csv file into [primer-dimer.com](https://primer-dimer.com), select 'Multiplex Analysis' and 'Dimer Structure Report', and click Submit. Depending on how many loci you provided, this step may take awhile (~20 minutes for primers for 50 loci, ~xx hours for 1200 loci).
 
 4. Run translate_primerSuite_report.R on the PrimerDimerReport.txt file downloaded from primer-dimer.com to convert this to a CSV. This can either be run directly in R or via the command line following the syntax:
    Rscript --vanilla scripts/translate_primerSuite_report.R <PATH_TO_PrimerDimerReport.txt> <DELTA_G_THRESHOLD>
@@ -47,7 +47,7 @@ This pipeline relies on primer3 for primer design. Primer3 can be downloaded (he
         - homodimers or heterodimers at primer ends: -5 kcal/mol
         - homodimers or heterodimers not at primer ends: -10 kcal/mol
 3. Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded.
-4. A primer dimer table is calculated which includes the number of primer dimers estimated for all combinations of primer pairs. Currently this is being done using PrimerSuite's Primer Dimer function, but in the future the goal will be to add downstream capability for ThermoFisher's Multiplex Primer Design and SADDLE DimerScores.
+4. A primer dimer table is calculated which includes the number of primer dimers estimated for all combinations of primer pairs. Currently this is being done using PrimerSuite's Primer Dimer function, but in the future the goal will be to add downstream capability for [ThermoFisher's Multiplex Primer Design](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html) and SADDLE DimerScores.
   Primer dimers are only considered if their delta G is below a given threshold (default: -6 kcal/mol).
   In the future, functionality may be added to filter primer dimers based on Tm and location (end vs. middle).
 5. A set of primers for "N" loci is selected that minimizes the number of negative interactions between primer pairs. This algorithm was largely inspired by SADDLE and Marxan Conservation Planning software. Specifically, the following steps are followed:
