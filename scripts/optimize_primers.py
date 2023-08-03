@@ -16,8 +16,8 @@ import random
 PRIMER_FASTA = sys.argv[1]
 DIMER_SUMS =sys.argv[2]
 DIMER_TABLE = sys.argv[3]
-N_LOCI = sys.argv[4]
-ITERATIONS = sys.argv[5]
+N_LOCI = int(sys.argv[4])
+ITERATIONS = int(sys.argv[5])
 
 #PRIMER_FASTA="Test1_adapters" #filepath to adapter-ligated primers
 #DIMER_SUMS="PrimerDimerReport_25jul2023_PrimerPairInteractions_sum_binary.csv"
@@ -40,7 +40,7 @@ def main():
     
     ## read in dimer info
     print("Reading in primer dimer counts........")
-    dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)    
+    dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)    
     
     ## Choose initial set of loci based on loci with minimum dimer counts
     ## (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
@@ -93,7 +93,7 @@ def main():
         else:
             curr_worst, new_best_id, new_pairIDs = newSet
             # test if new set is better than current set (if fewer overall dimers)
-            comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs)
+            comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID)
 
         #if test passed, then new set stats were returned
         if comparison is not False:
@@ -131,7 +131,7 @@ def main():
                         else:
                             break
                     # compare against current set
-                    comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs)
+                    comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID)
                     if comparison is not False:
                         current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = comparison
                         break #exit this loop if a replacement was found
@@ -220,7 +220,7 @@ def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blackli
         return curr_worst, new_best_id, new_pairIDs
 
 
-def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs):
+def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID):
     # calculate # dimers in this new set
     new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, dimer_table, dimer_pairID, True)
     new_dimer_totals = CalcTotalDimers(new_primerset_dimers)
@@ -365,7 +365,7 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
             linesplit[0]=linesplit[0].replace('"', '')
             dimer_table.update({linesplit[0]: linesplit[1:]})
             dimer_pairID.append(linesplit[0])
-    return dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
+    return dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
 
 
 

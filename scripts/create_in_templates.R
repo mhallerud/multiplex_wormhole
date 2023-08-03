@@ -7,7 +7,7 @@ library(stringr)
 #### READ IN SEQUENCES
 setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/0_Inputs/')
 # load template sequences
-marten_seq <- read_templates('13A_MAF30.repBaseFiltered.random200.fa') #input fasta file
+marten_seq <- read_templates('13A_snps_MAF30.repBaseFiltered.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
@@ -47,23 +47,28 @@ for (i in 1:nrow(marten_seq)){
 marten_seq$Allowed_fw
 marten_seq$Allowed_rev
 
-# check for enough space for primers
-range(nchar(marten_seq$Allowed_fw))
-range(nchar(marten_seq$Allowed_rev))
-length(which(nchar(marten_seq$Allowed_rev)<18))
-
-# remove any that don't have enough binding space
-marten_seq <- marten_seq[-which(nchar(marten_seq$Allowed_fw)<18 | nchar(marten_seq$Allowed_rev)<18),]
-
-# check that there's only one line per locus
-nrow(marten_seq)
-length(unique(marten_seq$Header))
-
 # double check that microhaps are properly represented
 counts=data.frame(table(marten_fix$CHROM))
 microhaps=counts[counts$Freq>1,]
 marten_fix[marten_fix$CHROM==microhaps$Var1[1],]
 marten_seq[marten_seq$ID==">CLocus_101071",]
+
+# export microhaplotypes
+nrow(microhaps)
+microhaps$Var1 <- paste0('>CLocus_', microhaps$Var1)
+microhaps <- microhaps[order(microhaps$Freq),]
+microhaps_seq <- marten_seq[which(marten_seq$ID %in% microhaps$Var1)]
+microhaps_seq <- microhaps_seq[which(nchar(microhaps_seq$Allowed_rev)>=18 | nchar(microhap_seq$Allowed_fw)>=18),]
+nrow(microhaps)
+write.csv(microhaps_seq$ID, 'MartenTemplates_MAF30-repBaseFilter_01Aug2023_microhaplotypes.csv', row.names=FALSE)
+
+# remove any that don't have enough binding space
+marten_seq <- marten_seq[which(nchar(marten_seq$Allowed_fw)>=18 | nchar(marten_seq$Allowed_rev)>=18),]
+
+# check that there's only one line per locus
+nrow(marten_seq)
+length(unique(marten_seq$Header))
+
 
 # double check that everything looks OK...
 View(marten_seq)
