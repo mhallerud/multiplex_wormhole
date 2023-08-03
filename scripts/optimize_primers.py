@@ -18,12 +18,12 @@ DIMER_SUMS =sys.argv[2]
 DIMER_TABLE = sys.argv[3]
 N_LOCI = int(sys.argv[4])
 ITERATIONS = int(sys.argv[5])
+RUN = sys.argv[6]
 
-#PRIMER_FASTA="Test1_adapters" #filepath to adapter-ligated primers
-#DIMER_SUMS="PrimerDimerReport_25jul2023_PrimerPairInteractions_sum_binary.csv"
-#DIMER_TABLE="PrimerDimerReport_25jul2023_PrimerPairInteractions_wide_binary.csv"
-#N_LOCI=10 # Number of SNPs in final panel
-#ITERATIONS=50 # Number of times to run optimization
+# extract name from inputs
+NAME=os.path.basename(DIMER_SUMS).split('_')[0]
+OUTDIR=os.path.dirname(DIMER_SUMS)
+OUTNAME=OUTDIR+NAME+'_optimizedSet'+str(RUN)+'.tsv'
 
 
 
@@ -163,7 +163,13 @@ def main():
     for b in range(len(blacklist)):
         print("\t\t" + blacklist[b])
     
-    return curr_dimer_totals
+    # export the current dimers and their totals as TSV
+    with open(OUTNAME, 'w') as file:
+        for line in current_dimer_totals:
+            line_str = str(line)[1:-1].replace("'","")
+            file.write(line_str+"\n")      
+    
+    return curr_dimer_totals # only meaningful if running within python... 
 
 
 
