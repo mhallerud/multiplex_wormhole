@@ -60,3 +60,21 @@ done > "$OUT"_failedSeqs.txt
 # save CSV for primers that passed
 rm "$OUT"_passed.csv
 grep -v -f "$OUT"_failedIDs.txt $IN > "$OUT"_passed.csv
+
+
+# save FASTA for primers that passed
+lines="$(wc -l "$OUT"_passed.csv | awk '{print $1}')"
+passed=()
+for i in $(seq 1 $lines)
+do
+	primer="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $5}')"
+	id="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $1}')"
+	passed+=("$(echo >"$id")")
+	passed+=($primer)
+done
+
+rm "$OUT"_passed.fa
+for i in "${!passed[@]}"
+do
+        printf "%s\n" "${passed[$i]}"
+done > "$OUT"_passed.fa
