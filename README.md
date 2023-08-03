@@ -4,24 +4,24 @@ Optimizing PCR primer design for multiplex amplicon sequencing.
 # Dependencies
 This pipeline relies on primer3 for primer design and MFEprimer for dimer calculations. To setup your files to run:
 - Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). The path to primer3_core will need to be updated on line 18 of scripts/primer3.sh will need to be updated to reflect your local version. Primer3 version
-- MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on lines 80-81 of primer_design.sh to reflect your local version. MFEprimer Version 3.2.7 on Darwin was used during development. 
+- MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on lines 80-81 of multiplex_primer_design.sh to reflect your local version. MFEprimer Version 3.2.7 on Darwin was used during development. 
 
 The pipeline was built and tested on MacOS with Python 3.9.13 and bash 3.2.57(1)-release.
 
 # Steps to run the pipeline
 1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position (following primer3 <start bp>,<length> format). For SNPs, the create_in_templates.R file takes the input VCF and matching FASTA and outputs the templates CSV. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
 
-2. Run primer_design.sh to design and filter primers for your targets:
-   ./primer_design.sh <TEMPLATE_CSV> <OUTPUT_DIRECTORY> <RESULTS_PREFIX>
+2. Run multiplex_primer_design.sh to design and filter primers for your targets:
+   ./multiplex_primer_design.sh <TEMPLATE_CSV> <OUTPUT_DIRECTORY> <RESULTS_PREFIX>
 
    To specify primer design settings:
    - The primer3 settings used for primer design are found in primer3_settings/primer3_Base_NoSecondaryFilters.txt and primer3_settings/primer3_Broad_NoSecondaryFilters.txt. These settings can be edited directly, or you can create your own Broad and Base setting files and change the filepaths in the primer3_batch_design.sh script.
-   - If you want to adjust PCR specifications, make sure to also change the parameters used for estimating dimer formation (lines 80-81 in primer_design.sh)
+   - If you want to adjust PCR specifications, make sure to also change the parameters used for estimating dimer formation (lines 80-81 in multiplex_primer_design.sh)
 
    To specify filtering criteria:
-   - Line 30 in the primer_design.sh file can be edited to specify different filtering parameters. The format is:
+   - Line 30 in the multiplex_primer_design.sh file can be edited to specify different filtering parameters. The format is:
    ./scripts/filter_primers_Tm_dG.sh <max_Tm> <min_hairpin_dG> <min_ends_dG> <min_self_dG> <OUTPUT_DIRECTORY> <RESULTS_PREFIX> > <LOGFILE>
-   - Lines 80-81 in the primer_design.sh file can be edited to specify different delta G and score thresholds for considering dimers.
+   - Lines 80-81 in the multiplex_primer_design.sh file can be edited to specify different delta G and score thresholds for considering dimers.
 
 # Using other dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
