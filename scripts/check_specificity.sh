@@ -69,7 +69,7 @@ for i in $(seq 1 $lines)
 do
 	primer="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $5}')"
 	id="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $1}')"
-	passed+=("$(echo >"$id")")
+	passed+=("$(echo \>$id)")
 	passed+=($primer)
 done
 
