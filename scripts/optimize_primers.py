@@ -7,7 +7,7 @@ Created on Mon Jul 24 07:59:12 2023
 """
 
 # load dependencies
-#import os
+import os
 import sys
 import random
 
@@ -165,7 +165,7 @@ def main():
     
     # export the current dimers and their totals as TSV
     with open(OUTNAME, 'w') as file:
-        for line in current_dimer_totals:
+        for line in curr_dimer_totals:
             line_str = str(line)[1:-1].replace("'","")
             file.write(line_str+"\n")      
     
