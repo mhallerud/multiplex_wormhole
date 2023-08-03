@@ -20,10 +20,64 @@ N_LOCI = int(sys.argv[4])
 ITERATIONS = int(sys.argv[5])
 RUN = sys.argv[6]
 
+# this lists all primer pairs that MUST be included in the final set
+# whitelist = ['CLocus_93850_1',
+#  'CLocus_117970_1',
+#  'CLocus_40220_2',
+#  'CLocus_34762_1',
+#  'CLocus_61996_1',
+#  'CLocus_473077_0',
+#  'CLocus_81920_7',
+#  'CLocus_23075_5',
+#  'CLocus_31399_7',
+#  'CLocus_84137_1',
+#  'CLocus_86842_4',
+#  'CLocus_55820_4',
+#  'CLocus_58927_4',
+#  'CLocus_30541_1',
+#  'CLocus_129175_0',
+#  'CLocus_129175_1',
+#  'CLocus_65906_5',
+#  'CLocus_80147_4',
+#  'CLocus_74268_2',
+#  'CLocus_465138_3',
+#  'CLocus_58665_3',
+#  'CLocus_131931_6',
+#  'CLocus_129175_2',
+#  'CLocus_65906_4',
+#  'CLocus_80147_1',
+#  'CLocus_7041_1',
+#  'CLocus_23896_4',
+#  'CLocus_65906_4',
+#  'CLocus_6753_6',
+#  'CLocus_30541_1',
+#  'CLocus_129175_3',
+#  'CLocus_23459_2',
+#  'CLocus_55804_0',
+#  'CLocus_129175_8',
+#  'CLocus_58927_4',
+#  'CLocus_79822_2',
+#  'CLocus_6753_4',
+#  'CLocus_6753_6',
+#  'CLocus_45384_3',
+#  'CLocus_45384_3',
+#  'CLocus_65906_4',
+#  'CLocus_60852_0',
+#  'CLocus_65906_1',
+#  'CLocus_70449_1',
+#  'CLocus_109443_0',
+#  'CLocus_7041_1',
+#  'CLocus_70449_1',
+#  'CLocus_72746_0',
+#  'CLocus_38234_0',
+#  'CLocus_29775_2']
+
+
+
 # extract name from inputs
 NAME=os.path.basename(DIMER_SUMS).split('_')[0]
 OUTDIR=os.path.dirname(DIMER_SUMS)
-OUTNAME=OUTDIR+NAME+'_optimizedSet'+str(RUN)+'.tsv'
+OUTNAME=OUTDIR+'/2_OptimizedSets/'+NAME+'_optimizedSet'+str(RUN)+'.csv'
 
 
 
@@ -58,13 +112,22 @@ def main():
         print("# loci used: " + str(nloci))
         initial_pairs = best_primer_pairs
     else:
-        # grab N primer pairs with min dimer count
-        initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI])
-        #initial_loci=random.sample(uniq_loci, N_LOCI)
+        if len(whitelist)>0:
+            # grab whitelist primer pairs
+            whitelist_pairs = {k: best_primer_pairs[k] for k in whitelist}
+            n_whitelist=len(whitelist)
+            # remove these options
+            for k in list(best_primer_pairs.keys()):
+                if k in whitelist:
+                    best_primer_pairs.pop(k)
+            # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
+            initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI-n_whitelist])
+        else:
+            initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI])
     
     # grab locus IDs for primer pairs
     current_pairIDs = list(initial_pairs.keys())
-    current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]   
+    current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
     # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
     allowed_loci = [uniq_loci[i] for i in range(len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
     allowed_idx = list(filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
@@ -77,7 +140,10 @@ def main():
     
     ## Optimize primer set iteratively
     i=0
-    blacklist=[]
+    if len(whitelist)>0:
+        blacklist=whitelist
+    else:
+        blacklist=[]
     print("Starting optimization process......")
     print("Current # dimers: " + str(curr_total))
     while i < ITERATIONS:
@@ -93,7 +159,7 @@ def main():
         else:
             curr_worst, new_best_id, new_pairIDs = newSet
             # test if new set is better than current set (if fewer overall dimers)
-            comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID)
+            comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, dimer_table, dimer_pairID)
 
         #if test passed, then new set stats were returned
         if comparison is not False:
@@ -115,37 +181,53 @@ def main():
             orig_best = new_best_id
             # loop through, allowing all other replacement options to be tested
             x=len(allowed_pairs_rmv)
+            blacklist2=[]
             while x>0:
                 if x>0:
+                    # set these to avoid infinite loops
+                    prev_worst = curr_worst
+                    prev_best = new_best_id
                     # make new set
-                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci)
+                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci, blacklist2)
                     if newSet is None:
                         print("No new sets can be found for this set of primer pairs")
+                        blacklist.append(curr_worst)
                         break
                     else:
                         curr_worst, new_best_id, new_pairIDs = newSet
                     # skip back to top of while if new best is same as original curr_worst
                     if new_best_id==orig_worst or new_best_id==orig_best:
                         if x>1:
+                            try:
+                                allowed_pairs_rmv.remove(new_best_id)
+                            except:
+                                pass
+                            x=len(allowed_pairs_rmv)
                             continue#go back to while
                         else:
                             break
+                    # add to blacklist2 if stuck in an infinite loop
+                    if new_best_id==prev_best and curr_worst==prev_worst:
+                        blacklist2.append(new_best_id)
                     # compare against current set
-                    comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID)
+                    comparison = compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, dimer_table, dimer_pairID)
                     if comparison is not False:
                         current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = comparison
                         break #exit this loop if a replacement was found
                     else:
-                        # remove tested pair from allowed list
                         try:
                             allowed_pairs_rmv.remove(new_best_id)
+                        except:
+                            pass
+                        try:
+                            allowed_pairs_rmv.remove(curr_worst)
                         except:
                             pass
                 # otherwise, loop through remaining replacement options
                 # this avoids retesting the same options for this replacement
                 x=len(allowed_pairs_rmv)#update
                 # when options run out for replacing this pair, add it to blacklist to avoid trying to replace
-                if x==0:
+                if x<=1:
                     #print("Adding "+curr_worst+" to blacklist")
                     blacklist.append(curr_worst)
         
@@ -165,19 +247,19 @@ def main():
     
     # export the current dimers and their totals as TSV
     with open(OUTNAME, 'w') as file:
-        for line in curr_dimer_totals:
-            line_str = str(line)[1:-1].replace("'","")
-            file.write(line_str+"\n")      
+        for key in curr_dimer_totals.keys():
+            #line = curr_dimer_totals[]
+            #line_str = str(line)[1:-1].replace("'","")
+            file.write(key+","+str(curr_dimer_totals[key])+"\n")
     
     return curr_dimer_totals # only meaningful if running within python... 
 
 
 
-def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist,
-               dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci):
+def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci, blacklist2=[]):
         # create copy of original list, otherwise links them and affects both lists when using update/remove    
         new_pairIDs = pairIDs.copy()
-        allowed_pairs_edit = allowed_pairs.copy()
+        allowed_pairs_edit = allowed.copy()
         # subset nonset dimer table to include only allowed primer pairs
         nonset_pairIDs = list(set(dimer_primerIDs) - set(new_pairIDs)) #gets pair IDs that aren't in current pairs
         nonset_allowed_idx = list(filter(lambda x: nonset_pairIDs[x] in allowed_pairs_edit, range(len(nonset_pairIDs))))
@@ -218,15 +300,31 @@ def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blackli
         #new_best_idx = list(filter(lambda x: nonset_totals[x]==nonset_min, range(len(nonset_totals))))
         #new_best_idx = random.choice(new_best_idx) #if more than 1 match, randomly choose 1...
         #new_best_id = nonset_pairs_allowed[new_best_idx]
+        # Remove any primer pairs that cause infinite loops
+        for pair in blacklist2:
+            try: 
+                allowed_pairs_edit.remove(pair)
+            except:
+                pass
         # Choose random primer pair as replacement
-        new_best_id = random.choice(allowed_pairs_edit)
+        if len(allowed_pairs_edit)>0:
+            new_best_id = random.choice(allowed_pairs_edit)
+        else:
+            return None
+        # double check that chosen pair isn't already in set... if it is, remove and try again
+        while new_best_id in new_pairIDs:
+            allowed_pairs_edit.remove(new_best_id)
+            if len(allowed_pairs_edit)>0:
+                new_best_id = random.choice(allowed_pairs_edit)
+            else:
+                return None
         # update the primer set
         new_pairIDs.append(new_best_id)
         new_pairIDs.remove(curr_worst)
         return curr_worst, new_best_id, new_pairIDs
 
 
-def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs, dimer_table, dimer_pairID):
+def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, dimer_table, dimer_pairID):
     # calculate # dimers in this new set
     new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, dimer_table, dimer_pairID, True)
     new_dimer_totals = CalcTotalDimers(new_primerset_dimers)
@@ -237,11 +335,6 @@ def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs,
         # TODO: if a primer pair has been tried, remove from current 'allowed' set (so that we don't go in circles...)
         # update all starting values to match this iteration's values
         current_pairIDs = new_pairIDs.copy()
-        try:
-            allowed_pairs.remove(new_best_id)
-        except:
-            pass
-        #allowed_pairs.append(curr_worst)
         primerset_dimers, nonset_dimers = new_primerset_dimers, new_nonset_dimers
         curr_dimer_totals = new_dimer_totals
         curr_total = new_total

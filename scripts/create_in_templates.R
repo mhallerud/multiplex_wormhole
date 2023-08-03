@@ -5,14 +5,15 @@ library(stringr)
 
 
 #### READ IN SEQUENCES
-setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/0_Inputs/')
+setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/Random300/')
 # load template sequences
-marten_seq <- read_templates('13A_snps_MAF30.repBaseFiltered.fa') #input fasta file
+marten_seq <- read_templates('13A_MAF30_repBaseFilter_random300.fixed.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
-marten_vcf <- read.vcfR('13A_MAF30.recode.vcf')
+marten_vcf <- read.vcfR('../../populations.snps.vcf')
 marten_fix <- as.data.frame(marten_vcf@fix) #this file holds SNP positions 
+#names(marten_fix) <- c("CHROM","POS","ID","MAJOR","MINOR","UNK","UNK","ALLELE_FREQ")
 
 # fix locus IDs
 marten_fix$CHROM <- unlist(lapply(marten_fix$ID, function(X) strsplit(X,':')[[1]][1]))
@@ -25,6 +26,8 @@ for (i in 1:nrow(marten_seq)){
   snps <- as.numeric(snps)
   min_snp <- min(snps)
   max_snp <- max(snps)
+  if (min_snp==Inf) min_snp <- marten_seq$Sequence_Length[i]
+  if (max_snp==-Inf) max_snp <- 1
   marten_seq$Allowed_End_fw[i] <- min_snp-1
   marten_seq$Allowed_Start_rev[i] <- max_snp+1
   marten_seq$Allowed_End_rev[i] <- marten_seq$Sequence_Length[i]
@@ -51,7 +54,7 @@ marten_seq$Allowed_rev
 counts=data.frame(table(marten_fix$CHROM))
 microhaps=counts[counts$Freq>1,]
 marten_fix[marten_fix$CHROM==microhaps$Var1[1],]
-marten_seq[marten_seq$ID==">CLocus_101071",]
+marten_seq[marten_seq$ID==">CLocus_1",]
 
 # export microhaplotypes
 nrow(microhaps)
@@ -81,5 +84,5 @@ targets <- paste0(as.character(target_start), ",", as.character(target_len))
 marten_csv <- data.frame(SEQUENCE_ID=str_replace_all(marten_seq$ID,'>',''),
                          SEQUENCE_TEMPLATE=marten_seq$Sequence,
                          SEQUENCE_TARGET=targets)
-write.csv(marten_csv, 'MartenTemplates_Random200MAF30_01AUG2023.csv', row.names=FALSE)                         
+write.csv(marten_csv, 'MartenTemplates_MAF30-repBaseFilter-random300.csv', row.names=FALSE)                         
 

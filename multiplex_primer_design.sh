@@ -54,7 +54,7 @@ echo "$(cat "$OUTDIR"/"$NAME"_specificityCheck_failedIDs.txt| tr "_" " " | awk '
 
 
 # convert checkSpecificity CSV to fasta format
-./scripts/convert_CSV_to_fasta.sh "$OUTDIR"/"$NAME"_specificityCheck_passed.csv 1 5
+#./scripts/convert_CSV_to_fasta.sh "$OUTDIR"/"$NAME"_specificityCheck_passed.csv 1 5
 #echo " " 
 #echo "NEXT STEP: Input to PrimerSuite PrimerDimer (http://www.primer-dimer.com/): " "$OUTDIR"/"$NAME"_specificityCheck_passed.csv
 
@@ -99,7 +99,7 @@ mkdir $OPTOUT
 #6- RUN : Run ID
 
 echo "......Run 1"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 1 > "$OPTOUT"/"$NAME"_OptimizedSet1.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 50 5000 1 > "$OPTOUT"/"$NAME"_OptimizedSet1.txt
 echo " "
 
 echo "......Run 2"
