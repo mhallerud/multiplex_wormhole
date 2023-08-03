@@ -8,8 +8,8 @@ if(length(args)<2) stop("Must provide input PrimerDimerReport.txt file & Delta G
 IN = args[1] 
 DELTAG_THRESHOLD = args[2]
 
-IN='/Users/maggiehallerud/Marten_Primer_Design/TEST/PrimerDimerReport_25jul2023.txt'
-DELTAG_THRESHOLD=-6
+#IN='/Users/maggiehallerud/Marten_Primer_Design/TEST/PrimerDimerReport_25jul2023.txt'
+#DELTAG_THRESHOLD=-6
 
 # load dependency
 library(stringr)
@@ -29,7 +29,7 @@ primer2=unlist(lapply(1:length(dimers_txt), function(X) str_replace_all(str_repl
 deltaG=as.numeric(unlist(lapply(1:length(dimers_txt), function(X) str_split(dimers_txt[X]," ")[[1]][11])))
 dimers <- data.frame(Primer1=primer1, Primer2=primer2, DeltaG=deltaG)
 #write.table(dimers, paste0(paste(OUTDIR, OUT, sep="/"), ".tsv"), sep="\t", row.names=FALSE)
-nrow(dimers)
+#nrow(dimers)
 
 # only keep dimers below on deltaG threshold
 filtered_dimers <- dimers[dimers$DeltaG<DELTAG_THRESHOLD,]

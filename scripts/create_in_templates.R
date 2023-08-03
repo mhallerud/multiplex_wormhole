@@ -7,7 +7,7 @@ library(stringr)
 #### READ IN SEQUENCES
 setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/0_Inputs/')
 # load template sequences
-marten_seq <- read_templates('13A_snps_MAF30.repBaseFiltered.uniq.fa') #input fasta file
+marten_seq <- read_templates('13A_MAF30.repBaseFiltered.random200.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
@@ -76,5 +76,5 @@ targets <- paste0(as.character(target_start), ",", as.character(target_len))
 marten_csv <- data.frame(SEQUENCE_ID=str_replace_all(marten_seq$ID,'>',''),
                          SEQUENCE_TEMPLATE=marten_seq$Sequence,
                          SEQUENCE_TARGET=targets)
-write.csv(marten_csv, 'MartenTemplates_01AUG2023.csv', row.names=FALSE)                         
+write.csv(marten_csv, 'MartenTemplates_Random200MAF30_01AUG2023.csv', row.names=FALSE)                         
 

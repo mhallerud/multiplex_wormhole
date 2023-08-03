@@ -6,22 +6,28 @@ Created on Mon Jul 24 07:59:12 2023
 @author: maggiehallerud
 """
 
-# set user-defined parameters
-PRIMER_SEQS="Test1_adapters" #filepath to adapter-ligated primers
-DIMER_SUMS="PrimerDimerReport_25jul2023_PrimerPairInteractions_sum_binary.csv"
-DIMER_TABLE="PrimerDimerReport_25jul2023_PrimerPairInteractions_wide_binary.csv"
-N_LOCI=10 # Number of SNPs in final panel
-ITERATIONS=50 # Number of times to run optimization
-
 # load dependencies
-import os
+#import os
+import sys
 import random
 
-os.chdir('/Users/maggiehallerud/Marten_Primer_Design/TEST')
 
-# TODO: Add melting temperature for primer dimers: Tm = 81.5 + 0.41(%GC) - 675/N - % mismatch
+# set user-defined parameters
+PRIMER_FASTA = sys.argv[1]
+DIMER_SUMS =sys.argv[2]
+DIMER_TABLE = sys.argv[3]
+N_LOCI = sys.argv[4]
+ITERATIONS = sys.arv[5]
 
-def main(ITERATIONS):
+#PRIMER_FASTA="Test1_adapters" #filepath to adapter-ligated primers
+#DIMER_SUMS="PrimerDimerReport_25jul2023_PrimerPairInteractions_sum_binary.csv"
+#DIMER_TABLE="PrimerDimerReport_25jul2023_PrimerPairInteractions_wide_binary.csv"
+#N_LOCI=10 # Number of SNPs in final panel
+#ITERATIONS=50 # Number of times to run optimization
+
+
+
+def main():
     ## read in IDs and primers
     ## NOTE: Numpy arrays would be more efficient & cleaner coding here than lists, 
     ## however numpy is constantly being updated so using it as a dependency would 
@@ -30,7 +36,7 @@ def main(ITERATIONS):
     ## most generalizable / user-friendly function.
 
     print("Reading in primer sequences..........")
-    primer_loci, primer_seqs, primer_IDs = LoadPrimers(PRIMER_SEQS)
+    primer_loci, primer_seqs, primer_IDs = LoadPrimers(PRIMER_FASTA)
     
     ## read in dimer info
     print("Reading in primer dimer counts........")
@@ -248,7 +254,6 @@ def AddWorstToAllowed(curr_worst, inlist, primer_loci=primer_loci, primer_IDs=pr
             inlist.append(p)
 
 
-
 def condition(x, list): 
     if x in list:
         return x
@@ -278,7 +283,7 @@ def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs):
         # set up dictionary with locus: (primer pair id, min # dimers)
         best_primer_pairs.update({bestPair[0]: min(tallies)})
     return best_primer_pairs
-        
+
 
 def SubsetDimerTable(primer_pairs, return_complement=False, dimer_table=dimer_table, dimer_ids=dimer_pairID):
     """primer_pairs"""
@@ -309,29 +314,29 @@ def CalcTotalDimers(dimerDict):
         Ndimers=sum(dimerDict[pair])
         outDict.update({pair: Ndimers})
     return outDict
-    
 
-def LoadPrimers(PRIMER_SEQS):
+
+def LoadPrimers(PRIMER_FASTA):
     # read in files as lists
     primer_loci = []
     primer_IDs = []
-    with open(PRIMER_SEQS+"_primerIDs.temp", "r") as file:
-        lines = file.readlines()
-        for line in lines:
-            line=line.rstrip()
-            line=line.replace('>','')
-            linesplit=line.split("_")
-            locus=linesplit[0]+"_"+linesplit[1]
-            primer_loci.append(locus)
-            primer_IDs.append(locus+"_"+linesplit[2])
     primer_seqs=[]
-    with open(PRIMER_SEQS+"_primerSeqs.temp", "r") as file:
+    # parse sequences from headers
+    with open(PRIMER_FASTA, "r") as file:
         lines = file.readlines()
         for line in lines:
-            line=line.rstrip()
-            primer_seqs.append(line)
-    
+            if ">" in line:
+                line=line.rstrip()
+                line=line.replace('>','')
+                linesplit=line.split("_")
+                locus=linesplit[0]+"_"+linesplit[1]
+                primer_loci.append(locus)
+                primer_IDs.append(locus+"_"+linesplit[2])
+            else:
+                line=line.rstrip()
+                primer_seqs.append(line)
     return primer_loci, primer_seqs, primer_IDs
+
 
 def LoadDimers(DIMER_SUMS, DIMER_TABLE):
     dimer_primerIDs=[]
@@ -361,6 +366,7 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
             dimer_table.update({linesplit[0]: linesplit[1:]})
             dimer_pairID.append(linesplit[0])
     return dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
+
 
 
 # run main function when called from the command line
