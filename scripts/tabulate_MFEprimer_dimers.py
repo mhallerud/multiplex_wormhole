@@ -14,9 +14,6 @@ import sys
 ALL_DIMERS = sys.argv[1]
 END_DIMERS = sys.argv[2]
 OUTNAME = sys.argv[3]
-ALL_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/examples/Example_MFEprimerDimers.txt'
-END_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/examples/Example_MFEprimerDimers_ends.txt'
-OUTNAME='Example'
 
 
 
