@@ -23,7 +23,7 @@ The pipeline was built and tested on MacOS with Python 3.9.13 and bash 3.2.57(1)
    ./scripts/filter_primers_Tm_dG.sh <max_Tm> <min_hairpin_dG> <min_ends_dG> <min_self_dG> <OUTPUT_DIRECTORY> <RESULTS_PREFIX> > <LOGFILE>
    - Lines 80-81 in the primer_design.sh file can be edited to specify different delta G and score thresholds for considering dimers.
 
-# Steps to run the pipeline with a different dimer calculation tool
+# Using other dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
 
 One alternative to MFEprimer dimer is Primer Suite's Primer Dimer tool. To use this tool to calculate dimers:
@@ -35,7 +35,7 @@ The delta G threshold specified will filter out any primer dimers with delta G a
 
 Another alternative is [ThermoFisher's Multiplex Primer Design](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html), however multiplex_wormhole currently has no support for translating these outputs into tables.
 
-# Detailed Process
+# Optimization Workflow
 1. Primers are designed for each template sequence using primer3, including calculating secondary structures using Illumina i5 and i7 adapters as overhangs.
   Defaults:
    - Annealing Temp: 52 C
