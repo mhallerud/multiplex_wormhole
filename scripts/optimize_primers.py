@@ -17,7 +17,7 @@ PRIMER_FASTA = sys.argv[1]
 DIMER_SUMS =sys.argv[2]
 DIMER_TABLE = sys.argv[3]
 N_LOCI = sys.argv[4]
-ITERATIONS = sys.arv[5]
+ITERATIONS = sys.argv[5]
 
 #PRIMER_FASTA="Test1_adapters" #filepath to adapter-ligated primers
 #DIMER_SUMS="PrimerDimerReport_25jul2023_PrimerPairInteractions_sum_binary.csv"

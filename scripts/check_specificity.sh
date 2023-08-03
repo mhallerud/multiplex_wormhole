@@ -65,7 +65,7 @@ grep -v -f "$OUT"_failedIDs.txt $IN > "$OUT"_passed.csv
 # save FASTA for primers that passed
 lines="$(wc -l "$OUT"_passed.csv | awk '{print $1}')"
 passed=()
-for i in $(seq 1 $lines)
+for i in $(seq 2 $lines)
 do
 	primer="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $5}')"
 	id="$(awk -v i=$i 'NR==i' "$OUT"_passed.csv | awk 'BEGIN{FS=","}{print $1}')"

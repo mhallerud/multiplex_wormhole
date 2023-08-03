@@ -14,9 +14,9 @@ import sys
 ALL_DIMERS = sys.argv[1]
 END_DIMERS = sys.argv[2]
 OUTNAME = sys.argv[3]
-#ALL_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/MFEprimerDimers_MAF30_rand200.txt'
-#END_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/MFEprimerDimers_MAF30_rand200_endOnly.txt'
-#OUTNAME='MAF30_rand200'
+ALL_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/examples/Example_MFEprimerDimers.txt'
+END_DIMERS='/Users/maggiehallerud/Marten_Primer_Design/examples/Example_MFEprimerDimers_ends.txt'
+OUTNAME='Example'
 
 
 
@@ -175,7 +175,8 @@ def totalDimers(pairwise_interactions, ids):
 def exportToCSV(inArray, outCSV):
     with open(outCSV, 'w') as file:
         for line in inArray:
-            file.write(line+"\n")
+            str_line = str(line)[1:-1].replace("'", "")
+            file.write(str_line+"\n")
 
 
 
