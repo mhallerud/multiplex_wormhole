@@ -80,7 +80,7 @@ echo "Calculating dimers with MFEprimer dimer........."
 
 # convert MFEprimer dimer report to tables
 echo " " 
-echo "Calculating dimers with MFEprimer dimer........."
+echo "Converting dimer report to tables........."
 #script arguments order: 1- path to all dimers file, 2- path to end dimers file, 3- output name
 python ./scripts/tabulate_MFEprimer_dimers.py "$OUTDIR"/"$NAME"_MFEprimerDimers.txt "$OUTDIR"/"$NAME"_MFEprimerDimers_ends.txt "$NAME"
 
@@ -98,41 +98,41 @@ mkdir $OPTOUT
 #5- ITERATIONS=50 # Number of times to run optimization
 
 echo "......Run 1"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet1.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet1.txt
 echo " "
 
 echo "......Run 2"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet2.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet2.txt
 echo " "
  
 echo "......Run 3"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet3.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet3.txt
 echo " "
 
 echo "......Run 4"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet4.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet4.txt
 echo " "
 
 echo "......Run 5"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet5.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet5.txt
 echo " "
 
 echo "......Run 6"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet6.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet6.txt
 echo " "
 
 echo "......Run 7"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet7.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet7.txt
 echo " "
 
 echo "......Run 8"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet8.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet8.txt
 echo " "
 
 echo "......Run 9"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet9.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet9.txt
 echo " "
 
 echo "......Run 10"
-python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa" "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet10.txt
+python ./scripts/optimize_primers.py "$OUTDIR"/"$NAME"_specificityCheck_passed.fa "$OUTDIR"/"$NAME"_PrimerPairInteractions_sum_binary.csv "$OUTDIR"/"$NAME"_PrimerPairInteractions_wide_binary.csv 100 5000 > "$OPTOUT"/"$NAME"_OptimizedSet10.txt
 echo " "

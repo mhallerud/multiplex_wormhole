@@ -71,7 +71,7 @@ def main():
     allowed_pairs = [primer_IDs[i] for i in allowed_idx]
     allowed_pairs = list(set(allowed_pairs))
     # calculate # primer dimers per pair for current set of primers
-    primerset_dimers, nonset_dimers = SubsetDimerTable(current_pairIDs, True)
+    primerset_dimers, nonset_dimers = SubsetDimerTable(current_pairIDs, dimer_table, dimer_pairID, True)
     curr_dimer_totals = CalcTotalDimers(primerset_dimers)# totals for current primers
     curr_total = sum(curr_dimer_totals.values())
     
@@ -87,7 +87,7 @@ def main():
             #break
 
         # create new set by replacing current worst pair with a random pair
-        newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist)
+        newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci)
         if newSet is None:
             comparison=False
         else:
@@ -109,7 +109,7 @@ def main():
             except:
                 pass
             # add indices for the other primer pairs for the current worst locus to the allowed list
-            AddWorstToAllowed(curr_worst, allowed_pairs_rmv)
+            AddWorstToAllowed(curr_worst, allowed_pairs_rmv, primer_loci, primer_IDs)
             # avoid trying the same values...
             orig_worst = curr_worst
             orig_best = new_best_id
@@ -118,7 +118,7 @@ def main():
             while x>0:
                 if x>0:
                     # make new set
-                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist)
+                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci)
                     if newSet is None:
                         print("No new sets can be found for this set of primer pairs")
                         break
@@ -168,7 +168,7 @@ def main():
 
 
 def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist,
-               dimer_primerIDs=dimer_primerIDs, dimer_table=dimer_table, dimer_pairID=dimer_pairID, primer_IDs=primer_IDs, primer_loci=primer_loci):
+               dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci):
         # create copy of original list, otherwise links them and affects both lists when using update/remove    
         new_pairIDs = pairIDs.copy()
         allowed_pairs_edit = allowed_pairs.copy()
@@ -200,7 +200,7 @@ def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blackli
             if n<abs(j):
                 return None
         # add primer IDs for the chosen locus to the allowed list
-        AddWorstToAllowed(curr_worst, allowed_pairs_edit)
+        AddWorstToAllowed(curr_worst, allowed_pairs_edit, primer_loci, primer_IDs)
         # ID primer pair outside of set that would have the smallest dimer load in the context of the current set
         # The main purpose of this is to speed up the optimization (as opposed to just choosing a random pair, many)
         # of which may not be very good in any context). This method also doesn't allow any flexibility if the min option doesn't work.
@@ -222,7 +222,7 @@ def MakeNewSet(pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blackli
 
 def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs):
     # calculate # dimers in this new set
-    new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, True)
+    new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, dimer_table, dimer_pairID, True)
     new_dimer_totals = CalcTotalDimers(new_primerset_dimers)
     new_total = sum(new_dimer_totals.values())
     # if this primer set has fewer dimers overall, keep it and proceed
@@ -244,7 +244,7 @@ def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, allowed_pairs)
         return False
 
 
-def AddWorstToAllowed(curr_worst, inlist, primer_loci=primer_loci, primer_IDs=primer_IDs):
+def AddWorstToAllowed(curr_worst, inlist, primer_loci, primer_IDs):
         curr_worst_locus = curr_worst.split("_")[0] + "_" + curr_worst.split("_")[1]
         curr_worst_idx = list(filter(lambda x: primer_loci[x]==curr_worst_locus, range(len(primer_loci))))
         curr_worst_pairs = [primer_IDs[i] for i in curr_worst_idx]
@@ -277,7 +277,7 @@ def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs):
         # extract primer pair with min dimer value
         min_idx = list(filter(lambda x: tallies[x]==min(tallies), range(len(tallies))))
         if len(min_idx)>1:# if there's more than one 'best' option, randomly choose one...
-            min_idx = random.choice(min_idx) 
+            min_idx = [random.choice(min_idx)]
         # extract the ID for the selected pair
         bestPair= [ids[i] for i in min_idx]
         # set up dictionary with locus: (primer pair id, min # dimers)
@@ -285,7 +285,7 @@ def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs):
     return best_primer_pairs
 
 
-def SubsetDimerTable(primer_pairs, return_complement=False, dimer_table=dimer_table, dimer_ids=dimer_pairID):
+def SubsetDimerTable(primer_pairs, dimer_table, dimer_ids, return_complement=False):
     """primer_pairs"""
     """dimer_tally_dict"""
     sub_dimer_table = dict() #blank dictionary to store output
