@@ -24,6 +24,7 @@ do
 
 	# loop through each primer pair
 	primerpairs=$(grep PRIMER_PAIR_NUM_RETURNED $locus | cut -d"=" -f 2)
+	echo $primerpairs
 	locusID=$(basename $locus | cut -d'.' -f 1)
 	if [ "$primerpairs" -gt 0 ]; then
 		echo "Testing " $locusID "........................................."

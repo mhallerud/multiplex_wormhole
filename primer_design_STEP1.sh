@@ -7,7 +7,7 @@ NAME=$3 #prefix for naming outputs
 numIn="$(wc -l $TEMPLATES | awk '{print $1-1}')"
 echo "# loci in input file: " $numIn
 
-
+10
 # design initial primers using Primer3
 # NOTE: adapters are added to primers and considered in secondary structure calculations via the LEFT_PRIMER_OVERHANG & RIGHT_PRIMER_OVERHANG settings
 # NOTE: the primer3 setting files are setup so that no filtering occurs based on secondary structures at this step
@@ -17,7 +17,7 @@ echo "      (see primer3_batch.log for details)"
 ./scripts/primer3_batch_design.sh "$TEMPLATES" "$OUTDIR" > "$OUTDIR"/primer3_batch.log
 numMissing="$(grep 'No primers found' "$OUTDIR"/primer3_batch.log | wc -l | awk '{print $1}')"
 numWithPrimers=$(($numIn-$numMissing))
-echo "      # loci primers could be designed for: " $numWithPrimers
+20echo "      # loci primers could be designed for: " $numWithPrimers
 
 
 # filter primers
@@ -27,11 +27,18 @@ echo "      # loci primers could be designed for: " $numWithPrimers
 ## deltaG <= -10 kcal/mole in the middle of primers where steric hindrance makes structures difficult to form - also for pair heterodimers in middle
 echo " "
 echo "Filtering primers based on delta G and melting temp (Tm)........" 
+30# in order, the arguments for this script are:
+# Tm_limit : Max melting temp allowed for secondary structures
+# #dG_hairpins : Min delta G allowed for hairpins
+# dG_end_limit : Min delta G allowed for secondary structures at the end of primers (self-dimers or heterodimers)
+# dG_self_limit : Min delta G allowed for secondary structures occurring in the middle of primers
+# OUTDIR : Directory to save outputs to
+# OUTNAME : Prefix for naming outputs
 ./scripts/filter_primers_Tm_dG.sh 45 -2000 -5000 -10000 "$OUTDIR" "$NAME"_filteredPrimers > "$OUTDIR"/filter_primers.log
 numfiltered="$(wc -l "$OUTDIR"/"$NAME"_filteredPrimers_LocusIDs.txt | awk '{print $1}')"
 echo "      # loci with primers after filtering:" $numfiltered
 
-
+40
 # check primer specificity, remove any non-specific primer pairs
 echo " "
 echo "Checking specificity of remaining primers......." 
@@ -41,7 +48,7 @@ echo "      Number of unique primer sequences that failed specificity check: " "
 echo "      Loci represented in non-specific primers: " 
 echo "$(cat "$OUTDIR"/"$NAME"_specificityCheck_failedIDs.txt| tr "_" " " | awk '{print $1"_"$2}' | sort | uniq)"
 
-
+50
 # add adapters - this is already done in primer3 with the PRIMER_*_OVERHANG settings!
 #cd $OUTDIR
 #./scripts/add_adapters.sh $NAME_filteredPrimers.csv $NAME_primerAdapters.fa
@@ -51,7 +58,7 @@ echo "$(cat "$OUTDIR"/"$NAME"_specificityCheck_failedIDs.txt| tr "_" " " | awk '
 ./scripts/convert_CSV_to_fasta.sh "$OUTDIR"/"$NAME"_specificityCheck_passed.csv 1 5
 #echo " " 
 #echo "NEXT STEP: Input to PrimerSuite PrimerDimer (http://www.primer-dimer.com/): " "$OUTDIR"/"$NAME"_specificityCheck_passed.csv
-
+60
 
 # originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
 # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
@@ -61,7 +68,7 @@ echo " "
 echo "Calculating dimers with MFEprimer dimer........."
 # -i = input FASTA of primer sequences 
 # -o = output file
-# -d = maximum deltaG threshold to consider dimers (kcal/mol)
+70# -d = maximum deltaG threshold to consider dimers (kcal/mol)
 # -s = minimum score threshold to consider dimers(scores are calculated with +1 for each match and -1 for each mismatch (not including Ns)
 # -m = max allowed mismatches per dimer
 # -p = only output dimers with 3' end bind
@@ -69,8 +76,8 @@ echo "Calculating dimers with MFEprimer dimer........."
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-../mfeprimer-3.2.7-darwin-10.6-amd64 dimer -i "$OUTDIR"/"$NAME"_specificityCheck_passed.fa -o "$OUTDIR"/"$NAME"_MFEprimerDimers.txt -d -6 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50
-../mfeprimer-3.2.7-darwin-10.6-amd64 dimer -i "$OUTDIR"/"$NAME"_specificityCheck_passed.fa -o "$OUTDIR"/"$NAME"_MFEprimerDimers_ends.txt -d -2.5 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p
+80../mfeprimer-3.2.7-darwin-10.6-amd64 dimer -i "$OUTDIR"/"$NAME"_specificityCheck_passed.fa -o "$OUTDIR"/"$NAME"_MFEprimerDimers.txt -d -6 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50
+81../mfeprimer-3.2.7-darwin-10.6-amd64 dimer -i "$OUTDIR"/"$NAME"_specificityCheck_passed.fa -o "$OUTDIR"/"$NAME"_MFEprimerDimers_ends.txt -d -2.5 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p
 
 # convert MFEprimer dimer report to tables
 echo " " 

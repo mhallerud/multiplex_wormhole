@@ -15,7 +15,8 @@ OUTDIR=$2
 
 OUT1=$OUTDIR/1_InitialPrimers
 mkdir $OUT1
-
+rm $OUT1/*
+ 
 ## load CSV file with SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET in columns
 # use create_in_templates.R script lines 1-90 to create this CSV
 # read in CSV
