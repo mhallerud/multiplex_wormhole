@@ -21,67 +21,49 @@ ITERATIONS = int(sys.argv[5])
 RUN = sys.argv[6]
 
 # this lists all primer pairs that MUST be included in the final set
-# whitelist = ['CLocus_93850_1',
-#  'CLocus_117970_1',
-#  'CLocus_40220_2',
-#  'CLocus_34762_1',
-#  'CLocus_61996_1',
-#  'CLocus_473077_0',
-#  'CLocus_81920_7',
-#  'CLocus_23075_5',
-#  'CLocus_31399_7',
-#  'CLocus_84137_1',
-#  'CLocus_86842_4',
-#  'CLocus_55820_4',
-#  'CLocus_58927_4',
-#  'CLocus_30541_1',
-#  'CLocus_129175_0',
-#  'CLocus_129175_1',
-#  'CLocus_65906_5',
-#  'CLocus_80147_4',
-#  'CLocus_74268_2',
-#  'CLocus_465138_3',
-#  'CLocus_58665_3',
-#  'CLocus_131931_6',
-#  'CLocus_129175_2',
-#  'CLocus_65906_4',
-#  'CLocus_80147_1',
-#  'CLocus_7041_1',
-#  'CLocus_23896_4',
-#  'CLocus_65906_4',
-#  'CLocus_6753_6',
-#  'CLocus_30541_1',
-#  'CLocus_129175_3',
-#  'CLocus_23459_2',
-#  'CLocus_55804_0',
-#  'CLocus_129175_8',
-#  'CLocus_58927_4',
-#  'CLocus_79822_2',
-#  'CLocus_6753_4',
-#  'CLocus_6753_6',
-#  'CLocus_45384_3',
-#  'CLocus_45384_3',
-#  'CLocus_65906_4',
-#  'CLocus_60852_0',
-#  'CLocus_65906_1',
-#  'CLocus_70449_1',
-#  'CLocus_109443_0',
-#  'CLocus_7041_1',
-#  'CLocus_70449_1',
-#  'CLocus_72746_0',
-#  'CLocus_38234_0',
-#  'CLocus_29775_2']
-
-
-
-# extract name from inputs
-NAME=os.path.basename(DIMER_SUMS).split('_')[0]
-OUTDIR=os.path.dirname(DIMER_SUMS)
-OUTNAME=OUTDIR+'/2_OptimizedSets/'+NAME+'_optimizedSet'+str(RUN)+'.csv'
+whitelist = ['CLocus_109443_0',
+ 'CLocus_117970_9',
+ 'CLocus_129175_0',
+ 'CLocus_131931_6',
+ 'CLocus_23075_5',
+ 'CLocus_23459_2',
+ 'CLocus_23896_4',
+ 'CLocus_29775_2',
+ 'CLocus_30541_1',
+ 'CLocus_31399_7',
+ 'CLocus_34762_1',
+ 'CLocus_38234_0',
+ 'CLocus_40220_2',
+ 'CLocus_45384_3',
+ 'CLocus_465138_3',
+ 'CLocus_473077_0',
+ 'CLocus_55804_0',
+ 'CLocus_55820_4',
+ 'CLocus_58665_3',
+ 'CLocus_58927_4',
+ 'CLocus_60852_0',
+ 'CLocus_61996_1',
+ 'CLocus_65906_1',
+ 'CLocus_6753_4',
+ 'CLocus_7041_1',
+ 'CLocus_70449_1',
+ 'CLocus_72746_0',
+ 'CLocus_74268_2',
+ 'CLocus_79822_2',
+ 'CLocus_80147_1',
+ 'CLocus_81920_7',
+ 'CLocus_84137_1',
+ 'CLocus_86842_4',
+ 'CLocus_93850_1']
 
 
 
 def main():
+    # extract name from inputs
+    NAME=os.path.basename(DIMER_SUMS).split('_')[0]
+    OUTDIR=os.path.dirname(DIMER_SUMS)
+    OUTNAME=OUTDIR+'/2_OptimizedSets/'+NAME+'_optimizedSet'+str(RUN)+'.csv'
+
     ## read in IDs and primers
     ## NOTE: Numpy arrays would be more efficient & cleaner coding here than lists, 
     ## however numpy is constantly being updated so using it as a dependency would 
@@ -105,7 +87,7 @@ def main():
     uniq_loci=list(set(primer_loci)) # convert to list because new versions of random.sample won't be able to handle sets... 
     nloci=len(uniq_loci)
     # grab best primer pairs for each locus
-    best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs)
+    best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist)
     # if there are fewer loci than desired, use all of them
     if nloci < N_LOCI:
         print("WARNING: Fewer loci passed filtering than desired in panel")
@@ -122,6 +104,9 @@ def main():
                     best_primer_pairs.pop(k)
             # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
             initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI-n_whitelist])
+            # append all whitelist pairs to initial pairs
+            for k in list(whitelist_pairs.keys()):
+                initial_pairs.update({k: whitelist_pairs[k]})
         else:
             initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI])
     
@@ -364,23 +349,37 @@ def GetLocusID(pairID):
     return LocusID
 
 
-def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs):
+def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist):
     """loci: """
     """dimer_tally_dict: """
+    # replace "best" with whitelist pair if in whitelist
+    whitelist_loci = [whitelist[x].split('_')[0]+'_'+whitelist[x].split('_')[1] for x in range(len(whitelist))]
     best_primer_pairs= dict()
     for locus in loci:
-        # extract dimer data for this locus
-        locus_idx = list(filter(lambda x: dimer_loci[x]==locus, range(len(dimer_loci))))
-        ids = [dimer_primerIDs[i] for i in locus_idx]
-        tallies = [dimer_tallies[i] for i in locus_idx]
-        # extract primer pair with min dimer value
-        min_idx = list(filter(lambda x: tallies[x]==min(tallies), range(len(tallies))))
-        if len(min_idx)>1:# if there's more than one 'best' option, randomly choose one...
-            min_idx = [random.choice(min_idx)]
-        # extract the ID for the selected pair
-        bestPair= [ids[i] for i in min_idx]
+        if locus in whitelist_loci:
+            # assign whitelist pairs as best
+            whitelist_indx = list(filter(lambda x: whitelist_loci[x]==locus, range(len(whitelist_loci))))
+            bestPair = [whitelist[x] for x in whitelist_indx][0]
+            # extract dimer tally for this pair
+            dimer_idx = list(filter(lambda x: dimer_primerIDs[x]==bestPair, range(len(dimer_primerIDs))))
+            if len(dimer_idx)==0:
+                min_dimers=float('nan')#in case pair is missing from DB
+            else:
+                min_dimers=[dimer_tallies[x] for x in dimer_idx][0]
+        else:
+            # extract dimer data for this locus
+            locus_idx = list(filter(lambda x: dimer_loci[x]==locus, range(len(dimer_loci))))
+            ids = [dimer_primerIDs[i] for i in locus_idx]
+            tallies = [dimer_tallies[i] for i in locus_idx]
+            # extract primer pair with min dimer value
+            min_idx = list(filter(lambda x: tallies[x]==min(tallies), range(len(tallies))))
+            if len(min_idx)>1:# if there's more than one 'best' option, randomly choose one...
+                min_idx = [random.choice(min_idx)]
+            # extract the ID for the selected pair
+            bestPair= [ids[i] for i in min_idx][0]
+            min_dimers = min(tallies)
         # set up dictionary with locus: (primer pair id, min # dimers)
-        best_primer_pairs.update({bestPair[0]: min(tallies)})
+        best_primer_pairs.update({bestPair: min_dimers})        
     return best_primer_pairs
 
 
