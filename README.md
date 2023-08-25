@@ -1,6 +1,8 @@
 # multiplex_wormhole
 Optimizing PCR primer design for multiplex amplicon sequencing.
 
+**Important: This pipeline is still in development. Use at your own risk!**
+
 # Dependencies
 This pipeline relies on primer3 for primer design and MFEprimer for dimer calculations. To setup your files to run:
 - Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). The path to primer3_core will need to be updated on line 18 of scripts/primer3.sh will need to be updated to reflect your local version. Primer3 version
