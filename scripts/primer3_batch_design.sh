@@ -5,15 +5,15 @@
 
 TEMPLATES=$1
 OUTDIR=$2
-#outls="$(ls -1 $OUTDIR | wc -l | awk '{print $1}')"
-#if (($outls == 0))
-#then
-#	mkdir $OUTDIR
-#	OUT1=$OUTDIR/1_InitialPrimers
-#	mkdir $OUT1
-#fi
+
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 OUT1=$OUTDIR/1_InitialPrimers
+#outls="$(ls -1 $OUT1 | wc -l | awk '{print $1}')"
+#if (($outls == 0))
+#then
+#	mkdir $OUT1
+#fi
 mkdir $OUT1
 rm $OUT1/*
  
@@ -42,14 +42,14 @@ do
 
 	# run primer3 based on strict settings
 	echo "-Designing primers for " $id
-	./scripts/primer3.sh "$id" "$seq" "$SNP" ./primer3_settings/primer3_Base_NoSecondaryFilters.txt $OUT1
+	$SCRIPTPATH/primer3.sh "$id" "$seq" "$SNP" $SCRIPTPATH/../primer3_settings/primer3_Base_NoSecondaryFilters.txt $OUT1
 
 	# rerun with broad settings if no primers were found
 	primers="$(grep PRIMER_PAIR_NUM_RETURNED=0 $OUT1/$id.out)"
 	if [ "$primers" != "" ]
 	then
 		echo ".....Retrying with broader parameters"
-		./scripts/primer3.sh $id $seq $SNP ./primer3_settings/primer3_Broad_NoSecondaryFilters.txt $OUT1
+		$SCRIPTPATH/primer3.sh $id $seq $SNP $SCRIPTPATH/../primer3_settings/primer3_Broad_NoSecondaryFilters.txt $OUT1
 	fi
 
 	# raise message if no primers were found for broad settings either
@@ -62,7 +62,7 @@ do
 	# raise message if there were errors in primer design
 	errors="$(wc -l $OUT1/$id.err | awk '{print $1}')"
 	outErrors="$(grep ERROR $OUT1/$id.out)"
-	if [ $errors  -gt 0 ] || [ "$outErrors" != "" ]
+	if [ $errors -gt 0 ] || [ "$outErrors" != "" ]
 	then
 		echo ".....ERROR in primer design!"
 	fi

@@ -17,7 +17,7 @@ filtered_primers+=("PrimerID,LocusID,PrimerPair,Direction,Sequence,StartBP,Lengt
 ids=() #array for locus IDs that pass filtering
 
 # loop through each locus
-for locus in $(ls -1 $OUTDIR/1_InitialPrimers/*.out)
+for locus in "$(ls -1 $OUTDIR/1_InitialPrimers/*.out)"
 do
 	# progress tracking for # primers per locus
 	passed=0
