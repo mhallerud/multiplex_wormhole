@@ -25,6 +25,7 @@ import csv
 import re
 
 
+
 def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG_mid_limit=-10000):
     """
     OUTDIR : path
@@ -81,7 +82,7 @@ def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG
                 # start counter for tests
                 tests=0
 
-                # check FW and REV structures separately
+                # check FW and REV primers separately for self-dimers
                 for DIR in ["LEFT","RIGHT"]:
                     # set strings based on direction
                     if DIR=="LEFT":
@@ -92,107 +93,21 @@ def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG
                         pass
                     
                     # check for dimers with self
-                    SelfAny = list(filter(re.compile("PRIMER_"+DIR+"_"+N+"_SELF_ANY_STUCT").match, lines))
-                    # if self secondary structures exist, test criteria
-                    if len(SelfAny) > 0:
-                        print("         "+DIRNAME+" Dimer with self (middle)")
-                        # extract annealing temp of structure
-                        Tm = SelfAny[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
-                        Tm_num = float(Tm)
-                        # extract deltaG of structure
-                        dG = SelfAny[0].split("=")[1].split(";")[1].split(" ")[3]
-                        dG_num = float(dG)
-                        # check if thresholds are met
-                        if Tm_num > Tm_limit and dG_num < dG_mid_limit:
-                            print("             FAILED")
-                        else:
-                            tests+=1
-                    # otherwise, tests are passed by default
-                    else:
-                        tests+=1
-                    del SelfAny # cleanup
-                    
+                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_ANY_STUCT", 
+                                   Tm_limit, dG_mid_limit, DIRNAME+" Dimer with self (middle)", tests)                    
                     # check for dimers with self at ends
-                    SelfEnd = list(filter(re.compile("PRIMER_"+DIR+"_"+N+"_SELF_END_STUCT").match, lines))
-                    # if self end secondary structures exist, test criteria
-                    if len(SelfEnd) > 0:
-                        print("         "+DIRNAME+" Dimer with self (end)")
-                        # extract annealing temp of structure
-                        Tm = SelfEnd[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
-                        Tm_num = float(Tm)
-                        # extract deltaG of structure
-                        dG = SelfEnd[0].split("=")[1].split(";")[1].split(" ")[3]
-                        dG_num = float(dG)
-                        # check if thresholds are met
-                        if Tm_num > Tm_limit and dG_num < dG_end_limit:
-                            print("             FAILED")
-                        else:
-                            tests+=1
-                    # otherwise, tests are passed by default
-                    else:
-                        tests+=1
-                    del SelfEnd # cleanup
-                    
+                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_END_STUCT", 
+                                   Tm_limit, dG_end_limit, DIRNAME+" Dimer with self (end)", tests)
                     # check for hairpin dimers
-                    Hairpin = list(filter(re.compile("PRIMER_"+DIR+"_"+N+"_HAIRPIN_STUCT").match, lines))
-                    # if self end secondary structures exist, test criteria
-                    if len(Hairpin) > 0:
-                        print("         "+DIRNAME+" Hairpin dimer")
-                        # extract annealing temp of structure
-                        Tm = Hairpin[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
-                        Tm_num = float(Tm)
-                        # extract deltaG of structure
-                        dG = Hairpin[0].split("=")[1].split(";")[1].split(" ")[3]
-                        dG_num = float(dG)
-                        # check if thresholds are met
-                        if Tm_num > Tm_limit and dG_num < dG_hairpins:
-                            print("             FAILED")
-                        else:
-                            tests+=1
-                    # otherwise, tests are passed by default
-                    else:
-                        tests+=1
-                    del Hairpin # cleanup
-                    
-                # check for secondary structures between primers
-                PairStruct = list(filter(re.compile("PRIMER_PAIR_"+N+"_COMPL_ANY_STUCT").match, lines))
-                if len(PairStruct) > 0:
-                    print("         "+DIRNAME+" Primer pair dimer")
-                    # extract annealing temp of structure
-                    Tm = PairStruct[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
-                    Tm_num = float(Tm)
-                    # extract deltaG of structure
-                    dG = PairStruct[0].split("=")[1].split(";")[1].split(" ")[3]
-                    dG_num = float(dG)
-                    # check if thresholds are met
-                    if Tm_num > Tm_limit and dG_num < dG_mid_limit:
-                        print("             FAILED")
-                    else:
-                        tests+=1
-                # otherwise, tests are passed by default
-                else:
-                    tests+=1
-                del PairStruct # cleanup
+                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_HAIRPIN_STUCT", 
+                                   Tm_limit, dG_hairpins, DIRNAME+" Hairpin dimer", tests)
                 
+                # check for secondary structures between primers
+                tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_ANY_STUCT",
+                                       Tm_limit, dG_mid_limit, DIRNAME+" Primer pair dimer (middle)", tests)                
                 # check for secondary structures between primer ends
-                PairEndStruct = list(filter(re.compile("PRIMER_PAIR_"+N+"_COMPL_END_STUCT").match, lines))
-                if len(PairEndStruct) > 0:
-                    print("         "+DIRNAME+" Primer pair dimer")
-                    # extract annealing temp of structure
-                    Tm = PairEndStruct[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
-                    Tm_num = float(Tm)
-                    # extract deltaG of structure
-                    dG = PairEndStruct[0].split("=")[1].split(";")[1].split(" ")[3]
-                    dG_num = float(dG)
-                    # check if thresholds are met
-                    if Tm_num > Tm_limit and dG_num < dG_end_limit:
-                        print("             FAILED")
-                    else:
-                        tests+=1
-                # otherwise, tests are passed by default
-                else:
-                    tests+=1
-                del PairEndStruct # cleanup
+                tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_END_STUCT", 
+                                       Tm_limit, dG_end_limit, DIRNAME+" Primer pair dimer (ends)", tests)
                 
                 # if all tests are passed (n=8), then the primer pairs are added to the output array
                 if tests==8:
@@ -266,6 +181,27 @@ def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG
         for row in ids:
             file.write(row+'\n')
 
+
+
+def checkStructure(lines, structure_name, Tm_threshold, dG_threshold, message, tests):
+    Structure = list(filter(re.compile(structure_name).match, lines))
+    # if self secondary structures exist, test criteria
+    if len(Structure) > 0:
+        print("         "+message)
+        # extract annealing temp of structure
+        Tm = Structure[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
+        Tm_num = float(Tm)
+        # extract deltaG of structure
+        dG = Structure[0].split("=")[1].split(";")[1].split(" ")[3]
+        dG_num = float(dG)
+        # check if thresholds are met
+        if Tm_num > Tm_threshold and dG_num < dG_threshold:
+            print("             FAILED")
+        else:
+            tests+=1
+    else:
+        tests+=1
+    return tests
 
 
 
