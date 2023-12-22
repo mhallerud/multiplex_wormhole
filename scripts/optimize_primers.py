@@ -6,19 +6,22 @@ Created on Mon Jul 24 07:59:12 2023
 @author: maggiehallerud
 """
 
+
+"""
+TO DO
+- fix path that needs to be harcoded in scripts --> also change "python" to "python3" (in help docs)
+- formalize whitelist functionality!
+- lose 2 loci when you read in data (first and last)
+- change the # of desired loci?
+- parallelize tabulate_dimers script!!
+"""
+
 # load dependencies
 import os
 import sys
 import random
 
 
-# set user-defined parameters
-PRIMER_FASTA = sys.argv[1]
-DIMER_SUMS =sys.argv[2]
-DIMER_TABLE = sys.argv[3]
-N_LOCI = int(sys.argv[4])
-ITERATIONS = int(sys.argv[5])
-RUN = sys.argv[6]
 
 # this lists all primer pairs that MUST be included in the final set
 whitelist = ['CLocus_109443_0',
@@ -58,7 +61,7 @@ whitelist = ['CLocus_109443_0',
 
 
 
-def main():
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTDIR, N_LOCI, ITERATIONS, RUN, WHITELIST=None):
     # extract name from inputs
     NAME=os.path.basename(DIMER_SUMS).split('_')[0]
     OUTDIR=os.path.dirname(DIMER_SUMS)

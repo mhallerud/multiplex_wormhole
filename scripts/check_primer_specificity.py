@@ -22,7 +22,7 @@ import csv
 
 
 
-def main(PRIMERS, TARGET, OUTNAME, OUTDIR):
+def main(PRIMERS, TARGET, OUTPATH):
     """
     PRIMERS : CSV
         Primer details from filter_primers.py
@@ -33,8 +33,10 @@ def main(PRIMERS, TARGET, OUTNAME, OUTDIR):
     OUTDIR : diirectory path
         directory where outputs are saved
     -------
+    Checks specificity of PRIMERS against TARGET
+    Returns CSVs with primers passing and failing the specificity check
     """
-    
+      
     # read in primer CSV
     with open(PRIMERS, 'r', newline='\n') as file:
         reader = csv.reader(file)
@@ -106,20 +108,20 @@ def main(PRIMERS, TARGET, OUTNAME, OUTDIR):
         raise InputError("TARGET file of must be a CSV file (.csv) or a FASTA (.fasta, .fa), FASTQ (.fastq, .fq), or FASTQ.GZ file (.fastq.gz or .fq.gz)")
         
     # write passed primers to a CSV file
-    passed_csv_path = os.path.join(OUTDIR, OUTNAME+"_passed.csv")
+    passed_csv_path = OUTPATH+"_passed.csv"
     with open(passed_csv_path, 'w') as file:
         writer= csv.writer(file)
         for row in passed:
             writer.writerow(row)
     
     # write passed primer sequences to a FASTA file
-    passed_fa_path = os.path.join(OUTDIR, OUTNAME+"_passed.fa")
+    passed_fa_path = OUTPATH+"_passed.fa"
     with open(passed_fa_path, 'w') as file:
         for row in passed_seq:
             file.write(row+"\n")
     
     # write failed primers to CSV file
-    failed_csv_path = os.path.join(OUTDIR, OUTNAME+"_failed.csv")
+    failed_csv_path = OUTPATH+"_failed.csv"
     with open(failed_csv_path, 'w') as file:
         writer = csv.writer(file)
         for row in failed:

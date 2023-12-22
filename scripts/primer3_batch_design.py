@@ -24,11 +24,22 @@ import shutil
 import csv
 import glob
 
-scriptpath=os.path.dirname(__file__)
 
 
+def main(IN_CSV, OUTDIR):
+    """
+    IN_CSV : csv filepath
+        field1=ID, field2=DNA sequence, field3=amplicon (start_bp,length)
 
-def main(IN_CSV, OUTDIR, SCRIPTPATH=scriptpath):
+    OUTDIR : directory path
+        an output directory where primer details are saved
+    ------
+    Designs primers for all loci in IN_CSV; 
+    Returns primer output files in OUTDIR/1_InitialPrimers
+    """
+    # find script directory 
+    SCRIPTPATH=os.path.dirname(__file__)
+
     # set up output folder structure
     if not os.path.exists(OUTDIR):
         os.mkdir(OUTDIR)
@@ -57,7 +68,7 @@ def main(IN_CSV, OUTDIR, SCRIPTPATH=scriptpath):
         for line in reader: 
             templates.append(line)
     
-    ## design FW and REV primers for each sequence
+    # design FW and REV primers for each sequence
     print("Designing initial primers......")
     for row in range(len(templates)):
         # pull in inputs
@@ -69,31 +80,31 @@ def main(IN_CSV, OUTDIR, SCRIPTPATH=scriptpath):
         print(" - Designing primers for "  + ids)
         os.system(primer3_sh +' '+ ids +' '+ seq +' '+ snp +' '+ strict +' '+ outprimers)
     
-	# rerun with broad settings if no primers were found
-    primers = glob.glob(os.path.join(outprimers, ids +'.out'))
-    if len(primers)==0:
-        print("     No primers found! Retrying with broader parameters.")
-        os.system(primer3_sh +' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
-    
-	# raise message if no primers were found for broad settings either
-    primers = glob.glob(os.path.join(outprimers, ids +'.out'))
-    if len(primers)==0:
-        print("     No primers found with broader settings!")
-    
-    # raise message if there were errors in primer design
-    error_file = glob.glob(os.path.join(outprimers, ids +'.err'))
-    file = open(error_file, 'r')
-    errErrors = len(file.readlines())
-    file.close()
-    
-    outErrors = []
-    with open(os.path.join(outprimers, ids+'.out')) as file:
-        for line in file.readlines():
-            if "ERROR" in line:
-                outErrors.append(line)
-    
-    if len(errErrors)>0 | len(outErrors)>0:
-        print("     ERROR in primer design!")
+    	# rerun with broad settings if no primers were found
+        primers = glob.glob(os.path.join(outprimers, ids +'.out'))
+        if len(primers)==0:
+            print("     No primers found! Retrying with broader parameters.")
+            os.system(primer3_sh +' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
+            
+        # raise message if no primers were found for broad settings either
+        primers = glob.glob(os.path.join(outprimers, ids +'.out'))
+        if len(primers)==0:
+            print("     No primers found with broader settings!")
+            
+        # raise message if there are errors in primer design
+        error_file = os.path.join(outprimers, ids +'.err')
+        file = open(error_file, 'r')
+        errErrors = file.readlines()
+        file.close()
+        
+        outErrors = []
+        with open(os.path.join(outprimers, ids+'.out')) as file:
+            for line in file.readlines():
+                if "ERROR" in line:
+                    outErrors.append(line)
+                    
+        if len(errErrors)>0 | len(outErrors)>0:
+            print("     ERROR in primer design!")
 
 
 

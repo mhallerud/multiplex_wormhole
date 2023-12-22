@@ -5,13 +5,13 @@ library(stringr)
 
 
 #### READ IN SEQUENCES
-setwd('/Users/maggiehallerud/Marten_Primer_Design/MAF30_repBaseFiltered_01AUG2023/Random300/')
+setwd('/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/')
 # load template sequences
-marten_seq <- read_templates('13A_MAF30_repBaseFilter_random300.fixed.fa') #input fasta file
+marten_seq <- read_templates('MAF30_repBaseFiltered_01AUG2023/0_Inputs/13A_MAF30.repBaseFiltered.random200.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
-marten_vcf <- read.vcfR('../../populations.snps.vcf')
+marten_vcf <- read.vcfR('populations.snps.vcf')
 marten_fix <- as.data.frame(marten_vcf@fix) #this file holds SNP positions 
 #names(marten_fix) <- c("CHROM","POS","ID","MAJOR","MINOR","UNK","UNK","ALLELE_FREQ")
 

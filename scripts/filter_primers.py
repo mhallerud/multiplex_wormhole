@@ -7,12 +7,8 @@ Created on Tue Dec 19 21:53:08 2023
 
 Purpose: Filters primer3 primer design output to remove primer pairs with likely secondary structures
 
-Inputs: 1) Tm_limit
-        2) dG_hairpin
-        3) dG_end_limit
-        4) dG_mid_limit
-        5) OUTDIR
-        6) OUTNAME
+Inputs: Path to primer directory, output path, and filtering parameters
+
 Outputs: 1) Filtered primers CSV
          2) LocusIDs text file
 """
@@ -26,32 +22,37 @@ import re
 
 
 
-def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG_mid_limit=-10000):
+def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000, dG_MID_LIMIT=-10000):
     """
-    OUTDIR : path
-        output directory
-    OUTNAME : string
+    PRIMER_DIR : path to primer directory
+        primer directory
+    OUTPATH : string
         prefix for output files
-    Tm_limit : degrees Celsius
+    Tm_LIMIT : degrees Celsius
         minimum melting temperature allowed (default 45)
-    dG_hairpins : cal/mol
+    dG_HAIRPINS : cal/mol
         maximum delta G allowed for hairpin structures (default -2000)
-    dG_end_limit : cal/mol
+    dG_END_LIMIT : cal/mol
         maximium delta G allowed for dimers at ends of primers (default -5000)
-    dG_mid_limit : cal/mol
+    dG_MID_LIMIT : cal/mol
         maximum delta G allowed for dimers not at primer ends (default -10000)
     -------
     Removes primer pairs with predicted secondary structures;
     Outputs filtered primer pair details to a CSV
     """
+
+    # make list of all primer3 output files
+    locus_files = glob.glob(os.path.join(PRIMER_DIR,'*.out'))
+    
+    # raise error if no primer3 output files in PRIMER_DIR
+    if len(locus_files)==0:
+        raise InputError("PRIMER_DIR must contain .out and .err files from primer3 primer design")
+            
     
     # set up an empty array to store primers that pass filtering
     filtered_primers=[]
     filtered_primers.append(["PrimerID","LocusID","PrimerPair","Direction","Sequence","StartBP","Length","AnnealingTempC","PropBound","AmpliconSize"])
     ids=[] # array for locus IDs that pass
-    
-    # make list of all primer3 output files
-    locus_files = glob.glob(os.path.join(OUTDIR,'1_InitialPrimers/*.out'))
     
     for locus in locus_files:
         # get locus ID from pathname
@@ -94,20 +95,20 @@ def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG
                     
                     # check for dimers with self
                     tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_ANY_STUCT", 
-                                   Tm_limit, dG_mid_limit, DIRNAME+" Dimer with self (middle)", tests)                    
+                                   Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Dimer with self (middle)", tests)                    
                     # check for dimers with self at ends
                     tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_END_STUCT", 
-                                   Tm_limit, dG_end_limit, DIRNAME+" Dimer with self (end)", tests)
+                                   Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Dimer with self (end)", tests)
                     # check for hairpin dimers
                     tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_HAIRPIN_STUCT", 
-                                   Tm_limit, dG_hairpins, DIRNAME+" Hairpin dimer", tests)
+                                   Tm_LIMIT, dG_HAIRPINS, DIRNAME+" Hairpin dimer", tests)
                 
                 # check for secondary structures between primers
                 tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_ANY_STUCT",
-                                       Tm_limit, dG_mid_limit, DIRNAME+" Primer pair dimer (middle)", tests)                
+                                       Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Primer pair dimer (middle)", tests)                
                 # check for secondary structures between primer ends
                 tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_END_STUCT", 
-                                       Tm_limit, dG_end_limit, DIRNAME+" Primer pair dimer (ends)", tests)
+                                       Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Primer pair dimer (ends)", tests)
                 
                 # if all tests are passed (n=8), then the primer pairs are added to the output array
                 if tests==8:
@@ -163,17 +164,17 @@ def main(OUTDIR, OUTNAME, Tm_limit=45, dG_hairpins=-2000, dG_end_limit=-5000, dG
         del lines
 
     # Export filtered primers as CSV
-    OUTPATH = os.path.join(OUTDIR, OUTNAME+".csv")
-    if os.path.exists(OUTPATH):
-        os.remove(OUTPATH) # remove if it already exists
+    OUTCSV= OUTPATH + '.csv'
+    if os.path.exists(OUTCSV):
+        os.remove(OUTCSV) # remove if it already exists
     
-    with open(OUTPATH, 'w', newline="\n") as file:
+    with open(OUTCSV, 'w', newline="\n") as file:
         writer = csv.writer(file)
         for row in filtered_primers:
             writer.writerow(row)
     
     # export locus IDs that passed as text file
-    OUTIDS = os.path.join(OUTDIR, OUTNAME+"_LocusIDs.txt")
+    OUTIDS = OUTPATH+"_LocusIDs.txt"
     if os.path.exists(OUTIDS):
         os.remove(OUTIDS) # remove if it already exists
     
@@ -205,10 +206,16 @@ def checkStructure(lines, structure_name, Tm_threshold, dG_threshold, message, t
 
 
 
+# define InputError as an exception
+class InputError(Exception):
+    pass
+
+
+
 if __name__=="__main__":
-    main(Tm_limit = sys.argv[0],
-         dG_hairpins = sys.argv[1],
-         dG_end_limit = sys.argv[2],
+    main(Tm_LIMIT = sys.argv[0],
+         dG_HAIRPINS = sys.argv[1],
+         dG_END_LIMIT = sys.argv[2],
          dG_self_limit = sys.argv[3],
          OUTDIR = sys.argv[4],
          OUTNAME = sys.argv[5])

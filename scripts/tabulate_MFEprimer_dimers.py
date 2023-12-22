@@ -1,26 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Title: TABULATE MFEprimer DIMERS
 Created on Wed Aug  2 11:57:09 2023
-
 @author: maggiehallerud
+
+Dependencies: numpy (developed with version 1.26.2)
+
+Purpose: Converts text output from MFEprimer dimer function into a pairwise interaction table
+        and sum of primer interactions per primer and primer pair
 """
 
 # load dependencies
-import os
+#import os
 import sys
-
-# import user-defined parameters from command line
-ALL_DIMERS = sys.argv[1]
-END_DIMERS = sys.argv[2]
-OUTNAME = sys.argv[3]
+from operator import truth # converts anything>=1 to True and =0 to False
+#import multiprocessing
 
 
 
-def main():
+def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
+    """
+    ALL_DIMERS : Filepath
+        Output from MFEprimer dimer
+    END_DIMERS : Filepath
+        Output from MFEprimer dimer -p
+    OUTPATH : Filepath
+        Filepath prefix for all primer pair outputs
+    OUTPRIMERPATH : Filepath [DEFAULT: None]
+        Filepath prefix for all primer outputs
+    -------
+    Converts MFEprimer dimer outputs into CSV tables
+    """
+    
     # read in files - convert each interaction to a single line in array
     all_dimers = readDimerFile(ALL_DIMERS)
-    if END_DIMERS == '':
+    if END_DIMERS is None:
         end_dimers = []
     else:
         end_dimers = readDimerFile(END_DIMERS)
@@ -40,54 +55,73 @@ def main():
         primerIDs = [lines[x].split(' ')[0] for x in range(start_indx+3, end_indx-4)]
         locusIDs = [primerIDs[x].split('_')[0]+'_'+primerIDs[x].split('_')[1] for x in range(len(primerIDs))]
         pairIDs = [locusIDs[x]+'_'+primerIDs[x].split('_')[2] for x in range(len(primerIDs))]
-
-    # convert line by line dimers into table
-    # total # interactions
-    primer_interactions, primer_interactions_bin = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
-            
+    
+    ## convert long format dimers into pairwise tables
     # aggregate the number of interactions per primer pair
     primer_pairs = list(set(pairIDs))
     pair_loci = [primer_pairs[x].split('_')[0]+'_'+primer_pairs[x].split('_')[1] for x in range(len(primer_pairs))]
-    pair_interactions, pair_interactions_bin = tabulateDimers(dimers, primer_pairs, pair_loci, pairs=True)        
-
-    # calculate # interactions per primer (long format)
-    #skipped- add later if it seems useful
+    pair_interactions = tabulateDimers(dimers, primer_pairs, pair_loci, pairs=True)
+    # convert to binary
+    pair_interactions_bin = []
+    pair_interactions_bin.append(pair_interactions[0])
+    for j in range(1, len(pair_interactions), 1):
+        rowid = pair_interactions[j][0]
+        out = [rowid, *map((0).__add__, map(truth, pair_interactions[j][1:]))]
+        pair_interactions_bin.append(out)
     
-    # calculate # interactions per primer pair (long format)
-    pair_sums = totalDimers(pair_interactions, primer_pairs)
-        
-    # calculate # primer pairs each pair interacts with (binary long format)
-    pair_bin_sums = totalDimers(pair_interactions_bin, primer_pairs)
+    # calculate interactions per primer
+    if OUTPRIMERPATH:
+        # primers - total # interactions
+        primer_interactions = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
+        # convert to binary
+        primer_interactions_bin = []
+        primer_interactions_bin.append(primer_interactions[0])
+        for j in range(1, len(primer_interactions), 1):
+            rowid = primer_interactions[j][0]
+            out = [rowid, *map((0).__add__, map(truth, primer_interactions[j][1:]))]
+            primer_interactions_bin.append(out)
     
-    # Export all files
-    OUTDIR = os.path.dirname(ALL_DIMERS)
 
+    # calculate sum of interactions for each primer pair
+    pair_sums = totalDimers(pair_interactions) #total interactions
+    pair_sums_bin = totalDimers(pair_interactions_bin) # total pairs interacted with
+    
+    # calculate # interactions per primer
+    if OUTPRIMERPATH:
+        primer_sums = totalDimers(primer_interactions) # total interactions       
+        primer_sums_bin = totalDimers(primer_interactions_bin) # total primers interacted with
+    
+    ## Export all files
     # export total pairwise interactions per primer pair (wide)
-    pairwide = os.path.join(OUTDIR, OUTNAME+'_PrimerPairInteractions_wide.csv')
+    pairwide = OUTPATH + '_wide.csv'
     exportToCSV(pair_interactions, pairwide)
     
     # export binary pairwise interactions per primer pair (wide)
-    pairwidebin = os.path.join(OUTDIR, OUTNAME+'_PrimerPairInteractions_wide_binary.csv')
+    pairwidebin = OUTPATH + '_binary_wide.csv'
     exportToCSV(pair_interactions_bin, pairwidebin)
     
     # export total interactions per primer pair (long)
-    pairlong = os.path.join(OUTDIR, OUTNAME+'_PrimerPairInteractions_sum.csv')
+    pairlong = OUTPATH + '_sum.csv'
     exportToCSV(pair_sums, pairlong)
 
     # export total # pairwise interactions per primer pair long (long)
-    pairlongbin = os.path.join(OUTDIR, OUTNAME+'_PrimerPairInteractions_sum_binary.csv')
-    exportToCSV(pair_bin_sums, pairlongbin)
+    pairlongbin = OUTPATH + '_binary_sum.csv'
+    exportToCSV(pair_sums_bin, pairlongbin)
     
-    ## export total interactions per primer (long)
-    #primerlong = os.path.join(OUTDIR, OUTNAME+'_PrimerInteractions_sum.csv')
-    #exportToCSV(primer_interactions_sum, primerlong) #primer_interactions_sum would need to be calculated
-    # skipped
-    
-    # export pairwise interactions per primer (wide)
-    #primerwide = os.path.join(OUTDIR, OUTNAME+'_PrimerInteractions_wide.csv')
-    #exportToCSV(primer_interactions, primerwide)
-    #skipped
-    
+    if OUTPRIMERPATH:
+        # export total interactions per primer (long)
+        primerlong = OUTPRIMERPATH + '_sum.csv'
+        exportToCSV(primer_sums, primerlong)    
+        # export pairwise interactions per primer (wide)
+        primerwide = OUTPRIMERPATH + '_wide.csv'
+        exportToCSV(primer_interactions, primerwide)
+        # export # primers each primer interacts with (long)
+        primerlong = OUTPRIMERPATH + '_binary_sum.csv'
+        exportToCSV(primer_sums_bin, primerlong)    
+        # export pairwise interactions per primer (wide)
+        primerwide = OUTPRIMERPATH + '_binary_wide.csv'
+        exportToCSV(primer_interactions_bin, primerwide)    
+
 
 
 def readDimerFile(infile):
@@ -111,60 +145,66 @@ def readDimerFile(infile):
 
 
 
-def tabulateDimers(dimers, IDlist, locusIDs, pairs=False):
-    # set up arrays to hold counts and binary interactions
-    pairwise_interactions = [["NA" for _ in range(len(IDlist)+1)] for _ in range(len(IDlist)+1)]
-    pairwise_interactions[0] = ['Primer2_ID'] + IDlist
-    pairwise_interactions_bin = pairwise_interactions
-    # loop through each primer or pair
-    for i in range(len(IDlist)):
-        # the first index will be the 'rows'
-        rowID = IDlist[i]
-        pairwise_interactions[i+1][0] = pairwise_interactions_bin[i+1][0] = rowID
-        # compare with every other primer/pairs
-        for j in range(len(IDlist)):
-            # these will be the 'columns'
-            colID = IDlist[j]
-            # if these primers are for the same locus, then set to 0 because
-            # we already filtered for homodimers and pair dimers, and dimers 
-            # between pairs for the same locus don't matter because there will 
-            # only ever be one primer pair per locus in a set
-            if locusIDs[i]==locusIDs[j]:
-                pairwise_interactions[i+1][j+1] = 0 # offset indices by 1 to allow space for row and column names
+def tabulateByRow(i, primer_ids, locus_ids, dimers, pairs):
+    # progress tracking
+    if(i%10 == 0):
+        print('     ' + str(int(i/len(primer_ids)*100)) + '% primers finished')
+    # set up empty arrays to hold results
+    interactions_row = []
+    # add rowname as first value in array
+    rowID = primer_ids[i]
+    interactions_row.append(rowID)
+    # loop through every other primer pair to find dimers- these will be the 'columns'
+    for j in range(len(primer_ids)):
+        # grab primer ID
+        colID = primer_ids[j]
+        # if these primers are for the same locus, then set to 0 because
+        # we already filtered for homodimers and pair dimers, and dimers 
+        # between pairs for the same locus don't matter because there will 
+        # only ever be one primer pair per locus in a set
+        if locus_ids[i]==locus_ids[j]:
+            interactions_row.append(0)
+        else:
+            # for pairs, look at fields 3-4 in dimer array
+            if pairs:
+                # get all dimers for these primers (including both pairwise comparisons)
+                sub1_dimer_indx = list(filter(lambda x: dimers[x][2]==rowID and dimers[x][3]==colID, range(len(dimers))))
+                sub2_dimer_indx = list(filter(lambda x: dimers[x][2]==rowID and dimers[x][3]==colID, range(len(dimers))))
+                sub_dimer_indx = sub1_dimer_indx + sub2_dimer_indx
+            # for primers, look at fields 1-2 in dimer array
             else:
-                # for pairs, look at fields 3-4 in dimer array
-                if pairs:
-                    # get all dimers for these primers (including both pairwise comparisons)
-                    sub1_dimer_indx = list(filter(lambda x: dimers[x][2]==rowID and dimers[x][3]==colID, range(len(dimers))))
-                    sub2_dimer_indx = list(filter(lambda x: dimers[x][2]==rowID and dimers[x][3]==colID, range(len(dimers))))
-                    sub_dimer_indx = sub1_dimer_indx + sub2_dimer_indx
-                # for primers, look at fields 1-2 in dimer array
-                else:
-                    sub1_dimer_indx = list(filter(lambda x: dimers[x][0]==rowID and dimers[x][1]==colID, range(len(dimers))))
-                    sub2_dimer_indx = list(filter(lambda x: dimers[x][0]==rowID and dimers[x][1]==colID, range(len(dimers))))
-                    sub_dimer_indx = sub1_dimer_indx + sub2_dimer_indx
-                # grab the # of primer interactions for this comparison
-                Ndimers = len(sub_dimer_indx)
-                if Ndimers>0:
-                    Ndimers_bin = 1
-                else:
-                    Ndimers_bin = 0
-                pairwise_interactions[i+1][j+1] = Ndimers
-                pairwise_interactions_bin[i+1][j+1] = Ndimers_bin
-    return pairwise_interactions, pairwise_interactions_bin
+                sub1_dimer_indx = list(filter(lambda x: dimers[x][0]==rowID and dimers[x][1]==colID, range(len(dimers))))
+                sub2_dimer_indx = list(filter(lambda x: dimers[x][0]==rowID and dimers[x][1]==colID, range(len(dimers))))
+                sub_dimer_indx = sub1_dimer_indx + sub2_dimer_indx
+            # grab the # of primer interactions for this comparison
+            Ndimers = len(sub_dimer_indx)
+            # add to row
+            interactions_row.append(Ndimers)
+    # return populated row
+    return interactions_row
 
 
 
-def totalDimers(pairwise_interactions, ids):
+def tabulateDimers(dimers, primerIDs, locusIDs, pairs):
+    # tabulate dimers per primer interaction row-by-row using simple list comprehension
+    results = [tabulateByRow(x, primerIDs, locusIDs, dimers, pairs) for x in range(len(primerIDs))]
+    # set up array to hold results
+    header = ['ID']
+    header[1:len(primerIDs)+1] = primerIDs
+    pairwise_interactions = [header]
+    # copy results into array
+    pairwise_interactions[1:len(pairwise_interactions)+1] = results
+    return pairwise_interactions
+    #return [pool.apply(tabulateByRow, args=(x, primerIDs, locusIDs, dimers, pairs)) for x in range(len(primerIDs))]
+
+
+
+def totalDimers(pairwise_interactions):
     sums = []
-    for id in ids:
-        # grab the row for this id
-        indx = list(filter(lambda x: pairwise_interactions[x][0]==id, range(len(pairwise_interactions))))
-        dimers = [pairwise_interactions[x] for x in indx]
-        # sum the dimer count across all pairwise interactions
-        Ndimers = sum(dimers[1:]) # skip first record because it's the ID field
-        # add to output array
-        sums.append([id, Ndimers])
+    for row in range(1, len(pairwise_interactions)):
+        rowid = pairwise_interactions[row][0]
+        ndimers = sum(pairwise_interactions[row][1:])
+        sums.append([rowid, ndimers])
     return sums
 
 
@@ -178,4 +218,10 @@ def exportToCSV(inArray, outCSV):
 
 
 if __name__ == "__main__":
-    main()
+   main(sys.argv[0],
+        sys.argv[1],
+        sys.argv[2],
+        sys.argv[3])
+    # set up pool specs for multiprocessing
+   # with multiprocessing.Pool(4) as pool:
+   #     print(Pooling.tabulateDimers)
