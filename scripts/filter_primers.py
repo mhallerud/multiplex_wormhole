@@ -213,9 +213,9 @@ class InputError(Exception):
 
 
 if __name__=="__main__":
-    main(Tm_LIMIT = sys.argv[0],
-         dG_HAIRPINS = sys.argv[1],
-         dG_END_LIMIT = sys.argv[2],
-         dG_self_limit = sys.argv[3],
-         OUTDIR = sys.argv[4],
-         OUTNAME = sys.argv[5])
+    main(sys.argv[1],
+         sys.argv[2],
+         sys.argv[3],
+         sys.argv[4],
+         sys.argv[5],
+         sys.argv[6])

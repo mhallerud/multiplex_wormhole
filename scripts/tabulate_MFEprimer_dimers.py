@@ -218,10 +218,10 @@ def exportToCSV(inArray, outCSV):
 
 
 if __name__ == "__main__":
-   main(sys.argv[0],
-        sys.argv[1],
+   main(sys.argv[1],
         sys.argv[2],
-        sys.argv[3])
+        sys.argv[3],
+        sys.argv[4])
     # set up pool specs for multiprocessing
    # with multiprocessing.Pool(4) as pool:
    #     print(Pooling.tabulateDimers)

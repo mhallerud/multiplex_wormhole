@@ -61,12 +61,27 @@ whitelist = ['CLocus_109443_0',
 
 
 
-def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTDIR, N_LOCI, ITERATIONS, RUN, WHITELIST=None):
-    # extract name from inputs
-    NAME=os.path.basename(DIMER_SUMS).split('_')[0]
-    OUTDIR=os.path.dirname(DIMER_SUMS)
-    OUTNAME=OUTDIR+'/2_OptimizedSets/'+NAME+'_optimizedSet'+str(RUN)+'.csv'
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000, WHITELIST=None):
+    """
+    PRIMER_FASTA : TYPE
+        DESCRIPTION.
+    DIMER_SUMS : TYPE
+        DESCRIPTION.
+    DIMER_TABLE : TYPE
+        DESCRIPTION.
+    OUTPATH : TYPE
+        DESCRIPTION.
+    N_LOCI : TYPE
+        DESCRIPTION.
+    ITERATIONS : TYPE
+        DESCRIPTION.
+    WHITELIST : TYPE, optional
+        DESCRIPTION. The default is None.
+    -------
+    TYPE
+        DESCRIPTION.
 
+    """
     ## read in IDs and primers
     ## NOTE: Numpy arrays would be more efficient & cleaner coding here than lists, 
     ## however numpy is constantly being updated so using it as a dependency would 
@@ -74,17 +89,22 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTDIR, N_LOCI, ITERATIONS, RUN,
     ## doing extremely heavy lifting, so indexing lists should work and provide the 
     ## most generalizable / user-friendly function.
 
-    print("Reading in primer sequences..........")
+    #print("Reading in primer sequences..........")
     primer_loci, primer_seqs, primer_IDs = LoadPrimers(PRIMER_FASTA)
     
     ## read in dimer info
-    print("Reading in primer dimer counts........")
+    #print("Reading in primer dimer counts........")
     dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)    
+    
+    # read in whitelist info
+    whitelist = []
+    with open(WHITELIST, 'r') as file:
+        for line in file:
+            whitelist.append(line)
     
     ## Choose initial set of loci based on loci with minimum dimer counts
     ## (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
     print("Generating initial primer set........")
-    #TODO: lock in important ones (e.g. microhaplotpyes, sex ID)
     #TODO: add ability to count SNPs within microhaps separately...
     # make list of unique loci
     uniq_loci=list(set(primer_loci)) # convert to list because new versions of random.sample won't be able to handle sets... 
@@ -234,7 +254,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTDIR, N_LOCI, ITERATIONS, RUN,
         print("\t\t" + blacklist[b])
     
     # export the current dimers and their totals as TSV
-    with open(OUTNAME, 'w') as file:
+    with open(OUTPATH, 'w') as file:
         for key in curr_dimer_totals.keys():
             #line = curr_dimer_totals[]
             #line_str = str(line)[1:-1].replace("'","")
@@ -427,16 +447,22 @@ def LoadPrimers(PRIMER_FASTA):
         lines = file.readlines()
         for line in lines:
             if ">" in line:
-                line=line.rstrip()
-                line=line.replace('>','')
-                linesplit=line.split("_")
-                locus=linesplit[0]+"_"+linesplit[1]
-                primer_loci.append(locus)
-                primer_IDs.append(locus+"_"+linesplit[2])
+                if not whitelist:
+                    line=line.rstrip()
+                    line=line.replace('>','')
+                    linesplit=line.split("_")
+                    locus=linesplit[0]+"_"+linesplit[1]
+                    primer_loci.append(locus)
+                    primer_IDs.append(locus+"_"+linesplit[2])
+                else:
+                    primer_IDs.append(line)
             else:
                 line=line.rstrip()
                 primer_seqs.append(line)
-    return primer_loci, primer_seqs, primer_IDs
+    if whitelist:
+        return primer_loci, primer_seqs
+    else:
+        return primer_loci, primer_seqs, primer_IDs
 
 
 def LoadDimers(DIMER_SUMS, DIMER_TABLE):
@@ -472,4 +498,10 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
 
 # run main function when called from the command line
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1], 
+         sys.argv[2], 
+         sys.argv[3], 
+         sys.argv[4], 
+         sys.argv[5], 
+         sys.argv[6], 
+         sys.argv[7])

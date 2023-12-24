@@ -70,6 +70,14 @@ specificity_check(os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.csv'),
 # for 200 loci vs 3160 reads: 10.8 seconds
 
 
+
+## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
+## This can be done by adding these loci into the SpecificityCheckGenome_passed.fa file.
+## There is a helper script to convert CSV format primers to FA format:
+#csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
+
+
+
 ## Step 4: Predict primer dimers using MFEprimer
 # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
 # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
@@ -114,4 +122,4 @@ optimize_multiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_pa
                    N_LOCI=50, 
                    ITERATIONS=5000, 
                    RUN=1, 
-                   WHITELIST=None)
+                   WHITELIST_FA=None)

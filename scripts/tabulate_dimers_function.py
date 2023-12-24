@@ -57,11 +57,11 @@ def tabulateByRow(i, primer_ids, locus_ids, dimers, pairs):
 
 if __name__=="__main__":
     # read in arguments from command line
-    i = sys.argv[0] 
-    primer_ids = sys.argv[1]
-    locus_ids = sys.argv[2]
-    dimers = sys.argv[3]
-    pairs = sys.argv[4]
+    i = sys.argv[1] 
+    primer_ids = sys.argv[2]
+    locus_ids = sys.argv[3]
+    dimers = sys.argv[4]
+    pairs = sys.argv[5]
     # define arguments
     i, primer_ids, locus_ids, dimers, pairs, pairwise_interactions = main(i, primer_ids, locus_ids, dimers, pairs)
     # run tabulateByRow for each primer using multiprocessing pool

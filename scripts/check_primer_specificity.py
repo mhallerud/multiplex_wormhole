@@ -143,7 +143,7 @@ class InputError(Exception):
 
 
 if __name__=="__main__":
-    main(sys.argv[0],
-         sys.argv[1],
+    main(sys.argv[1],
          sys.argv[2],
-         sys.argv[3])
+         sys.argv[3],
+         sys.argv[4])
