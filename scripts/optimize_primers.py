@@ -75,8 +75,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
     dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)    
     
     # read in whitelist info
-    whitelist_loci, whitelist_pairs = LoadPrimers(WHITELIST, True)
-    n_whitelist=len(whitelist_pairs)
+    if WHITELIST is not None:
+        whitelist_loci, whitelist_pairs = LoadPrimers(WHITELIST, True)
+        n_whitelist=len(whitelist_pairs)
+    else:
+        whitelist_pairs = []
+        n_whitelist = 0
 
     ## Choose initial set of loci based on loci with minimum dimer counts
     ## (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
@@ -156,7 +160,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
             except:
                 pass
             # add indices for the other primer pairs for the current worst locus to the allowed list
-            AddWorstToAllowed(curr_worst, allowed_pairs_rmv, primer_loci, primer_IDs)
+            AddWorstToAllowed(curr_worst, allowed_pairs_rmv, primer_loci, primer_pairs)
             # avoid trying the same values...
             orig_worst = curr_worst
             orig_best = new_best_id
@@ -222,7 +226,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
         print("\tCurrent # dimers: "+str(curr_total))
 
     # report the blacklisted loci
-    print("The following loci could not be improved with existing replacements. If primer loads are high, consider removing these from the list.")
+    print("The following loci could not be improved with existing replacements. If primer loads are high, consider manually removing these from the fasta file.")
     for b in range(len(blacklist)):
         print("\t\t" + blacklist[b])
     
@@ -245,7 +249,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
 
 
 
-def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_IDs, primer_loci, blacklist2=[]):
+def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, blacklist2=[]):
         # create copy of original list, otherwise links them and affects both lists when using update/remove    
         new_pairIDs = pairIDs.copy()
         allowed_pairs_edit = allowed.copy()
@@ -268,7 +272,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
             if n<abs(j):
                 return None
         # add other primers for the worst locus back to the allowed list
-        AddWorstToAllowed(curr_worst, allowed_pairs_edit, primer_loci, primer_IDs)
+        AddWorstToAllowed(curr_worst, allowed_pairs_edit, primer_loci, primer_pairs)
         
         # subset nonset dimer table to include only allowed primer pairs (i.e., primer pairs for loci not in the set)
         #gets all pair IDs that aren't in current pairs
@@ -339,12 +343,16 @@ def compareSets(new_pairIDs, curr_total, curr_worst, new_best_id, dimer_table, d
 
 
 
-def AddWorstToAllowed(curr_worst, inlist, primer_loci, primer_IDs):
+def AddWorstToAllowed(curr_worst, inlist, primer_loci, primer_pairs):
         curr_worst_locus = curr_worst.split("_")[0] + "_" + curr_worst.split("_")[1]
         curr_worst_idx = list(filter(lambda x: primer_loci[x]==curr_worst_locus, range(len(primer_loci))))
-        curr_worst_pairs = [primer_IDs[i] for i in curr_worst_idx]
+        curr_worst_pairs = [primer_pairs[i] for i in curr_worst_idx]
         curr_worst_pairs = (set(curr_worst_pairs))#extract unique values only
-        curr_worst_pairs.remove(curr_worst)
+        # make sure current worse isn't in here...
+        try:
+            curr_worst_pairs.remove(curr_worst)
+        except Exception:
+            pass
         for p in curr_worst_pairs:
             inlist.append(p)
         return inlist
@@ -453,13 +461,13 @@ def LoadPrimers(PRIMER_FASTA, whitelist=False):
                 line=line.rstrip()
                 primer_seqs.append(line)
     if whitelist:
-        primer_IDs = list(set(primer_IDs))
+        primer_pairs = list(set(primer_pairs))
         primer_loci = []
-        for i in primer_IDs:
+        for i in primer_pairs:
             linesplit = i.split("_")
             locus = linesplit[0] + "_" + linesplit[1]
             primer_loci.append(locus)
-        return primer_loci, primer_IDs
+        return primer_loci, primer_pairs
     else:
         return primer_loci, primer_seqs, primer_IDs, primer_pairs
 
