@@ -154,13 +154,20 @@ def main():
             print(" ")
     else:
         for run in range(N_RUNS):
-            optimize_multiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
-                               DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                               DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                               OUTPATH=os.path.join(OUTDIR4,"Run"+str(run+1)), 
-                               N_LOCI=N_LOCI, 
-                               ITERATIONS=N_ITERATIONS, 
-                               WHITELIST=WHITELIST_FA)
+            signal.alarm(300) # set timer for 5 minutes- this helps to skip infinite loops in optimization process
+            try:
+                optimize_multiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
+                                   DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'),
+                                   DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
+                                   OUTPATH=os.path.join(OUTDIR4,"Run"+str(run+1)), 
+                                   N_LOCI=N_LOCI, 
+                                   ITERATIONS=N_ITERATIONS, 
+                                   WHITELIST=WHITELIST_FA)
+            except TimeoutException:
+                continue
+            #reset alarm
+            else:
+                signal.alarm(0)
             print(" ")
 
 
