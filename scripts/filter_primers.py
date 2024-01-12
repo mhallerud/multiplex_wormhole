@@ -54,115 +54,125 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     filtered_primers.append(["PrimerID","LocusID","PrimerPair","Direction","Sequence","StartBP","Length","AnnealingTempC","PropBound","AmpliconSize"])
     ids=[] # array for locus IDs that pass
     
+    failed_loci = []
+    
     for locus in locus_files:
-        # get locus ID from pathname
-        locusID = os.path.basename(locus).split('.')[0]
-        
-        # progress tracking for # primers per locus
-        passed=0
-        
-        # read in file
-        lines = []
-        with open(locus, 'r') as file:
-            for line in file.readlines():
-                lines.append(line.strip()) #.strip removes whitespace
-        
-        # find number of primer pairs
-        primerpairs_line = list(filter(re.compile("PRIMER_PAIR_NUM_RETURNED*.").match, lines))[0]
-        primerpairs = int(primerpairs_line.split("=")[1])
-        
-        # proceed if there are primers designed for this locus
-        if primerpairs > 0:
-            print("Testing "+locusID+"..............................")
+        try:
+            # get locus ID from pathname
+            locusID = os.path.basename(locus).split('.')[0]
             
-            # loop through each primer pair to test criteria
-            for N in range(primerpairs):
-                N = str(N) # convert to string
-                #print("     Primer pair "+N)
+            # progress tracking for # primers per locus
+            passed=0
+            
+            # read in file
+            lines = []
+            with open(locus, 'r') as file:
+                for line in file.readlines():
+                    lines.append(line.strip()) #.strip removes whitespace
+            
+            # find number of primer pairs
+            primerpairs_line = list(filter(re.compile("PRIMER_PAIR_NUM_RETURNED*.").match, lines))[0]
+            primerpairs = int(primerpairs_line.split("=")[1])
+            
+            # proceed if there are primers designed for this locus
+            if primerpairs > 0:
+                print("Testing "+locusID+"..............................")
                 
-                # start counter for tests
-                tests=0
-
-                # check FW and REV primers separately for self-dimers
-                for DIR in ["LEFT","RIGHT"]:
-                    # set strings based on direction
-                    if DIR=="LEFT":
-                        DIRNAME="FW"
-                    elif DIR=="RIGHT":
-                        DIRNAME="REV"
-                    else:
-                        pass
+                # loop through each primer pair to test criteria
+                for N in range(primerpairs):
+                    N = str(N) # convert to string
+                    #print("     Primer pair "+N)
                     
-                    # check for dimers with self
-                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_ANY_STUCT", 
-                                   Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Dimer with self (middle)", tests)                    
-                    # check for dimers with self at ends
-                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_END_STUCT", 
-                                   Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Dimer with self (end)", tests)
-                    # check for hairpin dimers
-                    tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_HAIRPIN_STUCT", 
-                                   Tm_LIMIT, dG_HAIRPINS, DIRNAME+" Hairpin dimer", tests)
-                
-                # check for secondary structures between primers
-                tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_ANY_STUCT",
-                                       Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Primer pair dimer (middle)", tests)                
-                # check for secondary structures between primer ends
-                tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_END_STUCT", 
-                                       Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Primer pair dimer (ends)", tests)
-                
-                # if all tests are passed (n=8), then the primer pairs are added to the output array
-                if tests==8:
-                    # extract elements we want to save
-                    FWseq_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_SEQUENCE").match, lines))[0]
-                    FWseq = FWseq_line.split("=")[1].lower()
-                    FWpos_line = list(filter(re.compile("PRIMER_LEFT_"+N+"=").match, lines))[0]
-                    FWpos = FWpos_line.split("=")[1].split(",")
-                    FWtm_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_TM").match, lines))[0]
-                    FWtm = FWtm_line.split("=")[1]
-                    FWbound_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_BOUND").match, lines))[0]
-                    FWbound = FWbound_line.split("=")[1]
-                    REVseq_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_SEQUENCE").match, lines))[0]
-                    REVseq = REVseq_line.split("=")[1].lower()
-                    REVpos_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"=").match, lines))[0]
-                    REVpos = REVpos_line.split("=")[1]
-                    REVtm_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_TM").match, lines))[0]
-                    REVtm = REVtm_line.split("=")[1]
-                    REVbound_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_BOUND").match, lines))[0]
-                    REVbound = REVbound_line.split("=")[1]
-                    ampSize_line = list(filter(re.compile("PRIMER_PAIR_"+N+"_PRODUCT_SIZE").match, lines))[0]
-                    ampSize = ampSize_line.split("=")[1]
-                
-                    # add FW and REV primers separately to the array
-                    filtered_primers.append([locusID+"_"+N+"_FW", # primer ID
-                                             locusID, # locus ID
-                                             N, # primer pair #
-                                             "FW", # primer direction
-                                             FWseq, # primer sequence
-                                             FWpos[0], # primer position (start BP)
-                                             FWpos[1], # primer position (length)
-                                             FWtm, # primer annealing temp
-                                             FWbound, # primer proportion bound
-                                             ampSize]) # amplicon size
-                    filtered_primers.append([locusID+"_"+N+"_REV", # primer ID
-                                             locusID, # locus ID
-                                             N, # primer pair #
-                                             "REV", # primer direction
-                                             REVseq, # primer sequence
-                                             REVpos[0], # primer position (start BP)
-                                             REVpos[1], # primer position (length)
-                                             REVtm, # primer annealing temp
-                                             REVbound, # primer proportion bound
-                                             ampSize]) # amplicon size
-                    # progress tracking for the number of primer pairs per locus that pass
-                    passed+=1
+                    # start counter for tests
+                    tests=0
+    
+                    # check FW and REV primers separately for self-dimers
+                    for DIR in ["LEFT","RIGHT"]:
+                        # set strings based on direction
+                        if DIR=="LEFT":
+                            DIRNAME="FW"
+                        elif DIR=="RIGHT":
+                            DIRNAME="REV"
+                        else:
+                            pass
+                        
+                        # check for dimers with self
+                        tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_ANY_STUCT", 
+                                       Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Dimer with self (middle)", tests)                    
+                        # check for dimers with self at ends
+                        tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_SELF_END_STUCT", 
+                                       Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Dimer with self (end)", tests)
+                        # check for hairpin dimers
+                        tests = checkStructure(lines, "PRIMER_"+DIR+"_"+N+"_HAIRPIN_STUCT", 
+                                       Tm_LIMIT, dG_HAIRPINS, DIRNAME+" Hairpin dimer", tests)
                     
-        # add locus ID to list if any primer pairs passed
-        if passed>0:
-            ids.append(locusID)
-        
-        # clean up before restarting loop
-        del lines
-
+                    # check for secondary structures between primers
+                    tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_ANY_STUCT",
+                                           Tm_LIMIT, dG_MID_LIMIT, DIRNAME+" Primer pair dimer (middle)", tests)                
+                    # check for secondary structures between primer ends
+                    tests = checkStructure(lines, "PRIMER_PAIR_"+N+"_COMPL_END_STUCT", 
+                                           Tm_LIMIT, dG_END_LIMIT, DIRNAME+" Primer pair dimer (ends)", tests)
+                    
+                    # if all tests are passed (n=8), then the primer pairs are added to the output array
+                    if tests==8:
+                        # extract elements we want to save
+                        FWseq_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_SEQUENCE").match, lines))[0]
+                        FWseq = FWseq_line.split("=")[1].lower()
+                        FWpos_line = list(filter(re.compile("PRIMER_LEFT_"+N+"=").match, lines))[0]
+                        FWpos = FWpos_line.split("=")[1].split(",")
+                        FWtm_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_TM").match, lines))[0]
+                        FWtm = FWtm_line.split("=")[1]
+                        FWbound_line = list(filter(re.compile("PRIMER_LEFT_"+N+"_BOUND").match, lines))[0]
+                        FWbound = FWbound_line.split("=")[1]
+                        REVseq_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_SEQUENCE").match, lines))[0]
+                        REVseq = REVseq_line.split("=")[1].lower()
+                        REVpos_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"=").match, lines))[0]
+                        REVpos = REVpos_line.split("=")[1]
+                        REVtm_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_TM").match, lines))[0]
+                        REVtm = REVtm_line.split("=")[1]
+                        REVbound_line = list(filter(re.compile("PRIMER_RIGHT_"+N+"_BOUND").match, lines))[0]
+                        REVbound = REVbound_line.split("=")[1]
+                        ampSize_line = list(filter(re.compile("PRIMER_PAIR_"+N+"_PRODUCT_SIZE").match, lines))[0]
+                        ampSize = ampSize_line.split("=")[1]
+                    
+                        # add FW and REV primers separately to the array
+                        filtered_primers.append([locusID+"_"+N+"_FW", # primer ID
+                                                 locusID, # locus ID
+                                                 N, # primer pair #
+                                                 "FW", # primer direction
+                                                 FWseq, # primer sequence
+                                                 FWpos[0], # primer position (start BP)
+                                                 FWpos[1], # primer position (length)
+                                                 FWtm, # primer annealing temp
+                                                 FWbound, # primer proportion bound
+                                                 ampSize]) # amplicon size
+                        filtered_primers.append([locusID+"_"+N+"_REV", # primer ID
+                                                 locusID, # locus ID
+                                                 N, # primer pair #
+                                                 "REV", # primer direction
+                                                 REVseq, # primer sequence
+                                                 REVpos[0], # primer position (start BP)
+                                                 REVpos[1], # primer position (length)
+                                                 REVtm, # primer annealing temp
+                                                 REVbound, # primer proportion bound
+                                                 ampSize]) # amplicon size
+                        # progress tracking for the number of primer pairs per locus that pass
+                        passed+=1
+                        
+            # add locus ID to list if any primer pairs passed
+            if passed>0:
+                ids.append(locusID)
+            
+            # clean up before restarting loop
+            del lines
+    
+        except Exception:
+            failed_loci.append(locusID)
+    
+    print("Filtering failed for the following loci. Retry manually if you want these included:")
+    for l in failed_loci:
+        print("          "+l)
+    
     # Export filtered primers as CSV
     OUTCSV= OUTPATH + '.csv'
     if os.path.exists(OUTCSV):
