@@ -169,9 +169,10 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
         except Exception:
             failed_loci.append(locusID)
     
-    print("Filtering failed for the following loci. Retry manually if you want these included:")
-    for l in failed_loci:
-        print("          "+l)
+    if len(failed_loci)>0:
+        print("Filtering failed for the following loci. Retry manually if you want these included:")
+        for l in failed_loci:
+            print("          "+l)
     
     # Export filtered primers as CSV
     OUTCSV= OUTPATH + '.csv'
