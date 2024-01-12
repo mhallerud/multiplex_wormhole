@@ -5,13 +5,13 @@ library(stringr)
 
 
 #### READ IN SEQUENCES
-setwd('/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/')
+setwd('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNP Panel/Panel2_200initialpairs/')
 # load template sequences
-marten_seq <- read_templates('MAF30_repBaseFiltered_01AUG2023/0_Inputs/13A_MAF30.repBaseFiltered.random200.fa') #input fasta file
+marten_seq <- read_templates('CoastalMartenMAF10.MAMA.trimmed.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
-marten_vcf <- read.vcfR('populations.snps.vcf')
+marten_vcf <- read.vcfR('CoastalMartens.MAF10.recode.vcf')
 marten_fix <- as.data.frame(marten_vcf@fix) #this file holds SNP positions 
 #names(marten_fix) <- c("CHROM","POS","ID","MAJOR","MINOR","UNK","UNK","ALLELE_FREQ")
 
@@ -21,7 +21,7 @@ marten_fix$CHROM <- unlist(lapply(marten_fix$ID, function(X) strsplit(X,':')[[1]
 # reset allowed primer binding locations- check VCF for position of SNPs on each sequence
 # go through one at a time & fix...
 for (i in 1:nrow(marten_seq)){
-  id <- str_split(marten_seq$ID[i], '_')[[1]][2]
+  id <- str_split(marten_seq$ID[i], '>')[[1]][2]
   snps <- marten_fix$POS[marten_fix$CHROM==as.numeric(id)]
   snps <- as.numeric(snps)
   min_snp <- min(snps)
@@ -47,26 +47,32 @@ for (i in 1:nrow(marten_seq)){
 }#for i
 
 # check allowed binding regions
-marten_seq$Allowed_fw
-marten_seq$Allowed_rev
+head(marten_seq$Allowed_fw)
+head(marten_seq$Allowed_rev)
 
 # double check that microhaps are properly represented
 counts=data.frame(table(marten_fix$CHROM))
 microhaps=counts[counts$Freq>1,]
-marten_fix[marten_fix$CHROM==microhaps$Var1[1],]
-marten_seq[marten_seq$ID==">CLocus_1",]
+marten_fix[marten_fix$CHROM==microhaps$Var1[2],]
+marten_seq[marten_seq$ID==">10057",]
 
 # export microhaplotypes
 nrow(microhaps)
-microhaps$Var1 <- paste0('>CLocus_', microhaps$Var1)
+microhaps$Var1 <- paste0('>', microhaps$Var1)
 microhaps <- microhaps[order(microhaps$Freq),]
 microhaps_seq <- marten_seq[which(marten_seq$ID %in% microhaps$Var1)]
-microhaps_seq <- microhaps_seq[which(nchar(microhaps_seq$Allowed_rev)>=18 | nchar(microhap_seq$Allowed_fw)>=18),]
-nrow(microhaps)
-write.csv(microhaps_seq$ID, 'MartenTemplates_MAF30-repBaseFilter_01Aug2023_microhaplotypes.csv', row.names=FALSE)
+nrow(microhaps_seq)
+#microhaps_seq <- microhaps_seq[which(nchar(microhaps_seq$Allowed_rev)>=18 | nchar(microhap_seq$Allowed_fw)>=18),]
+#write.csv(microhaps_seq$ID, 'MartenTemplates_MAF30-repBaseFilter_01Aug2023_microhaplotypes.csv', row.names=FALSE)
+
+# remove any loci with more than 3 loci (these are likely untrustworthy in our case...)
+sum(microhaps$Freq>3)#these might not be trustworthy (paralogs)....
+microhaps_loci <- microhaps$Var1[microhaps$Freq>3]
+marten_seq <- marten_seq[!marten_seq$ID %in% microhaps_loci,]
 
 # remove any that don't have enough binding space
-marten_seq <- marten_seq[which(nchar(marten_seq$Allowed_fw)>=18 | nchar(marten_seq$Allowed_rev)>=18),]
+marten_seq <- marten_seq[which(nchar(marten_seq$Allowed_fw)>=18 & nchar(marten_seq$Allowed_rev)>=18),]
+nrow(marten_seq)
 
 # check that there's only one line per locus
 nrow(marten_seq)
@@ -77,12 +83,12 @@ length(unique(marten_seq$Header))
 View(marten_seq)
 
 # export IDs, templates, targets as CSV for use with primer3
-target_start <- marten_seq$Allowed_End_fw + 1
+target_start <- marten_seq$Allowed_End_fw+1 #additional 1 is simpy for length calculations!
 target_end <- marten_seq$Allowed_Start_rev
 target_len <- target_end - target_start
 targets <- paste0(as.character(target_start), ",", as.character(target_len))
 marten_csv <- data.frame(SEQUENCE_ID=str_replace_all(marten_seq$ID,'>',''),
                          SEQUENCE_TEMPLATE=marten_seq$Sequence,
                          SEQUENCE_TARGET=targets)
-write.csv(marten_csv, 'MartenTemplates_MAF30-repBaseFilter-random300.csv', row.names=FALSE)                         
+write.csv(marten_csv, 'CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed.csv', row.names=FALSE)                         
 
