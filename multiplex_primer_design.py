@@ -76,7 +76,7 @@ def main():
     
     ## Step 3A Checking primer specificity 
     # Step 3A: Check primer specificity against provided loci
-    specificity_check(os.path.join(OUTDIR2,'FilteredPrimers')+'.csv', 
+    specificity_check(os.path.join(OUTDIR2,'FilteredPrimers.csv'), 
                       TEMPLATES, 
                       os.path.join(OUTDIR2,'SpecificityCheckTemplates'))
     # for 200 loci vs 200 loci: 6.15 seconds

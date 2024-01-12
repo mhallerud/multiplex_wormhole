@@ -28,10 +28,8 @@ def main(PRIMERS, TARGET, OUTPATH):
         Primer details from filter_primers.py
     TARGET : CSV or FASTQ/FASTA/FASTQ.GZ
         Sequences from DNA available to primers for amplification
-    OUTNAME : str
-        prefix for output files
-    OUTDIR : diirectory path
-        directory where outputs are saved
+    OUTPATH : filepath
+        path and prefix for outputs
     -------
     Checks specificity of PRIMERS against TARGET
     Returns CSVs with primers passing and failing the specificity check
@@ -145,5 +143,4 @@ class InputError(Exception):
 if __name__=="__main__":
     main(sys.argv[1],
          sys.argv[2],
-         sys.argv[3],
-         sys.argv[4])
+         sys.argv[3])
