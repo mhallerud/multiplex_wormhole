@@ -33,6 +33,7 @@ N_RUNS=sys.argv[8]
 
 ## INPUTS:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
+#PRIMER3_PATH#path to primer3 location
 OUTDIR='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/TEST'
 TEMPLATES='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/MartenTemplates_MAF30-repBaseFilter-random300.csv'
 GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'

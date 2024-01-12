@@ -26,13 +26,16 @@ import glob
 
 
 
-def main(IN_CSV, OUTDIR):
+def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     """
     IN_CSV : csv filepath
         field1=ID, field2=DNA sequence, field3=amplicon (start_bp,length)
 
     OUTDIR : directory path
         an output directory where primer details are saved
+    
+    PRIMER3_PATH : primer3_core path
+    	location of primer3_core software
     ------
     Designs primers for all loci in IN_CSV; 
     Returns primer output files in OUTDIR/1_InitialPrimers
@@ -78,13 +81,13 @@ def main(IN_CSV, OUTDIR):
         
         # run primer3 based on strict settings
         print(" - Designing primers for "  + ids)
-        os.system(primer3_sh +' '+ ids +' '+ seq +' '+ snp +' '+ strict +' '+ outprimers)
+        os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ ids +' '+ seq +' '+ snp +' '+ strict +' '+ outprimers)
     
     	# rerun with broad settings if no primers were found
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
         if len(primers)==0:
             print("     No primers found! Retrying with broader parameters.")
-            os.system(primer3_sh +' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
+            os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
             
         # raise message if no primers were found for broad settings either
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
@@ -109,8 +112,8 @@ def main(IN_CSV, OUTDIR):
 
 
 if __name__=="__main__":
-    if len(sys.argv) != 2:
-        print("Batch primer design takes two arguments: 1) the template CSV and 2) the output directory")
-        print("1_primer3_batch_design.sh <TEMPLATES> <OUTDIR>")
-    else:
-        main(sys.argv[1], sys.argv[2])
+   # if len(sys.argv) != 3:
+   #     print("Batch primer design takes three arguments: 1) the template CSV, 2) the output directory, and 3) filepath to primer3_core")
+   #     print("1_primer3_batch_design.sh <TEMPLATES> <OUTDIR> <PRIMER3>")
+   # else:
+        main(sys.argv[1], sys.argv[2], sys.argv[3])

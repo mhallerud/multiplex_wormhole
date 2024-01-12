@@ -78,7 +78,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
             # loop through each primer pair to test criteria
             for N in range(primerpairs):
                 N = str(N) # convert to string
-                print("     Primer pair "+N)
+                #print("     Primer pair "+N)
                 
                 # start counter for tests
                 tests=0
@@ -188,7 +188,6 @@ def checkStructure(lines, structure_name, Tm_threshold, dG_threshold, message, t
     Structure = list(filter(re.compile(structure_name).match, lines))
     # if self secondary structures exist, test criteria
     if len(Structure) > 0:
-        print("         "+message)
         # extract annealing temp of structure
         Tm = Structure[0].split("=")[1].split(";")[0].split(":")[1].split("&")[0].strip()
         Tm_num = float(Tm)
@@ -197,7 +196,9 @@ def checkStructure(lines, structure_name, Tm_threshold, dG_threshold, message, t
         dG_num = float(dG)
         # check if thresholds are met
         if Tm_num > Tm_threshold and dG_num < dG_threshold:
-            print("             FAILED")
+            #print("         "+message)
+            #print("             "+structure_name+" failed tests")
+            pass
         else:
             tests+=1
     else:
@@ -215,7 +216,7 @@ class InputError(Exception):
 if __name__=="__main__":
     main(sys.argv[1],
          sys.argv[2],
-         sys.argv[3],
-         sys.argv[4],
-         sys.argv[5],
-         sys.argv[6])
+         float(sys.argv[3]),
+         float(sys.argv[4]),
+         float(sys.argv[5]),
+         float(sys.argv[6]))
