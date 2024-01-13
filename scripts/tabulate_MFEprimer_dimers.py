@@ -14,7 +14,9 @@ Purpose: Converts text output from MFEprimer dimer function into a pairwise inte
 # load dependencies
 #import os
 import sys
+import gc
 from operator import truth # converts anything>=1 to True and =0 to False
+import itertools #paralellized filtering, etc.
 #import multiprocessing
 
 
@@ -33,6 +35,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     Converts MFEprimer dimer outputs into CSV tables
     """
     
+    print("Reading in files............")
     # read in files - convert each interaction to a single line in array
     all_dimers = readDimerFile(ALL_DIMERS)
     if END_DIMERS is None:
@@ -40,13 +43,19 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     else:
         end_dimers = readDimerFile(END_DIMERS)
     
+    print("Extracting non-end dimers............")
     # subset all dimers for all non-end dimers
-    middle_indx = list(filter(lambda x: all_dimers[x] not in end_dimers, range(len(all_dimers))))
-    middle_dimers = [all_dimers[x] for x in middle_indx]
+    #middle_indx = list(filter(lambda x: all_dimers[x] not in end_dimers, range(len(all_dimers))))
+    #middle_dimers = [all_dimers[x] for x in middle_indx]
+    middle_dimers = list(itertools.filterfalse(lambda x: x in end_dimers, all_dimers))
+    del all_dimers #clean up
     
+    print("Combining end dimers and non-end dimers.......")
     # combine middle and end dimers into same array
     dimers = end_dimers + middle_dimers
+    del end_dimers, middle_dimers # cleanup
     
+    print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
     with open(ALL_DIMERS, 'r') as file:
         lines = file.readlines()
@@ -55,8 +64,10 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         primerIDs = [lines[x].split(' ')[0] for x in range(start_indx+3, end_indx-4)]
         locusIDs = [primerIDs[x].split('_')[0]+'_'+primerIDs[x].split('_')[1] for x in range(len(primerIDs))]
         pairIDs = [locusIDs[x]+'_'+primerIDs[x].split('_')[2] for x in range(len(primerIDs))]
+    del lines # clean up
+    gc.collect() # clean up
     
-    ## convert long format dimers into pairwise tables
+    print("Calculating pairwise primer pair interactions........")
     # aggregate the number of interactions per primer pair
     primer_pairs = list(set(pairIDs))
     pair_loci = [primer_pairs[x].split('_')[0]+'_'+primer_pairs[x].split('_')[1] for x in range(len(primer_pairs))]
@@ -71,6 +82,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     
     # calculate interactions per primer
     if OUTPRIMERPATH:
+        print("Calculating pairwise primer interactions..........")
         # primers - total # interactions
         primer_interactions = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
         # convert to binary
@@ -81,16 +93,18 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
             out = [rowid, *map((0).__add__, map(truth, primer_interactions[j][1:]))]
             primer_interactions_bin.append(out)
     
-
+    print("Calculating total interactions per primer pair...........")
     # calculate sum of interactions for each primer pair
     pair_sums = totalDimers(pair_interactions) #total interactions
     pair_sums_bin = totalDimers(pair_interactions_bin) # total pairs interacted with
     
     # calculate # interactions per primer
     if OUTPRIMERPATH:
+        print("Calculating total interactions per primer............")
         primer_sums = totalDimers(primer_interactions) # total interactions       
         primer_sums_bin = totalDimers(primer_interactions_bin) # total primers interacted with
     
+    print("Saving output files!")
     ## Export all files
     # export total pairwise interactions per primer pair (wide)
     pairwide = OUTPATH + '_wide.csv'

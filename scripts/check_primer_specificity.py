@@ -26,7 +26,7 @@ def main(PRIMERS, TARGET, OUTPATH):
     """
     PRIMERS : CSV
         Primer details from filter_primers.py
-    TARGET : CSV or FASTQ/FASTA/FASTQ.GZ
+    TARGET : CSV or FASTQ/FASTA/FASTQ.GZ/FNA.GZ
         Sequences from DNA available to primers for amplification
     OUTPATH : filepath
         path and prefix for outputs
@@ -49,7 +49,7 @@ def main(PRIMERS, TARGET, OUTPATH):
     failed.append(["PrimerID","LocusID","PrimerPair","Direction","Sequence","StartBP","Length","AnnealingTempC","PropBound","AmpliconSize"])
     
     # use zgrep if input is a *.fastq.gz file
-    if TARGET.endswith("fastq.gz") or TARGET.endswith("fq.gz"):
+    if TARGET.endswith("fastq.gz") or TARGET.endswith("fq.gz") or TARGET.endswith("fa.gz") or TARGET.endswith("fna.gz"):
         # check for each primer
         # check for each primer
         for i in range(len(primers)):
@@ -76,7 +76,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
     # use normal grep if input is a *.fasta or *.fastq file
-    elif TARGET.endswith(".fasta") or TARGET.endswith(".fastq") or TARGET.endswith(".fa") or TARGET.endswith(".fq") or TARGET.endswith(".csv"):
+    elif TARGET.endswith(".fna") or TARGET.endswith(".fasta") or TARGET.endswith(".fastq") or TARGET.endswith(".fa") or TARGET.endswith(".fq") or TARGET.endswith(".csv"):
         # check for each primer
         for i in range(len(primers)):
             primer_seq = primers[i][4]# get primer sequence
@@ -103,7 +103,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 passed_seq.append(primer_seq)
     # if neither fastq.gz, fasta, or fastq file, raise error
     else:
-        raise InputError("TARGET file of must be a CSV file (.csv) or a FASTA (.fasta, .fa), FASTQ (.fastq, .fq), or FASTQ.GZ file (.fastq.gz or .fq.gz)")
+        raise InputError("TARGET file of must be a CSV file (.csv) or a FASTA (.fasta, .fa, .fna), FASTQ (.fastq, .fq), FASTA.GZ file (.fna.gz, .fa.gz), or FASTQ.GZ file (.fastq.gz or .fq.gz)")
         
     # write passed primers to a CSV file
     passed_csv_path = OUTPATH+"_passed.csv"
