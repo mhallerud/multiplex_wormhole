@@ -55,13 +55,13 @@ def main(PRIMERS, TARGET, OUTPATH):
         for i in range(len(primers)):
             primer_seq = primers[i][4]# get primer sequence
             # remove adapter sequence and make uppercase
-            primer_seq = primer_seq.replace('tcgtcggcagcgtcagatgtgtataagagacag','')
-            primer_seq = primer_seq.replace('gtctcgtgggctcggagatgtgtataagagacag','')
-            primer_seq = primer_seq.upper()
+            primer_seq_ed = primer_seq.replace('tcgtcggcagcgtcagatgtgtataagagacag','')
+            primer_seq_ed = primer_seq_ed.replace('gtctcgtgggctcggagatgtgtataagagacag','')
+            primer_seq_ed = primer_seq_ed.upper()
             # search for sequence in file using grep, save to temp file
             if os.path.exists("grep.tmp"):
                 os.remove("grep.tmp")
-            zgrep = "zgrep "+primer_seq+" "+TARGET+" > grep.tmp"
+            zgrep = "zgrep "+primer_seq_ed+" "+TARGET+" > grep.tmp"
             os.system(zgrep)
             # read in matching sequences
             matches = [i for i in open("grep.tmp").readlines()]
@@ -75,15 +75,16 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
+            os.remove("grep.tmp")#clean up
     # use normal grep if input is a *.fasta or *.fastq file
     elif TARGET.endswith(".fna") or TARGET.endswith(".fasta") or TARGET.endswith(".fastq") or TARGET.endswith(".fa") or TARGET.endswith(".fq") or TARGET.endswith(".csv"):
         # check for each primer
         for i in range(len(primers)):
             primer_seq = primers[i][4]# get primer sequence
             # remove adapter sequence and make uppercase
-            primer_seq = primer_seq.replace('tcgtcggcagcgtcagatgtgtataagagacag','')
-            primer_seq = primer_seq.replace('gtctcgtgggctcggagatgtgtataagagacag','')
-            primer_seq = primer_seq.upper()
+            primer_seq_ed = primer_seq.replace('tcgtcggcagcgtcagatgtgtataagagacag','')
+            primer_seq_ed = primer_seq_ed.replace('gtctcgtgggctcggagatgtgtataagagacag','')
+            primer_seq_ed = primer_seq_ed.upper()
             # search for sequence in file using grep, save to temp file
             if os.path.exists("grep.tmp"):
                 os.remove("grep.tmp")
@@ -101,6 +102,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
+            os.remove("grep.tmp")
     # if neither fastq.gz, fasta, or fastq file, raise error
     else:
         raise InputError("TARGET file of must be a CSV file (.csv) or a FASTA (.fasta, .fa, .fna), FASTQ (.fastq, .fq), FASTA.GZ file (.fna.gz, .fa.gz), or FASTQ.GZ file (.fastq.gz or .fq.gz)")
