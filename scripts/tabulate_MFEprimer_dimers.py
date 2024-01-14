@@ -99,7 +99,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     pair_sums_bin = totalDimers(pair_interactions_bin) # total pairs interacted with
     
     # calculate # interactions per primer
-    if OUTPRIMERPATH:
+    if OUTPRIMERPATH!="False":
         print("Calculating total interactions per primer............")
         primer_sums = totalDimers(primer_interactions) # total interactions       
         primer_sums_bin = totalDimers(primer_interactions_bin) # total primers interacted with
