@@ -81,7 +81,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         pair_interactions_bin.append(out)
     
     # calculate interactions per primer
-    if OUTPRIMERPATH is not "False":
+    if OUTPRIMERPATH!="False":
         print("Calculating pairwise primer interactions..........")
         # primers - total # interactions
         primer_interactions = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
@@ -122,7 +122,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     pairlongbin = OUTPATH + '_binary_sum.csv'
     exportToCSV(pair_sums_bin, pairlongbin)
     
-    if OUTPRIMERPATH is not "False":
+    if OUTPRIMERPATH!="False":
         # export total interactions per primer (long)
         primerlong = OUTPRIMERPATH + '_sum.csv'
         exportToCSV(primer_sums, primerlong)    
