@@ -48,12 +48,12 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     #middle_indx = list(filter(lambda x: all_dimers[x] not in end_dimers, range(len(all_dimers))))
     #middle_dimers = [all_dimers[x] for x in middle_indx]
     middle_dimers = list(itertools.filterfalse(lambda x: x in end_dimers, all_dimers))
-    del all_dimers #clean up
+    #del all_dimers #clean up
     
     print("Combining end dimers and non-end dimers.......")
     # combine middle and end dimers into same array
     dimers = end_dimers + middle_dimers
-    del end_dimers, middle_dimers # cleanup
+    #del end_dimers, middle_dimers # cleanup
     
     print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
@@ -64,7 +64,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         primerIDs = [lines[x].split(' ')[0] for x in range(start_indx+3, end_indx-4)]
         locusIDs = [primerIDs[x].split('_')[0]+'_'+primerIDs[x].split('_')[1] for x in range(len(primerIDs))]
         pairIDs = [locusIDs[x]+'_'+primerIDs[x].split('_')[2] for x in range(len(primerIDs))]
-    del lines # clean up
+    #del lines # clean up
     gc.collect() # clean up
     
     print("Calculating pairwise primer pair interactions........")
