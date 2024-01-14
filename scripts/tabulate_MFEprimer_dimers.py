@@ -80,31 +80,12 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         out = [rowid, *map((0).__add__, map(truth, pair_interactions[j][1:]))]
         pair_interactions_bin.append(out)
     
-    # calculate interactions per primer
-    if OUTPRIMERPATH!="False":
-        print("Calculating pairwise primer interactions..........")
-        # primers - total # interactions
-        primer_interactions = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
-        # convert to binary
-        primer_interactions_bin = []
-        primer_interactions_bin.append(primer_interactions[0])
-        for j in range(1, len(primer_interactions), 1):
-            rowid = primer_interactions[j][0]
-            out = [rowid, *map((0).__add__, map(truth, primer_interactions[j][1:]))]
-            primer_interactions_bin.append(out)
-    
     print("Calculating total interactions per primer pair...........")
     # calculate sum of interactions for each primer pair
     pair_sums = totalDimers(pair_interactions) #total interactions
     pair_sums_bin = totalDimers(pair_interactions_bin) # total pairs interacted with
     
-    # calculate # interactions per primer
-    if OUTPRIMERPATH!="False":
-        print("Calculating total interactions per primer............")
-        primer_sums = totalDimers(primer_interactions) # total interactions       
-        primer_sums_bin = totalDimers(primer_interactions_bin) # total primers interacted with
-    
-    print("Saving output files!")
+    print("Saving primer pair output files!")
     ## Export all files
     # export total pairwise interactions per primer pair (wide)
     pairwide = OUTPATH + '_wide.csv'
@@ -122,7 +103,27 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     pairlongbin = OUTPATH + '_binary_sum.csv'
     exportToCSV(pair_sums_bin, pairlongbin)
     
+    # calculate interactions per primer
     if OUTPRIMERPATH!="False":
+        print("")
+        print("")
+        print("Calculating pairwise primer interactions..........")
+        # primers - total # interactions
+        primer_interactions = tabulateDimers(dimers, primerIDs, locusIDs, pairs=False)
+        # convert to binary
+        primer_interactions_bin = []
+        primer_interactions_bin.append(primer_interactions[0])
+        for j in range(1, len(primer_interactions), 1):
+            rowid = primer_interactions[j][0]
+            out = [rowid, *map((0).__add__, map(truth, primer_interactions[j][1:]))]
+            primer_interactions_bin.append(out)
+    
+        # calculate # interactions per primer
+        print("Calculating total interactions per primer............")
+        primer_sums = totalDimers(primer_interactions) # total interactions       
+        primer_sums_bin = totalDimers(primer_interactions_bin) # total primers interacted with
+        
+        print("Saving primer output files!")
         # export total interactions per primer (long)
         primerlong = OUTPRIMERPATH + '_sum.csv'
         exportToCSV(primer_sums, primerlong)    
