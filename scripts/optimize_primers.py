@@ -34,6 +34,7 @@ TODO: add ability to count SNPs within microhaps separately...
 # load dependencies
 #import os
 import sys
+import csv
 import random
 
 
@@ -492,14 +493,12 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
     # we'll store this in a dictionary so that it's really easy to subset based on the primer pair ID
     dimer_table = dict()
     dimer_pairID = []
-    with open(DIMER_TABLE, 'r') as file:
-        lines = file.readlines()
-        for line in lines[1:]:
-            line=line.rstrip()
-            linesplit=line.split(", ")
-            linesplit[0]=linesplit[0].replace('"', '')
-            dimer_table.update({linesplit[0]: linesplit[1:]})
-            dimer_pairID.append(linesplit[0])
+    with open(DIMER_TABLE, 'r', newline="\n") as file:
+        reader = csv.reader(file, delimiter=',')
+        next(reader)#first line is header so we're skipping it
+        for row in reader: 
+            dimer_table.update({row[0]: row[1:]})
+            dimer_pairID.append(row[0])
     return dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
 
 
