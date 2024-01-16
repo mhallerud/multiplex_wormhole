@@ -127,7 +127,7 @@ def main():
     tabulate_dimers(ALL_DIMERS, 
                     END_DIMERS, 
                     os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
-                    False)#os.path.join(OUTDIR3, 'RawPrimerInteractions'))
+                    "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))
     # for 200 loci (primer pairs and individual primers): 3 minutes 54 seconds
     # for 200 loci (primer pairs only): 48 seconds
     

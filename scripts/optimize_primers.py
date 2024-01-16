@@ -99,12 +99,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
         if len(whitelist_pairs)>0:
             # remove these options
             for k in list(best_primer_pairs.keys()):
-                if k in whitelist_pairs:
+                if k in set(whitelist_pairs):
                     best_primer_pairs.pop(k)
             # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
             initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI-n_whitelist])
             # append all whitelist pairs to initial pairs
-            for pair in whitelist_pairs:
+            for pair in set(whitelist_pairs):
                 pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x]==pair][0]
                 initial_pairs.update({pair: pair_dimers})
         else:
