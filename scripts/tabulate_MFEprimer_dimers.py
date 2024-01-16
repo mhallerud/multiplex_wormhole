@@ -108,6 +108,8 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
                                     dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
     # replace NAs with 0s
     pair_interactions = pair_interactions.fillna(0)
+    # convert to integer
+    pair_interactions = pair_interactions.astype(int)
 
     # convert to binary format    
     pair_interactions_bin = pair_interactions.copy()
@@ -147,6 +149,8 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
                                           dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
         # replace NAs with 0s
         primer_interactions = primer_interactions.fillna(0)
+        # convert to integer
+        primer_interactions = primer_interactions.astype(int)
     
         print("Converting primer interactions to binary format.......")
         primer_interactions_bin = primer_interactions.copy()
