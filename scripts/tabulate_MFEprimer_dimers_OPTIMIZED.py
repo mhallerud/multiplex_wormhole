@@ -22,6 +22,7 @@ Purpose: Converts text output from MFEprimer dimer function into a pairwise inte
 # load dependencies
 import os
 import sys
+import csv
 import gc
 import numpy as np #version 1.26.2
 from operator import truth # converts anything>=1 to True and =0 to False
@@ -46,11 +47,11 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     
     print("Reading in files............")
     # read in files - convert each interaction to a single line in array
-    all_dimers = readDimerFile(ALL_DIMERS)
+    all_dimers = ReadDimerTXT(ALL_DIMERS)
     if END_DIMERS is None:
         end_dimers = []
     else:
-        end_dimers = readDimerFile(END_DIMERS)
+        end_dimers = ReadDimerTXT(END_DIMERS)
     endpath = OUTPATH+'_endDimers.csv'
     allpath = OUTPATH+'_allDimers.csv'
     exportToCSV(end_dimers, endpath)    
@@ -66,7 +67,12 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     #as list of fixed strings (i.e., ignores special chars) -f searches for matches per line in given file
     midpath = OUTPATH+'_middleDimers.csv'
     # this unix command takes the difference between the 2 dimerfiles and only saves lines found in the all dimers file
-    os.system("diff "+endpath+" "+allpath+" | grep '^>' | sed 's/^>//g'  | wc -l > "+midpath)
+    # it only works if both files are sorted
+    endpath_sort = OUTPATH+'_endDimers_sorted.csv'
+    allpath_sort = OUTPATH+'_allDimers_sorted.csv'
+    os.system("sort "+endpath+" > "+endpath_sort)
+    os.system("sort "+allpath+" > "+allpath_sort)
+    os.system("diff "+endpath_sort+" "+allpath_sort+" | grep '^>' | sed 's/^>//g'  > "+midpath)
     
     print("Combining end dimers and non-end dimers.......")
     # combine middle and end dimers into same array
@@ -75,13 +81,9 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     # If this step is a problem, could also write dimer lists to files and then 'paste' in bash
     # this unix binary command merges these two files
     dimerpath = OUTPATH+"_mergedDimers.csv"
-    os.system("paste "+midpath+" "+endpath+" > "+dimerpath)
+    os.system("cat "+midpath+" "+endpath+" > "+dimerpath)
     # now we'll read in this file...
-    dimers = []
-    with open(dimerpath, 'r') as file:
-        for row in file:
-            dimers.append(row)
-    dimers = np.array(dimers)
+    dimers = ReadDimerCSV(dimerpath)
     
     print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
@@ -167,7 +169,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
 
 
 
-def readDimerFile(infile):
+def ReadDimerTXT(infile):
     dimers = []
     with open(infile, 'r') as file:
         lines=file.readlines()
@@ -192,10 +194,30 @@ def readDimerFile(infile):
 
 
 
+def ReadDimerCSV(infile):
+    dimers = []
+    with open(infile, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            primer1 = row[0].strip()
+            primer2 = row[1].strip()
+            pair1 = row[2].strip()
+            pair2 = row[3].strip()
+            score = row[4].strip()
+            deltaG = row[5].strip()
+            newrow = [primer1, primer2, pair1, pair2, score, deltaG]
+            dimers.append(newrow)
+    dimers = np.array(dimers)
+    return dimers
+    gc.collect()
+    
+
+
 def tabulateByRow(i, primer_ids, locus_ids, dimers, pairs):
     # progress tracking
-    if(i%10 == 0):
-        print('     ' + str(int(i/len(primer_ids)*100)) + '% primers finished')
+    #if(i%10 == 0):
+    #    print('     ' + str(int(i/len(primer_ids)*100)) + '% primers finished')
+    print("......Tabulating dimers for "+str(i))
     # set up empty arrays to hold results
     interactions_row = []
     # add rowname as first value in array
@@ -205,6 +227,7 @@ def tabulateByRow(i, primer_ids, locus_ids, dimers, pairs):
     for j in range(len(primer_ids)):
         # grab primer ID
         colID = primer_ids[j]
+        print(".............................."+str(j))
         # if these primers are for the same locus, then set to 0 because
         # we already filtered for homodimers and pair dimers, and dimers 
         # between pairs for the same locus don't matter because there will 
