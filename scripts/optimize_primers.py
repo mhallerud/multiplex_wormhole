@@ -239,7 +239,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
             file.write(key+","+str(curr_dimer_totals[key])+"\n")
     
     # export selected primers to CSV
-    current_pairs_index = list(filter(lambda x: primer_IDs[x] in current_pairIDs, range(len(primer_IDs))))
+    current_pairs_index = list(filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
     outpairs = [primer_IDs[x] for x in current_pairs_index]
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     with open(OUTPATH+'_primers.csv', 'w') as file:
