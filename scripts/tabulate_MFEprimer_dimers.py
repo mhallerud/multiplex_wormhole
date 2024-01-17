@@ -37,7 +37,7 @@ import itertools #paralellized filtering, etc.
 
 
 
-def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
+def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
     """
     ALL_DIMERS : Filepath
         Output from MFEprimer dimer
@@ -64,10 +64,15 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     dimers_df = pd.concat([end_dimers, all_dimers])
     # get counts of each row
     counts = dimers_df.value_counts()
-    # grab unique dimers
+    # grab unique dimers between primers
     dimers = pd.DataFrame(list(counts.keys()), 
                           columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
-        
+    # grab unique sets of interacting primer pairs
+    dimers_subset = pd.DataFrame(list(zip(dimers['Primer1'], dimers['Primer2'], dimers['Pair1'], dimers['Pair2'])),
+                                 columns=['Primer1','Primer2', 'Pair1','Pair2'])
+    counts_pairs = dimers_subset.value_counts()
+    pair_dimers = pd.DataFrame(list(counts_pairs.keys()), columns=['Primer1','Primer2', 'Pair1','Pair2'])
+    
     print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
     with open(ALL_DIMERS, 'r') as file:
@@ -81,36 +86,8 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
     gc.collect() # clean up
     
     print("Calculating pairwise primer pair interactions........")
-    # duplicate dimers with pair1/primer1 and pair2/primer2 flipped (dimers will be counted by pair1 column, so 
-    # this ensures that they'll be counted from both directions)
-    flipped = pd.DataFrame(list(zip(dimers['Primer2'], dimers['Primer1'], dimers['Pair2'], dimers['Pair1'], dimers['Score'], dimers['DeltaG'])),
-                           columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
-    # combine raw and flipped dimers
-    dimers_flipped = pd.concat([dimers, flipped])
-    # add column for dimer count
-    dimers_flipped['Count']=1
-    # identify missing primers (i.e., primers with 0 dimers in files)
-    primersRow = pd.unique(dimers_flipped['Primer1'])
-    primersCol = pd.unique(dimers_flipped['Primer2'])
-    missingRows = list(itertools.filterfalse(lambda x: x in primersRow, primerIDs))
-    missingCols = list(itertools.filterfalse(lambda x: x in primersCol, primerIDs))
-    # add rows for missing pairs (otherwise they won't be included in table)
-    for primer in missingRows:
-        split = primer.split("_")
-        pair = split[0]+"_"+split[1]+"_"+split[2]
-        dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, "NA", "NA", 0]
-    for primer in missingCols:
-        split = primer.split("_")
-        pair = split[0]+"_"+split[1]+"_"+split[2]
-        dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, "NA", "NA", 0]
-    # cross-tabulate pair1 vs pair2 counts
-    pair_interactions = pd.crosstab(index=dimers_flipped['Pair1'], columns=dimers_flipped['Pair2'],
-                                    dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
-    # replace NAs with 0s
-    pair_interactions = pair_interactions.fillna(0)
-    # convert to integer
-    pair_interactions = pair_interactions.astype(int)
-
+    pair_interactions = CalcPairwiseDimers(pair_dimers, primerIDs, pairs=True)
+    
     # convert to binary format    
     pair_interactions_bin = pair_interactions.copy()
     pair_interactions_bin[pair_interactions_bin>=1] = 1
@@ -144,13 +121,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         print("")
         print("Calculating pairwise primer interactions..........")
         # primers - total # interactions
-        # cross-tabulate pair1 vs pair2 counts
-        primer_interactions = pd.crosstab(index=dimers_flipped['Primer1'], columns=dimers_flipped['Primer2'],
-                                          dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
-        # replace NAs with 0s
-        primer_interactions = primer_interactions.fillna(0)
-        # convert to integer
-        primer_interactions = primer_interactions.astype(int)
+        primer_interactions = CalcPairwiseDimers(dimers, primerIDs, pairs=False)
     
         print("Converting primer interactions to binary format.......")
         primer_interactions_bin = primer_interactions.copy()
@@ -174,6 +145,44 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH=False):
         # export pairwise interactions per primer (wide)
         primerwide = OUTPRIMERPATH + '_binary_wide.csv'
         primer_interactions_bin.to_csv(primerwide)
+
+
+
+def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
+    # duplicate dimers with pair1/primer1 and pair2/primer2 flipped (dimers will be counted by pair1 column, so 
+    # this ensures that they'll be counted from both directions)
+    flipped = pd.DataFrame(list(zip(dimers['Primer2'], dimers['Primer1'], dimers['Pair2'], dimers['Pair1'])),
+                           columns=['Primer1','Primer2','Pair1','Pair2'])
+    # combine raw and flipped dimers
+    dimers_flipped = pd.concat([dimers, flipped])
+    # add column for dimer count
+    dimers_flipped['Count']=1
+    # identify missing primers (i.e., primers with 0 dimers in files)
+    primersRow = pd.unique(dimers_flipped['Primer1'])
+    primersCol = pd.unique(dimers_flipped['Primer2'])
+    missingRows = list(itertools.filterfalse(lambda x: x in primersRow, primerIDs))
+    missingCols = list(itertools.filterfalse(lambda x: x in primersCol, primerIDs))
+    # add rows for missing pairs (otherwise they won't be included in table)
+    for primer in missingRows:
+        split = primer.split("_")
+        pair = split[0]+"_"+split[1]+"_"+split[2]
+        dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
+    for primer in missingCols:
+        split = primer.split("_")
+        pair = split[0]+"_"+split[1]+"_"+split[2]
+        dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
+    if pairs:
+        # cross-tabulate pair1 vs pair2 counts
+        pair_interactions = pd.crosstab(index=dimers_flipped['Pair1'], columns=dimers_flipped['Pair2'],
+                                        dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
+    else:
+        pair_interactions = pd.crosstab(index=dimers_flipped['Primer1'], columns=dimers_flipped['Primer2'],
+                                        dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
+    # replace NAs with 0s
+    pair_interactions = pair_interactions.fillna(0)
+    # convert to integer
+    pair_interactions = pair_interactions.astype(int)
+    return pair_interactions
 
 
 

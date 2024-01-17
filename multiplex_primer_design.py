@@ -115,8 +115,8 @@ def main():
     # --mono = concentration of monovalent cations (mM)
     # --dntp = concentration of dNTPs (mM)
     # --oligo = concentration of annealing oligos (nM) 
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -6 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -2.5 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
     # for 200 loci: 2.6 seconds (step 1: 1.6 sec, step 2: 0.9 sec)
     
     
