@@ -121,7 +121,9 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
         print("")
         print("Calculating pairwise primer interactions..........")
         # primers - total # interactions
-        primer_interactions = CalcPairwiseDimers(dimers, primerIDs, pairs=False)
+        dimers_sub = pd.DataFrame(list(zip(dimers['Primer1'],dimers['Primer2'],dimers['Pair1'],dimers['Pair2'])),
+                                  columns=['Primer1','Primer2','Pair1','Pair2'])
+        primer_interactions = CalcPairwiseDimers(dimers_sub, primerIDs, pairs=False)
     
         print("Converting primer interactions to binary format.......")
         primer_interactions_bin = primer_interactions.copy()
