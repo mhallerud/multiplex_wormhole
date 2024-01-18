@@ -36,6 +36,7 @@ TODO: add ability to count SNPs within microhaps separately...
 import sys
 import csv
 import random
+import pandas as pd
 
 
 
@@ -98,12 +99,27 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
         initial_pairs = best_primer_pairs
     else:
         if len(whitelist_pairs)>0:
-            # remove these options
-            for k in list(best_primer_pairs.keys()):
-                if k in set(whitelist_pairs):
-                    best_primer_pairs.pop(k)
+            # select primer pairs that have the least dimer load within the current set
+            primerset_dimers, nonset_dimers = SubsetDimerTable(whitelist_pairs, dimer_table, dimer_pairID, True)
+            whitelist_dimers = pd.DataFrame(nonset_dimers)
+            wl_dimers_sum = whitelist_dimers.sum(axis=1)
+            wl_sorted = wl_dimers_sum.sort_values()
+            # check how many primer pair options match the min value
+            wl_min = wl_sorted[wl_sorted==min(wl_sorted)]
+            if len(wl_min) > (N_LOCI-n_whitelist):
+                best_nonset = random.sample(list(wl_min.index), N_LOCI-n_whitelist)
+            else:
+                best_nonset = list(wl_sorted.head(N_LOCI-n_whitelist).index)
+            initial_pairIDs = [dimer_pairID[x] for x in best_nonset] 
+            # convert to dimer format
+            initial_tallies = [dimer_tallies[x] for x in best_nonset]
+            initial_pairs = dict(list(zip(initial_pairIDs, initial_tallies)))
+            # remove whitelist options
+            #for k in list(best_primer_pairs.keys()):
+            #    if k in set(whitelist_pairs):
+            #        best_primer_pairs.pop(k)
             # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
-            initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI-n_whitelist])
+            #initial_pairs = dict(sorted(best_primer_pairs.items(), key = lambda x: x[1])[:N_LOCI-n_whitelist])
             # append all whitelist pairs to initial pairs
             for pair in set(whitelist_pairs):
                 pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x]==pair][0]
@@ -126,6 +142,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
     
     ## Optimize primer set iteratively
     i=0
+    # set blacklist- these may not be replaced
     if len(whitelist_pairs)>0:
         blacklist=whitelist_pairs
     else:
@@ -139,7 +156,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
             #break
 
         # create new set by replacing current worst pair with a random pair
-        newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci)
+        newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blacklist, 
+                            dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, dimer_tallies)
         if newSet is None:
             comparison=False
         else:
@@ -174,7 +192,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
                     prev_worst = curr_worst
                     prev_best = new_best_id
                     # make new set
-                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, blacklist2)
+                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blacklist, 
+                                        dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, dimer_tallies, blacklist2)
                     if newSet is None:
                         print("No new sets can be found for this set of primer pairs")
                         blacklist.append(curr_worst)
@@ -244,13 +263,13 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     with open(OUTPATH+'_primers.csv', 'w') as file:
         for i in range(len(outpairs)):
-            file.write(outpairs[i]+","+outseqs[i])
+            file.write(outpairs[i]+","+outseqs[i]+"\n")
     
     return sorted(curr_dimer_totals) # only meaningful if running within python... 
 
 
 
-def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, blacklist2=[]):
+def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, dimer_tallies, blacklist2=[]):
         # create copy of original list, otherwise links them and affects both lists when using update/remove    
         new_pairIDs = pairIDs.copy()
         allowed_pairs_edit = allowed.copy()
@@ -273,7 +292,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
             if n<abs(j):
                 return None
         # add other primers for the worst locus back to the allowed list
-        AddWorstToAllowed(curr_worst, allowed_pairs_edit, primer_loci, primer_pairs)
+        #AddWorstToAllowed(curr_worst, allowed_pairs_edit, primer_loci, primer_pairs)
         
         # subset nonset dimer table to include only allowed primer pairs (i.e., primer pairs for loci not in the set)
         #gets all pair IDs that aren't in current pairs
@@ -305,17 +324,33 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
             except:
                 pass
         # Choose random primer pair as replacement
-        if len(allowed_pairs_edit)>0:
-            new_best_id = random.choice(allowed_pairs_edit)
-        else:
-            return None
+        #if len(allowed_pairs_edit)>0:
+        #    new_best_id = random.choice(allowed_pairs_edit)
+        #else:
+        #    return None
+        # choose primer pair that has least dimers with current set
+        primerset_dimers, nonset_dimers = SubsetDimerTable(pairIDs, dimer_table, dimer_pairID, True)
+        nonset_dimers = pd.DataFrame(nonset_dimers)
+        ns_dimers_sum = nonset_dimers.sum(axis=1)
+        ns_dimers_sorted = ns_dimers_sum.sort_values()
+        # randomly choose a set of primers with the minimum possible dimers
+        ns_min = list(ns_dimers_sorted[ns_dimers_sorted==min(ns_dimers_sorted)].index)
+        best_nonset = [dimer_pairID[x] for x in ns_min]
+        new_best_id = random.choice(best_nonset)
+
         # double check that chosen pair isn't already in set... if it is, remove and try again
         while new_best_id in new_pairIDs:
-            allowed_pairs_edit.remove(new_best_id)
-            if len(allowed_pairs_edit)>0:
-                new_best_id = random.choice(allowed_pairs_edit)
+            #allowed_pairs_edit.remove(new_best_id)
+            #if len(allowed_pairs_edit)>0:
+            #    new_best_id = random.choice(allowed_pairs_edit)
+            #else:
+            #    return None
+            best_nonset.remove(new_best_id)
+            if len(ns_min)>0:
+                new_best_id = random.choice(best_nonset)
             else:
                 return None
+
         # update the primer set
         new_pairIDs.append(new_best_id)
         new_pairIDs.remove(curr_worst)
