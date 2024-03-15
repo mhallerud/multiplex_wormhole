@@ -371,6 +371,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
     with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
         for line in costs:
             file.write(str(line[0])+","+str(line[1])+"\n")
+    
+    return curr_total
 
 
 

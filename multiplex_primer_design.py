@@ -147,8 +147,8 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 40 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
 # for 200 loci: 2.6 seconds (step 1: 1.6 sec, step 2: 0.9 sec)
 
 
@@ -170,25 +170,24 @@ tabulateDimers(ALL_DIMERS,
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including whitelist loci)
 # To run once:
-optimizeMultiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
-                  DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                  DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                  OUTPATH=os.path.join(OUTDIR4,"Run0"), 
-                  N_LOCI=N_LOCI, 
-                  ITERATIONS=N_ITERATIONS, 
-                  WHITELIST=None)
-# Outputs are found under 4_OptimizedSets/Run*
+optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
+                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
+                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
+                  OUTPATH = os.path.join(OUTDIR4,"Run0"), 
+                  N_LOCI = N_LOCI, 
+                  WHITELIST = WHITELIST_FA)
+# Outputs are found under 4_OptimizedSets/*
 
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
 ## random process and each run may be slightly different.
 ## Here's a helper function for running N times:
-from scripts.multiple_run_optimization import run_optimization
-run_optimization(N_RUNS = 10, 
-                 PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                 DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                 DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                 OUTPATH = os.path.join(OUTDIR4,"Run"), 
-                 N_LOCI = N_LOCI, 
-                 N_ITERATIONS = N_ITERATIONS, 
-                 WHITELIST = WHITELIST_FA)
+from scripts.multiple_run_optimization import multipleOptimizations
+multipleOptimizations(N_RUNS = 10, 
+                      PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
+                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
+                      OUTPATH = os.path.join(OUTDIR4,"Run"), 
+                      N_LOCI = N_LOCI, 
+                      WHITELIST = WHITELIST_FA, 
+                      TIMEOUT = 10)#time allowed per run- runs >10 minutes will break
 
