@@ -244,7 +244,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, ITERATIONS=5000
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     with open(OUTPATH+'_primers.csv', 'w') as file:
         for i in range(len(outpairs)):
-            file.write(outpairs[i]+","+outseqs[i])
+            file.write(outpairs[i]+","+outseqs[i]+"\n")
     
     return sorted(curr_dimer_totals) # only meaningful if running within python... 
 
