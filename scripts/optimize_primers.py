@@ -454,7 +454,7 @@ def LoadPrimers(PRIMER_FASTA, whitelist=False):
                 line = line.rstrip()
                 line = line.replace('>','')
                 locus = line.split(".")[0]
-                pair = line.replace(".FW","").replace(".REV","")
+                pair = line.replace(".FWD","").replace(".FW","").replace(".REV","")
                 primer_loci.append(locus)
                 primer_IDs.append(line)
                 primer_pairs.append(pair)
