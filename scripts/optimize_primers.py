@@ -18,18 +18,6 @@ Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair
 """
 
 
-"""
-TO DO
-- fix path that needs to be harcoded in scripts --> also change "python" to "python3" (in help docs)
-- formalize whitelist functionality!
-- lose 2 loci when you read in data (first and last)
-- change the # of desired loci?
-- parallelize tabulate_dimers script!!
-"""
-
-"""    
-TODO: add ability to count SNPs within microhaps separately...
-"""
 
 # load dependencies
 #import os
