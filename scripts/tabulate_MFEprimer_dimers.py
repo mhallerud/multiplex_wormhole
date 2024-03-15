@@ -80,7 +80,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
         start_indx = list(filter(lambda x: 'Primer ID' in lines[x], range(len(lines))))[0]
         end_indx = list(filter(lambda x: 'Dimer List' in lines[x], range(len(lines))))[0]
         primerIDs = [lines[x].split(' ')[0] for x in range(start_indx+3, end_indx-4)]
-        #locusIDs = [primerIDs[x].split('_')[0]+'_'+primerIDs[x].split('_')[1] for x in range(len(primerIDs))]
+        #locusIDs = [primerIDs[x].split('.')[0]+'_'+primerIDs[x].split('.')[1] for x in range(len(primerIDs))]
         #pairIDs = [locusIDs[x]+'_'+primerIDs[x].split('_')[2] for x in range(len(primerIDs))]
     #del lines # clean up
     gc.collect() # clean up
@@ -166,12 +166,10 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
     missingCols = list(itertools.filterfalse(lambda x: x in primersCol, primerIDs))
     # add rows for missing pairs (otherwise they won't be included in table)
     for primer in missingRows:
-        split = primer.split("_")
-        pair = split[0]+"_"+split[1]+"_"+split[2]
+        pair = primer.replace('.REV', '').replace('.FW', '')
         dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
     for primer in missingCols:
-        split = primer.split("_")
-        pair = split[0]+"_"+split[1]+"_"+split[2]
+        pair = primer.replace('.REV', '').replace('.FW', '')
         dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
     if pairs:
         # cross-tabulate pair1 vs pair2 counts
@@ -200,8 +198,8 @@ def ReadDimerTXT(infile):
             primer1 = line1[2]
             primer2 = line1[4]
             # we'll extract these later to reduce some memory reqs
-            pair1 = primer1.replace('_FW','').replace('_REV','')
-            pair2 = primer2.replace('_FW','').replace('_REV','')
+            pair1 = primer1.replace('.FW','').replace('.REV','')
+            pair2 = primer2.replace('.FW','').replace('.REV','')
             score = line2[1].replace(',','')
             delta_g = line2[5]
             #structure = lines[i+4:i+7] # no use for this yet

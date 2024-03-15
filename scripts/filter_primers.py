@@ -136,7 +136,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
                         ampSize = ampSize_line.split("=")[1]
                     
                         # add FW and REV primers separately to the array
-                        filtered_primers.append([locusID+"_"+N+"_FW", # primer ID
+                        filtered_primers.append([locusID+"."+N+".FW", # primer ID
                                                  locusID, # locus ID
                                                  N, # primer pair #
                                                  "FW", # primer direction
@@ -146,7 +146,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
                                                  FWtm, # primer annealing temp
                                                  FWbound, # primer proportion bound
                                                  ampSize]) # amplicon size
-                        filtered_primers.append([locusID+"_"+N+"_REV", # primer ID
+                        filtered_primers.append([locusID+"."+N+".REV", # primer ID
                                                  locusID, # locus ID
                                                  N, # primer pair #
                                                  "REV", # primer direction

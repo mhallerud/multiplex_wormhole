@@ -10,15 +10,19 @@ Dependencies: 1) primer3
 """
 
 
-# load modules
+# load dependencies and modules
 import os
 import sys
 import signal
-from scripts.primer3_batch_design import main as primer3_batch_design
-from scripts.filter_primers import main as filter_primers
-from scripts.check_primer_specificity import main as specificity_check
-from scripts.tabulate_MFEprimer_dimers import main as tabulate_dimers
-from scripts.optimize_primers import main as optimize_multiplex
+
+# set working dir to location of multiplex_wormhole
+os.chdir('/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/multiplex_wormhole')
+from scripts.primer3_batch_design import main as primer3BatchDesign
+from scripts.filter_primers import main as filterPrimers
+from scripts.check_primer_specificity import main as specificityCheck
+from scripts.add_whitelist_to_fasta import main as addWhitelistFasta
+from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
+from scripts.optimize_primers import main as optimizeMultiplex
 
 
 # COMMAND-LINE INPUTS
@@ -31,9 +35,10 @@ N_LOCI = sys.argv[6]
 N_ITERATIONS=sys.argv[7]
 N_RUNS=sys.argv[8]
 
-## INPUTS:
+
+## SET INPUTS:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
-#PRIMER3_PATH#path to primer3 location
+PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
 OUTDIR='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/TEST'
 TEMPLATES='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/MartenTemplates_MAF30-repBaseFilter-random300.csv'
 GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
@@ -60,12 +65,12 @@ def main():
     
     
     ## Step 1: batch design of primers
-    primer3_batch_design(TEMPLATES, OUTDIR)
+    primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
     # for 200 loci: 45.5 seconds
     
     
     ## Step 2: filter out primers with dimers
-    filter_primers(os.path.join(OUTDIR, '1_InitialPrimers'), 
+    filterPrimers(os.path.join(OUTDIR, '1_InitialPrimers'), 
                    os.path.join(OUTDIR2,'FilteredPrimers'), 
                    Tm_LIMIT=45, 
                    dG_HAIRPINS=-2000, 
@@ -76,24 +81,34 @@ def main():
     
     ## Step 3A Checking primer specificity 
     # Step 3A: Check primer specificity against provided loci
-    specificity_check(os.path.join(OUTDIR2,'FilteredPrimers.csv'), 
+    ## ADD MESSAGES INTO THIS SCRIPT.....
+    specificityCheck(os.path.join(OUTDIR2,'FilteredPrimers.csv'), 
                       TEMPLATES, 
                       os.path.join(OUTDIR2,'SpecificityCheckTemplates'))
     # for 200 loci vs 200 loci: 6.15 seconds
     
-    # Step 3B: Check primer specificity against a genome
-    specificity_check(os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.csv'), 
-                      GENOME, 
-                      os.path.join(OUTDIR2,'SpecificityCheckGenome'))
+    # Step 3B: Check AMPLICON specificity against a genome
+    #specificityCheck(os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.csv'), 
+    #                  GENOME, 
+    #                  os.path.join(OUTDIR2,'SpecificityCheckGenome'))
     # for 200 loci vs 3160 reads: 10.8 seconds
     
     
     
     ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
     ## This can be done by adding these loci into the SpecificityCheckGenome_passed.fa file.
+    ## Whitelist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
+
     ## There is a helper script to convert CSV format primers to FA format:
     #csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
     
+    ## Here's another helper script to automate combining these files:
+    if os.path.exists(WHITELIST_FA):
+        addWhitelistFasta(os.path.join(OUTDIR2, 'SpecificityCheckTemplates.fa'), 
+                          WHITELIST_FA)
+        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
+    else:
+        INPUT=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa')
     
     
     ## Step 4: Predict primer dimers using MFEprimer
@@ -101,7 +116,6 @@ def main():
     # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
     # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
     # set input / output paths
-    INPUT=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa')
     ALL_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers.txt')
     END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
     # MFEprimer parameters:
@@ -124,7 +138,7 @@ def main():
     ## NOTE: This is the most computationally intensive step. 
     ## It will run substantially faster if you leave the 4th argument blank 
     ## (which means pairwise interactions between individual primers won't be calculated)
-    tabulate_dimers(ALL_DIMERS, 
+    tabulateDimers(ALL_DIMERS, 
                     END_DIMERS, 
                     os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
                     "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))
@@ -139,7 +153,7 @@ def main():
         for run in range(N_RUNS):
             signal.alarm(300) # set timer for 5 minutes- this helps to skip infinite loops in optimization process
             try:
-                optimize_multiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
+                optimizeMultiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
                                    DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                                    DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
                                    OUTPATH=os.path.join(OUTDIR4,"Run"+str(run+1)), 
@@ -157,7 +171,7 @@ def main():
         for run in range(N_RUNS):
             signal.alarm(300) # set timer for 5 minutes- this helps to skip infinite loops in optimization process
             try:
-                optimize_multiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
+                optimizeMultiplex(PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                                    DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'),
                                    DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
                                    OUTPATH=os.path.join(OUTDIR4,"Run"+str(run+1)), 

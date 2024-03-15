@@ -51,7 +51,6 @@ def main(PRIMERS, TARGET, OUTPATH):
     # use zgrep if input is a *.fastq.gz file
     if TARGET.endswith("fastq.gz") or TARGET.endswith("fq.gz") or TARGET.endswith("fa.gz") or TARGET.endswith("fna.gz"):
         # check for each primer
-        # check for each primer
         for i in range(len(primers)):
             primer_seq = primers[i][4]# get primer sequence
             # remove adapter sequence and make uppercase
@@ -75,6 +74,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
+                print("Specificity check passed for "+primerID)
             os.remove("grep.tmp")#clean up
     # use normal grep if input is a *.fasta or *.fastq file
     elif TARGET.endswith(".fna") or TARGET.endswith(".fasta") or TARGET.endswith(".fastq") or TARGET.endswith(".fa") or TARGET.endswith(".fq") or TARGET.endswith(".csv"):
@@ -102,6 +102,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
+                print("Specificity check passed for "+primerID)
             os.remove("grep.tmp")
     # if neither fastq.gz, fasta, or fastq file, raise error
     else:
