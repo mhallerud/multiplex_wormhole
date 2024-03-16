@@ -53,18 +53,22 @@ from scripts.optimize_primers import main as optimizeMultiplex
 ## SET INPUTS:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
-TEMPLATES='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/MartenTemplates_MAF30-repBaseFilter-random300.csv'
-WHITELIST_FA='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/TEST/WHITELIST_FAKE.fa'
-OUTDIR='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/TEST'
+TEMPLATES='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed.csv'
+WHITELIST_FA='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/Marten_Panel1_whitelist.fa'
+OUTDIR='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole'
 #GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
-N_LOCI = 50
-N_ITERATIONS=5000
+N_LOCI = 100
 
 
 
-## Step 0: Set up output directory structure
+## Step 0: Set up output directory structure & copy inputs to it
 if not os.path.exists(OUTDIR):
     os.mkdir(OUTDIR)
+INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
+if not os.path.exists(INPUTDIR):
+    os.mkdir(INPUTDIR)
+os.system("cp "+TEMPLATES+" "+INPUTDIR)
+os.system("cp "+WHITELIST_FA+" "+INPUTDIR)
 OUTDIR2 = os.path.join(OUTDIR, "2_FilteredPrimers")
 if not os.path.exists(OUTDIR2):
     os.mkdir(OUTDIR2)
@@ -80,7 +84,6 @@ if not os.path.exists(OUTDIR4):
 ## Step 1: batch design of primers
 primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
 # Outputs are found in the 1_InitialPrimers folder. there is a *.out and *.err file per locus
-# for 200 loci: 45.5 seconds
 
 
 
@@ -92,7 +95,6 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               dG_END_LIMIT=-5000,
               dG_MID_LIMIT=-10000)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
-# for 200 loci: 0.51 seconds
 
 
 
@@ -103,20 +105,19 @@ specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
                  TARGET = TEMPLATES, 
                  OUTPATH = specificity_output)
 # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
-# for 200 loci vs 200 loci: 6.15 seconds
 
 # Step 3B: Check AMPLICON specificity against a genome
 #specificityCheck(os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.csv'), 
 #                  GENOME, 
 #                  os.path.join(OUTDIR2,'SpecificityCheckGenome'))
-# for 200 loci vs 3160 reads: 10.8 seconds
 
 
 
 ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-## Whitelist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
+## BEFORE RUNNING THIS STEP: Check that whitelist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
 
 ## Here's a helper script to automate combining these files:
+WHITELIST_FA = os.path.join(INPUTDIR, os.path.basename(WHITELIST_FA))
 if os.path.exists(WHITELIST_FA):
     addWhitelistFasta(specificity_output+'_passed.fa', WHITELIST_FA)
     INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
@@ -149,7 +150,6 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --oligo = concentration of annealing oligos (nM) 
 os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
 os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
-# for 200 loci: 2.6 seconds (step 1: 1.6 sec, step 2: 0.9 sec)
 
 
 
@@ -160,17 +160,15 @@ os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70
 tabulateDimers(ALL_DIMERS, 
                 END_DIMERS, 
                 os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
-                "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))
+                "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
-# for 200 loci (primer pairs and individual primers): 3 minutes 54 seconds
-# for 200 loci (primer pairs only): 48 seconds
 
 
 
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including whitelist loci)
 # To run once:
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa'), 
+optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                   DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                   DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
                   OUTPATH = os.path.join(OUTDIR4,"Run0"), 

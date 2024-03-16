@@ -46,7 +46,7 @@ BURNIN = 100
 # ADJUSTMENT (proportion of dimer load rand to consider when setting initial temp)
 # - values closer to 1 will accept nearly any change - extremely long run time and very 'bad' changes accepted
 # - values closer to 0 will only accept changes very similar to the 'least bad' options - quicker but won't explore much of the space
-ADJUSTMENT = 0.5
+ADJUSTMENT = 0.1
 # PARTITIONs (# partitions for temperature space)
 PARTITIONS = 1000
 # - fewer partitions means algorithm stays in each temperature space longer
@@ -57,6 +57,15 @@ ITERATIONS = 5000
 # - fewer iterations may be OK for simpler problems where local minima are not expected to be a problem
 # SIMPLE = # iterations in simple iterative improvement
 SIMPLE = 500
+# DECAY_RATE
+DECAY_RATE = 0.95 #must be between 0 and 1 (non-inclusive)
+# - closer to 1: algorithm will spend more time at high temperatures, and take more risks (adding more dimers)
+# - closer to 0.5: algorithm will spend little time at high temperatures and take few risks
+# - closer to 0: algorithm will spend virtually no time at high temperatures
+# set lower with more iterations, higher with more:
+# 1000 iterations - 0.98
+# 10000 iterations - 0.90
+# 5000 iterations - 0.95
 
 
 # load dependencies
@@ -68,7 +77,7 @@ import math
 
 
 
-def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None):
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None, SEED=None):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences
@@ -80,17 +89,17 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
         Output path and prefix
     N_LOCI : integer
         Number of loci in final set
-    ITERATIONS : integer
-        Number of iterations to attempt before finishing (Default: 5000)
     WHITELIST : Fasta path
         Contains whitelist primer IDs and sequences (Default: None)
+    SEED : CSV path
+        Initial primer set to start with from previous multiplex_wormhole run
     -------
     Iteratively optimizes a multiplex primer set of given size to minimize
             predicted dimer content. NOTE: This script relies on having a large ratio of 
             loci to choose from relative to the number of loci needed.
     Outputs : CSVs of selected primer pairs + dimer loads
     """
-    ## read in IDs and primers
+    ## STEP 0: Read in IDs and primers
     print("Reading in inputs..........")
     primer_loci, primer_seqs, primer_IDs, primer_pairs = LoadPrimers(
         PRIMER_FASTA)
@@ -108,39 +117,46 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
         whitelist_pairs = []
         n_whitelist = 0
     
-    
-    ## STEP 1: Choose initial primer set based on pseudo-Greedy algorithm
-    # Choose initial set of loci based on loci with minimum dimer counts
-    # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
-    print("Generating initial primer set........")
-    # make list of unique loci
-    # convert to list because new versions of random.sample won't be able to handle sets...
-    uniq_loci = list(set(primer_loci))
-    nloci = len(uniq_loci)
-    # grab best primer pairs for each locus
-    best_primer_pairs = BestPrimers(
-        uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
-    # if there are fewer loci than desired, use all of them
-    if nloci < N_LOCI:
-        print("WARNING: Fewer loci passed filtering than desired in panel")
-        print("# loci used: " + str(nloci))
-        initial_pairs = best_primer_pairs
-    else:
-        if len(whitelist_pairs) > 0:
-            # remove these options
-            for k in list(best_primer_pairs.keys()):
-                if k in set(whitelist_pairs):
-                    best_primer_pairs.pop(k)
-            # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
-            initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_whitelist])
-            # append all whitelist pairs to initial pairs
-            for pair in set(whitelist_pairs):
-                pair_dimers = [dimer_tallies[x] for x in range(
-                    len(dimer_tallies)) if dimer_primerIDs[x] == pair][0]
-                initial_pairs.update({pair: pair_dimers})
+    if SEED is None:
+        ## STEP 1: Choose initial primer set based on pseudo-Greedy algorithm
+        # Choose initial set of loci based on loci with minimum dimer counts
+        # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
+        print("Generating initial primer set........")
+        # make list of unique loci
+        # convert to list because new versions of random.sample won't be able to handle sets...
+        uniq_loci = list(set(primer_loci))
+        nloci = len(uniq_loci)
+        # grab best primer pairs for each locus
+        best_primer_pairs = BestPrimers(
+            uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
+        # if there are fewer loci than desired, use all of them
+        if nloci < N_LOCI:
+            print("WARNING: Fewer loci passed filtering than desired in panel")
+            print("# loci used: " + str(nloci))
+            initial_pairs = best_primer_pairs
         else:
-            initial_pairs = dict(
-                sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
+            if len(whitelist_pairs) > 0:
+                # remove these options
+                for k in list(best_primer_pairs.keys()):
+                    if k in set(whitelist_pairs):
+                        best_primer_pairs.pop(k)
+                # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
+                initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_whitelist])
+                # append all whitelist pairs to initial pairs
+                for pair in set(whitelist_pairs):
+                    pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x] == pair][0]
+                    initial_pairs.update({pair: pair_dimers})
+            else:
+                initial_pairs = dict(
+                    sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
+    
+    ## If a SEED file is provided, use this as the initial primer set....
+    else:
+        initial_pairs = []
+        with open(SEED, 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                initial_pairs.append(lines[0])
 
     # grab locus IDs for primer pairs
     current_pairIDs = list(initial_pairs.keys())
@@ -161,16 +177,16 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
     
     
     # STEP 2: Adaptive simulated annealing
-    print("Sampling dimer load changes...")
+    print("Sampling dimer load changes.......")
     # A) sample x iterations
     change = []
-    i = 1
+    i = 0
     while i < BURNIN:
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
                                                   dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
-                                                  random=True)
+                                                  random=True, whitelist=whitelist_loci)
 
         # compare newSet to original set
         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
@@ -186,7 +202,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
     # set initial and final temps
     T_end = min(change)
     # initial temp should accept most changes
-    T_init = min(change) + 0.5 * (max(change) - min(change))
+    T_init = min(change) + ADJUSTMENT * (max(change) - min(change))
     T_init = int(round(T_init, 0))
     # partition iteration space across temp range
     if ITERATIONS > PARTITIONS:
@@ -194,43 +210,74 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
         T_iter = Tspace*ITERATIONS
     else:
         Tspace = (T_init - T_end)/ITERATIONS
-        T_iter = 1
+        T_iter = 1    
     print(".....Initial temp: "+str(T_init))
     print(".....Final temp: "+str(T_end))
 
     # C) run simulated annealing optimization
     print("Starting adaptive simulated annealing.....")
     Temp = T_init
-    costs = [[Temp, curr_total]] #log for cost values
+    costs = [["Iterations","SA_Temp", "TotalDimers"]]
+    costs.append([1, Temp, curr_total]) #log for cost values
     n_iter = 0
-    while Temp > T_end:
+    step = 0
+    min_dimers = curr_total
+    while n_iter < ITERATIONS:
         i = 1  # reset iterations
         while i <= T_iter:
             # make a random change
             swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
                                                       dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
-                                                      random=True)
+                                                      random=True, whitelist=whitelist_loci)
             # if e^(-change/temp) < random number (0,1), accept the change
             comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
-            SAvalue = math.exp(comparison/Temp)
-            if SAvalue < rand.uniform(0,1):
+            SAvalue = math.exp(-comparison/Temp)
+            if SAvalue > rand.uniform(0,1):
                 update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                 current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
                 # log updated cost whenever a change is made
-                costs.append([Temp, curr_total])
+                costs.append([n_iter+i, Temp, curr_total])
+                # keep track of set with minimum dimers
+                # this allows the best set to be kept while the algorithm continues to explore more of the space
+                if curr_total < min_dimers:
+                    min_pairIDs = current_pairIDs
+                    min_dimers = curr_total
+                    min_dimer_totals = curr_dimer_totals
+                    min_primerset_dimers = primerset_dimers 
+                    min_nonset_dimers = nonset_dimers
                 # STOP if 0 dimers in set
                 if curr_total == 0:
                     break
             # in simulated annealing, no need to keep track of what's been tested
             # repeat until # iterations at this temp finishes
             i+=1
-        # decrease the temp
-        Temp+= -Tspace
+        # decrease the temp via exponential decay - this makes the algorithm spend less time in 
+        # 'risky' space and more time in productive optimization space
+        step+=1
+        Temp = (T_init-T_end)*DECAY_RATE**step+T_end
         n_iter+=T_iter
-        print("\t ....."+str(int(n_iter))+" iterations")
+        #print("....."+str(int(n_iter))+" iterations")
         if curr_total == 0:
             print("Solution with 0 dimers found!")
             break
+        print(curr_total)
+    
+    # proceed with best set found during simulated annealing- which isn't necessarily the final set
+    current_pairIDs = min_pairIDs
+    curr_total = min_dimers
+    curr_dimer_totals = min_dimer_totals
+    primerset_dimers = min_primerset_dimers 
+    nonset_dimers = min_nonset_dimers
+    # grab locus IDs for current primer pairs
+    current_pairIDs = list(curr_dimer_totals.keys())
+    current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
+    # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
+    allowed_loci = [uniq_loci[i] for i in range(
+        len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
+    allowed_idx = list(
+        filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
+    allowed_pairs = [primer_pairs[i] for i in allowed_idx]
+    allowed_pairs = list(set(allowed_pairs))
     
     
     ### STEP 3: Simple iterative improvement with swapping worst values
@@ -351,8 +398,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
         for b in range(len(blacklist)):
             print("\t\t" + blacklist[b])
     
+    
+    ## STEP 4: Export selected primers, dimer loads, and cost trace
     # export the current dimers and their totals as CSV
     with open(OUTPATH+'_dimers.csv', 'w') as file:
+        file.write("PrimerPairID,DimerLoad\n")
         for key in curr_dimer_totals.keys():
             # line = curr_dimer_totals[]
             #line_str = str(line)[1:-1].replace("'","")
@@ -364,27 +414,33 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None)
     outpairs = [primer_IDs[x] for x in current_pairs_index]
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     with open(OUTPATH+'_primers.csv', 'w') as file:
+        file.write("PrimerPairID,Sequence\n")
         for i in range(len(outpairs)):
             file.write(outpairs[i]+","+outseqs[i]+"\n")
     
     # export cost changes
     with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
         for line in costs:
-            file.write(str(line[0])+","+str(line[1])+"\n")
+            file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
     
     return curr_total
 
 
 
 def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table,
-               dimer_pairID, primer_pairs, primer_loci, blacklist2=[], random=False):
+               dimer_pairID, primer_pairs, primer_loci, blacklist2=[], random=False, whitelist=None):
     # create copy of original list, otherwise links them and affects both lists when using update/remove
     update_pairIDs = pairIDs.copy()
     allowed_pairs_edit = allowed.copy()
 
-    # if swapping randomly, choose a random pairID to replace
+    # if swapping randomly, choose a random pairID (not including whitelist) to replace
     if random:
-        swap = rand.choice(pairIDs)
+        options =  pairIDs.copy()
+        for p in pairIDs:
+            if p in whitelist:
+                options.remove(p)
+        swap = rand.choice(options)
+    
     # otherwise, replace the current worst (most dimers) pair in the set
     else:
         worst = sorted(curr_dimer_totals.items(), key=lambda x: x[1])[-1]
