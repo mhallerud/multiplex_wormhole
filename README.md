@@ -35,15 +35,7 @@ For more details on arguments and defaults for each function, go to the document
 1. primer3_batch_design: Primers are designed for each template sequence using primer3, including predicting secondary structures (hairpins, homodimers, and heterodimers) within the primer pair.
 2. filter_primers: Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
 3. check_primer_specificity: Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
-4. MFEprimer dimer: Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers. The following defaults are used for calculating dimer formation:
-    - delta G threshold for structures at the 3' end: -3 kcal/mol
-    - delta G threshold for any other structures: -6 kcal/mol
-    - score limit: 3 (score calculated with +1 for each bp match and -1 for each bp mismatch)
-    - max mismatches in dimer: 40 bp
-    - dNTP concentration: 0.25 mM
-    - oligo concentration: 50 nM
-    - divalent cation concentration: 3.8 mM
-    - monovalent cation concentration: 50 mM
+4. MFEprimer dimer: Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers.
 5. tabulate_MFEprimer_dimers: Primer dimer reports are translated into the following tables:
     - A N_PRIMERS x N_PRIMERS table which includes the total number of primer dimers estimated for all pairwise combinations of primer pairs.
     - A N_PRIMERS x 2 table which includes the total number of primer dimers contributed by each primer pair.
