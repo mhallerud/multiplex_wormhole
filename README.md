@@ -32,32 +32,8 @@ General Python modules required (these normally come pre-installed): os, sys, cs
 For more details on arguments and defaults for each function, go to the documentation for that function (multiplex_wormhole/docs).
 
 0. Set up a folder structure for storing inputs and outputs
-1. primer3_batch_design: Primers are designed for each template sequence using primer3, including calculating secondary structures using Illumina i5 and i7 adapters as overhangs.
-  Defaults:
-   - Annealing Temp: 52 C
-   - Amplicon size: 70-120 bp
-   - Primer size: 18-26 bp (optimal: 20)
-   - Primer Tm: 57-63 Celsius (optimal: 60)
-   - Primer GC content: 30-70% (optimal: 50)
-   - GC Clamp: 1
-   - Max End GC: 4
-   - Max Poly X: 4
-   - dNTP concentration: 0.25 mM
-   - template concentration: 50 nM
-   - divalent cation concentration: 3.8 mM
-    - monovalent cation concentration: 50 mM
-  If primers can't be found for the above settings, constraints are relaxed:
-    - Primer GC content: 20-80%
-    - GC Clamp: 0
-    - Max End GC: 5
-    - Max Poly X: 5
-2. filter_primers: Primer pairs are filtered to avoid secondary structures. By default, primer pairs are discarded if the following criteria are met:
-    - secondary structure Tm > 45 C
-        AND
-    - delta G < threshold
-        - hairpins: -2 kcal/mol
-        - homodimers or heterodimers at primer ends: -5 kcal/mol
-        - homodimers or heterodimers not at primer ends: -10 kcal/mol
+1. primer3_batch_design: Primers are designed for each template sequence using primer3, including predicting secondary structures (hairpins, homodimers, and heterodimers) within the primer pair.
+2. filter_primers: Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
 3. check_primer_specificity: Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
 4. MFEprimer dimer: Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers. The following defaults are used for calculating dimer formation:
     - delta G threshold for structures at the 3' end: -3 kcal/mol
