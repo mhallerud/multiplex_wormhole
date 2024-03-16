@@ -36,13 +36,7 @@ For more details on arguments and defaults for each function, go to the document
 2. filter_primers: Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
 3. check_primer_specificity: Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
 4. MFEprimer dimer: Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers.
-5. tabulate_MFEprimer_dimers: Primer dimer reports are translated into the following tables:
-    - A N_PRIMERS x N_PRIMERS table which includes the total number of primer dimers estimated for all pairwise combinations of primer pairs.
-    - A N_PRIMERS x 2 table which includes the total number of primer dimers contributed by each primer pair.
-    - A N_PRIMERS X N_PRIMERS table which specifies pairwise primer pair interactions in binary (0 = no secondary structures between primer 1 and primer 2, 1 = at least 1 secondary structure between primer 1 and primer 2).
-    - A N_PRIMERS X 2 table which inclues the total number of primer pairs with which each primer pair interacts.
-   Optionally, tables can also be output for per-primer interactions between primers within the same pair
-   For the optimization step, we recommend using the binary outputs for simplicity
+5. tabulate_MFEprimer_dimers: Primer dimer reports are translated into tables counting pairwise primer pair interactions and total interactions per primer pair. 
 6. optimize_primers: A set of primers for "N" loci is selected that minimizes the number of negative interactions between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives.
 7. Specifically, the following steps are followed:
      - The best primer pairs (i.e., the primer pairs with the lowest dimer load) are identified for each locus.
