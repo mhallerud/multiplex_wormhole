@@ -115,6 +115,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         n_whitelist = len(whitelist_pairs)
     else:
         whitelist_pairs = []
+        whitelist_loci = []
         n_whitelist = 0
     
     if SEED is None:
@@ -200,10 +201,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     # B) set initial and final temps and temp schedule
     print("Setting temperature schedule...")
     # set initial and final temps
-    T_end = min(change)
+    T_end = float(min(change))
     # initial temp should accept most changes
     T_init = min(change) + ADJUSTMENT * (max(change) - min(change))
-    T_init = int(round(T_init, 0))
+
     # partition iteration space across temp range
     if ITERATIONS > PARTITIONS:
         Tspace = (T_init - T_end)/PARTITIONS
