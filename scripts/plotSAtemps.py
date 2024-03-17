@@ -165,6 +165,8 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     i += 1
             MIN_DIMER = min(change)
             MAX_DIMER = max(change)
+            print(".....Maximum dimer load observed "+ str(MAX_DIMER))
+            print(".....Minimum dimer load observed "+ str(MIN_DIMER))
     
     ## Define range of dimer loads to use in calculations
     dimers = list(range(MIN_DIMER, MAX_DIMER+1))

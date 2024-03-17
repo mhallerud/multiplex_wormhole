@@ -47,7 +47,7 @@ from scripts.check_primer_specificity import main as specificityCheck
 from scripts.add_whitelist_to_fasta import main as addWhitelistFasta
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
-
+from scripts.plotSAtemps import main as plotSAtemps
 
 
 ## SET INPUTS:
@@ -162,6 +162,29 @@ tabulateDimers(ALL_DIMERS,
                 os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
                 "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
+
+
+
+## Step 6A: Explore temperature space for simulated annealing
+## There are two ways to run this script: one calculates temperatures and dimer loads based on the problem at hand, 
+## the other uses pre-specified temperatures and dimer loads.
+## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
+## parameters around the defaults.
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_defaults'),
+            PRIMER_FASTA=None, 
+            DIMER_SUMS=None, 
+            DIMER_TABLE=None, 
+            N_LOCI=None, 
+            WHITELIST=None, 
+            SEED=None, 
+            BURNIN=100)
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_decayRate98'),
+            MIN_DIMER=1,
+            MAX_DIMER=15, #update this value based on the max observed in the default plot!
+            DECAY_RATE=0.98, 
+            T_INIT=None, 
+            T_FINAL=None, 
+            ADJUSTMENT=0.1)
 
 
 
