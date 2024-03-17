@@ -47,7 +47,7 @@ from scripts.check_primer_specificity import main as specificityCheck
 from scripts.add_whitelist_to_fasta import main as addWhitelistFasta
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
-from scripts.plotSAtemps import main as plotSAtemps
+from scripts.plot_SA_temps import main as plotSAtemps
 
 
 ## SET INPUTS:
