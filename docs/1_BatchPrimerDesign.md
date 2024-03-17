@@ -18,9 +18,11 @@ For primer3_batch_design to run, `primer3.sh` must be found in the same folder a
 
 ### Arguments
 `IN_CSV` : Path to CSV file containing DNA template sequences in the following format (including headers):
-| SEQUENCE_ID | SEQUENCE_TEMPLATE | SEQUENCE_TARGET |
-| CLocus_704 | TCAGAGAC... | 53,36 |
-| ... | ... | ... |
+
+| SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
+-------------------------------------------------------------
+| CLocus_704    | TCAGAGAC...          | 53,36              |
+| ...           | ...                  | ...                |
 
 `OUTDIR`
 `PRIMER3_PATH`
