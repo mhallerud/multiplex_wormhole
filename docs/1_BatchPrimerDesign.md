@@ -1,4 +1,5 @@
-# Batch Primer Design with <primer3_batch_design>
+# Batch Primer Design
+<primer3_batch_design>
 
 ## Purpose
 Primers are designed for each template sequence using primer3, including calculating secondary structures using Illumina i5 and i7 adapters as overhangs.
