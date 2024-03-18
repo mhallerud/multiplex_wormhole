@@ -1,17 +1,18 @@
 # multiplex_wormhole
-Optimizing PCR primer design for multiplex amplicon sequencing.
+multiplex_wormhole was created for optimizing large multiplex PCR assays for the purpose of SNP-based genotyping wildlife from noninvasive genetic samples. Defaults are tailored towards amplifying degraded DNA from low quality samples. 
 
 **Important: This pipeline is still in development. Use at your own risk!**
 
 # Dependencies
 This pipeline relies on primer3 for primer design and MFEprimer for dimer calculations. To setup your files to run:
-- Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). The path to primer3_core will need to be updated on line 18 of scripts/primer3.sh will need to be updated to reflect your local version. Primer3 version
-- MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on lines 80-81 of multiplex_primer_design.sh to reflect your local version. MFEprimer Version 3.2.7 on Darwin was used during development. 
+- Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be added at line 55 in multiplex_primer_design.py.
+- MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
 
-The pipeline was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. The following (normally pre-installed) Python dependencies are required:
+The following (normally pre-installed) Python dependencies are required:
 - pandas: install by running "pip install pandas" in the command line. Developed with pandas version 1.4.4
 General Python modules required (these normally come pre-installed): os, sys, csv, random, math, signal, gc, itertools
 
+multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. 
 
 # Running the pipeline
 1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position (following primer3 <start bp>,<length> format). For SNPs, the create_in_templates.R file takes a paired VCF and FASTA (FASTA loci match VCF CHROM field) and outputs the templates CSV. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
@@ -34,8 +35,8 @@ The [multiplex_primer_design](multiplex_primer_design.py) script provides a work
 *Simulated annealing parameter space may be explored before proceeding to optimization* See [plot_SA_parameters](docs/6A_ExploreOptimParameters.md) for details.
 6. [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md): A set of primers for "N" loci is selected that minimizes the number of secondary interactions (i.e., dimer load) between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives.
 
-# Notes on the Optimization Process
-This pipeline was created for designing multiplex PCR primers for SNP genotyping from reduced-representation sequencing data. The pipeline functions best when there are 3-5 times as many potential templates relative to the number of desired loci. The process will likely perform poorly on problems with few targets relative to the number of desired loci (e.g., 50 input loci with a desired SNP panel of 40 loci).
+# Notes on the optimization process
+Optimization functions best when there are 3-5 times as many potential templates relative to the number of desired loci. The process will likely perform poorly on problems with few targets relative to the number of desired loci (e.g., 50 input loci with a desired SNP panel of 40 loci).
 
 # Using other dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
