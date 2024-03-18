@@ -4,7 +4,7 @@
 Primers are designed for each template sequence using primer3, including calculating secondary structures using Illumina i5 and i7 adapters as overhangs.
 
 ## Usage
-For primer3_batch_design to run, `primer3.sh` must be found in the same folder and settings files for Primer3 must be in the multiplex_wormhole/settings folder under `Primer3_Base_NoSecondaryFilters.txt` and `Primer3_Broad_NoSecondaryFilters.txt`.
+For primer3_batch_design to run, **primer3.sh** must be found in the same folder and settings files for Primer3 must be in the multiplex_wormhole/settings folder under **Primer3_Base_NoSecondaryFilters.txt** and **Primer3_Broad_NoSecondaryFilters.txt**.
 
 ### Python syntax
 `import os`
@@ -17,7 +17,7 @@ For primer3_batch_design to run, `primer3.sh` must be found in the same folder a
 `primer3_batch_design IN_CSV OUTDIR PRIMER3_PATH`
 
 ### Arguments
-`IN_CSV` : Path to CSV file containing DNA template sequences in the following format (including headers):
+**IN_CSV** : Path to CSV file containing DNA template sequences in the following format (including headers):
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
 | ------------- | -------------------- | ------------------ |
@@ -26,12 +26,12 @@ For primer3_batch_design to run, `primer3.sh` must be found in the same folder a
 
 The sequence target is in <POSITION,LENGTH> format. In the example, there is a SNP at basepair 53 within the locus 704.
 
-`OUTDIR` : Directory where primer output files will be saved. This directory must already exist.
-`PRIMER3_PATH` : Path to primer3_core file.
+**OUTDIR** : Directory where primer output files will be saved. This directory must already exist.
+**PRIMER3_PATH** : Path to primer3_core file.
 
 
 ## Defaults
-Default settings are found in the `Primer3_Base_NoSecondaryFilters.txt` and `Primer3_Broad_NoSecondaryFilters.txt` under multiplex_wormhole/primer3_settings. These settings can be manually changed in the text files. For details on primer3 setting options and definitions, see the [primer3 Manual](https://primer3.org/manual.html). Settings can also be explored in [Primer3Plus](https://www.primer3plus.com) and settings file saved. Make sure that SEQUENCE_ID=, SEQUENCE_TEMPLATE=, and SEQUENCE_TARGET= remain blank before inputting to the script.
+Default settings are found in the **Primer3_Base_NoSecondaryFilters.txt** and **Primer3_Broad_NoSecondaryFilters.txt** under multiplex_wormhole/primer3_settings. These settings can be manually changed in the text files. For details on primer3 setting options and definitions, see the [primer3 Manual](https://primer3.org/manual.html). Settings can also be explored in [Primer3Plus](https://www.primer3plus.com) and settings file saved. Make sure that SEQUENCE_ID=, SEQUENCE_TEMPLATE=, and SEQUENCE_TARGET= remain blank before inputting to the script.
 
 These default settings follow Eriksson et al. 2020 and are intended for amplifying DNA for SNP-based genotyping assays of wildlife from degraded samples (specifically, noninvasive genetic samples such as scats). Specifically, some of the important defaults include:
 
