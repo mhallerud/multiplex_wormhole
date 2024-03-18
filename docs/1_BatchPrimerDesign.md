@@ -1,7 +1,7 @@
 # Batch Primer Design with `primer3_batch_design`
 
 ## Purpose
-Primers are designed for each template sequence using primer3, including calculating secondary structures using Illumina i5 and i7 adapters as overhangs.
+Primers are designed for each template sequence using primer3, including predicting secondary structure formation for adapter-ligated primers.
 
 ## Usage
 For primer3_batch_design to run, **primer3.sh** must be found in the same folder and settings files for Primer3 must be in the multiplex_wormhole/settings folder under **Primer3_Base_NoSecondaryFilters.txt** and **Primer3_Broad_NoSecondaryFilters.txt**.
@@ -40,7 +40,7 @@ Default settings are found in the **Primer3_Base_NoSecondaryFilters.txt** and **
 
 These default settings follow Eriksson et al. 2020 and are intended for amplifying DNA for SNP-based genotyping assays of wildlife from degraded samples (specifically, noninvasive genetic samples such as scats). Specifically, some of the important defaults include:
 
-Illumina Nextera adapters are included
+Illumina Nextera i5 and i7 adapters are added to 5'ends of output primers
 - SEQUENCE_OVERHANG_LEFT=tcgtcggcagcgtcagatgtgtataagagacag
 - SEQUENCE_OVERHANG_RIGHT=gtctcgtgggctcggagatgtgtataagagacag
 Primer annealing temp is 52 Celsius
