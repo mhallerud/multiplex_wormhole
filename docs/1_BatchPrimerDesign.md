@@ -21,30 +21,59 @@ For primer3_batch_design to run, `primer3.sh` must be found in the same folder a
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
 | ------------- | -------------------- | ------------------ |
-| CLocus_704    | TCAGAGAC...          | 53,36              |
+| CLocus_704    | TCAGAGAC...          | 53,1               |
 | ...           | ...                  | ...                |
 
-`OUTDIR`
-`PRIMER3_PATH`
+The sequence target is in <POSITION,LENGTH> format. In the example, there is a SNP at basepair 53 within the locus 704.
+
+`OUTDIR` : Directory where primer output files will be saved. This directory must already exist.
+`PRIMER3_PATH` : Path to primer3_core file.
 
 
-## Defaults:
-Narrow primer3 settings (see --- file):
-- Annealing Temp: 52 C
-- Amplicon size: 70-120 bp
-- Primer size: 18-26 bp (optimal: 20)
-- Primer Tm: 57-63 Celsius (optimal: 60)
-- Primer GC content: 30-70% (optimal: 50)
-- GC Clamp: 1
-- Max End GC: 4
-- Max Poly X: 4
-- dNTP concentration: 0.25 mM
-- template concentration: 50 nM
-- divalent cation concentration: 3.8 mM
-- monovalent cation concentration: 50 mM
+## Defaults
+Default settings are found in the `Primer3_Base_NoSecondaryFilters.txt` and `Primer3_Broad_NoSecondaryFilters.txt` under multiplex_wormhole/primer3_settings. These settings can be manually changed in the text files. For details on primer3 setting options and definitions, see the [primer3 Manual](https://primer3.org/manual.html). Settings can also be explored in [Primer3Plus](https://www.primer3plus.com) and settings file saved. Make sure that SEQUENCE_ID=, SEQUENCE_TEMPLATE=, and SEQUENCE_TARGET= remain blank before inputting to the script.
 
-If primers can't be found for the above settings, constraints are relaxed (see --- file):
-    - Primer GC content: 20-80%
-    - GC Clamp: 0
-    - Max End GC: 5
-    - Max Poly X: 5
+These default settings follow Eriksson et al. 2020 and are intended for amplifying DNA for SNP-based genotyping assays of wildlife from degraded samples (specifically, noninvasive genetic samples such as scats). Specifically, some of the important defaults include:
+
+Illumina Nextera adapters are included
+- SEQUENCE_OVERHANG_LEFT=tcgtcggcagcgtcagatgtgtataagagacag
+- SEQUENCE_OVERHANG_RIGHT=gtctcgtgggctcggagatgtgtataagagacag
+Primer annealing temp is 52 Celsius
+- PRIMER_ANNEALING_TEMP=52
+Amplicon size is 70-120 base pairs, with an optimal of 100 bp
+- PRIMER_PRODUCT_SIZE_RANGE=70-120
+- PRIMER_PRODUCT_OPT_SIZE=100
+Primer size range is 18-26 bp (optimal 20 bp)
+- PRIMER_OPT_SIZE=20
+- PRIMER_MIN_SIZE=18
+- PRIMER_MAX_SIZE=26
+Primer Tm range from 57-63 (optimal 60)
+- PRIMER_MIN_TM=57
+- PRIMER_MAX_TM=63
+- PRIMER_OPT_TM=60
+Primer GC content must be between 30-70% (optimal 50%)
+- PRIMER_MAX_GC=70
+- PRIMER_MIN_GC=30
+- PRIMER_OPT_GC_PERCENT=50
+Primers must have at least one G or C (a GC clamp) at the 3' end
+- PRIMER_GC_CLAMP=1
+At most, primers can have 4 Gs or Gcs at the ends
+- PRIMER_MAX_END_GC=4
+At most, primers can have 4 repeats of the same base
+- PRIMER_MAX_POLY_X=4
+Primer concentrations are 0.25 nM in the final PCR reaction
+- PRIMER_DNTP_CONCENTRATOIN=0.25
+DNA template concentration is 50 nM in the final PCR reaction
+- PRIMER_DNA_CONCENTRATION=50
+Salt concentrations are 3.8 mM for divalent cations and 50 mM for monovalenet cations
+- PRIMER_SALT_DIVALENT=3.8
+- PRIMER_SALT_MONOVALENT=50
+
+If primers can't be found for the above settings, constraints are relaxed:
+- Primer GC content: 20-80%
+- GC Clamp: 0
+- Max End GC: 5
+- Max Poly X: 5
+
+## Citations
+Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(4): 10.1111/1755-0998.13208.
