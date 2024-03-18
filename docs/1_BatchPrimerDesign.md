@@ -36,6 +36,8 @@ The sequence target is in <POSITION,LENGTH> format. In the example, there is a S
 **PRIMER3_PATH** : Path to primer3_core file.
 
 
+## Outputs
+For each template sequence, a Primer3 output file and error file will be saved with naming based on the template SEQUENCE_ID: <SEQUENCE_ID>.out and <SEQUENCE_ID>.err. All outputs will be saved to `OUTDIR`. See the [primer3 Manual](https://primer3.org/manual.html) for interpreting output files.
 
 ## Defaults
 Default settings are found in the ***Primer3_Base_NoSecondaryFilters.txt*** and ***Primer3_Broad_NoSecondaryFilters.txt*** under multiplex_wormhole/primer3_settings. These settings can be manually changed in the text files. For details on primer3 setting options and definitions, see the [primer3 Manual](https://primer3.org/manual.html). Settings can also be explored in [Primer3Plus](https://www.primer3plus.com) and settings file saved. Make sure that SEQUENCE_ID=, SEQUENCE_TEMPLATE=, and SEQUENCE_TARGET= remain blank before inputting to the script.
@@ -92,9 +94,6 @@ If primers can't be found for the above settings, constraints are relaxed:
 - GC Clamp: 0
 - Max End GC: 5
 - Max Poly X: 5
-
-## Outputs
-For each template sequence, a Primer3 output file and error file will be saved with naming based on the template SEQUENCE_ID: <SEQUENCE_ID>.out and <SEQUENCE_ID>.err. All outputs will be saved to `OUTDIR`. See the [primer3 Manual](https://primer3.org/manual.html) for interpreting output files.
 
 
 ## Citations
