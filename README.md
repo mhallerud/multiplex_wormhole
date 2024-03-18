@@ -9,23 +9,14 @@ This pipeline relies on primer3 for primer design and MFEprimer for dimer calcul
 - MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on lines 80-81 of multiplex_primer_design.sh to reflect your local version. MFEprimer Version 3.2.7 on Darwin was used during development. 
 
 The pipeline was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. The following (normally pre-installed) Python dependencies are required:
-- pandas: install by running "pip install pandas" in the command line
+- pandas: install by running "pip install pandas" in the command line. Developed with pandas version 1.4.4
 General Python modules required (these normally come pre-installed): os, sys, csv, random, math, signal, gc, itertools
 
 
 # Running the pipeline
 1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position (following primer3 <start bp>,<length> format). For SNPs, the create_in_templates.R file takes a paired VCF and FASTA (FASTA loci match VCF CHROM field) and outputs the templates CSV. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
 
-2. Run multiplex_primer_design.py to design and filter primers for your targets:
-   ./multiplex_primer_design.sh <TEMPLATE_CSV> <OUTPUT_DIRECTORY> <RESULTS_PREFIX>
-
-   To specify primer design settings:
-   - The primer3 settings used for primer design are found in primer3_settings/primer3_Base_NoSecondaryFilters.txt and primer3_settings/primer3_Broad_NoSecondaryFilters.txt. These settings can be edited directly, or you can create your own Broad and Base setting files and change the filepaths in the primer3_batch_design.sh script.
-   - If you want to adjust PCR specifications, make sure to also change the parameters used for estimating dimer formation (lines 151-152 in multiplex_primer_design.py)
-
-   To specify filtering criteria:
-   - Lines 91-96 in the multiplex_primer_design.py file can be edited to specify different filtering parameters. 
-   - Lines 151-152 in the multiplex_primer_design.py file can be edited to specify different delta G and score thresholds for considering dimers.
+2. Run multiplex_primer_design.py by changing the filepaths on lines 43, 54-60. Default parameters are provided throughout the script but may be changed as desired.
 
 ***This pipeline has very specific file requirements and naming conventions. For simplicity, it is recommended to run the pipeline from the beginning for each new run to avoid problems.***
 
@@ -44,7 +35,7 @@ The [multiplex_primer_design](multiplex_primer_design.py) script provides a work
 6. [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md): A set of primers for "N" loci is selected that minimizes the number of secondary interactions (i.e., dimer load) between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives.
 
 # Notes on the Optimization Process
-This pipeline was created for designing multiplex PCR primers for SNP genotyping from reduced-representation sequencing data. The pipeline functions best when there are many potential targets relative to the number of desired loci (i.e., there are many alternatives that can be tested). The process will likely perform poorly on problems with few targets relative to the number of desired loci (e.g., 50 input loci with a desired SNP panel of 40 loci).
+This pipeline was created for designing multiplex PCR primers for SNP genotyping from reduced-representation sequencing data. The pipeline functions best when there are 3-5 times as many potential templates relative to the number of desired loci. The process will likely perform poorly on problems with few targets relative to the number of desired loci (e.g., 50 input loci with a desired SNP panel of 40 loci).
 
 # Using other dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
