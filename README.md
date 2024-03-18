@@ -40,8 +40,6 @@ For more details on arguments and defaults for each function, go to the document
 6. optimize_primers: A set of primers for "N" loci is selected that minimizes the number of secondary interactions (i.e., dimer load) between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives.
 
 # Notes on the Optimization Process
-Due to the random nature of the optimization algorithm, the returned primer set will only be an estimate of the ideal solution and will vary with each run. I recommend running the optimization 10-20 times and keeping the best set of these runs, unless a set with 0 dimers is found or the problem is simple (few desired # loci vs. many options).
-
 This pipeline was created for designing multiplex PCR primers for SNP genotyping from reduced-representation sequencing data. The pipeline functions best when there are many potential targets relative to the number of desired loci (i.e., there are many alternatives that can be tested). The process will likely perform poorly on problems with few targets relative to the number of desired loci (e.g., 50 input loci with a desired SNP panel of 40 loci).
 
 # Using other dimer calculation tools
