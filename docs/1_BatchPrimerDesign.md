@@ -7,14 +7,14 @@ Primers are designed for each template sequence using primer3, including calcula
 For primer3_batch_design to run, **primer3.sh** must be found in the same folder and settings files for Primer3 must be in the multiplex_wormhole/settings folder under **Primer3_Base_NoSecondaryFilters.txt** and **Primer3_Broad_NoSecondaryFilters.txt**.
 
 ### Python syntax
-`import os`
-`os.chdir('/multiplex_wormhole')`
-`from scripts.primer3_batch_design import main as primer3BatchDesign`
-`primer3BatchDesign(IN_CSV, OUTDIR, PRIMER3_PATH)`
+`import os
+os.chdir('/multiplex_wormhole')
+from scripts.primer3_batch_design import main as primer3BatchDesign
+primer3BatchDesign(IN_CSV, OUTDIR, PRIMER3_PATH)`
 
 ### Command line syntax
-`cd multiplex_wormhole/scripts`
-`primer3_batch_design IN_CSV OUTDIR PRIMER3_PATH`
+`cd multiplex_wormhole/scripts
+primer3_batch_design IN_CSV OUTDIR PRIMER3_PATH`
 
 ### Arguments
 **IN_CSV** : Path to CSV file containing DNA template sequences in the following format (including headers):
@@ -27,6 +27,7 @@ For primer3_batch_design to run, **primer3.sh** must be found in the same folder
 The sequence target is in <POSITION,LENGTH> format. In the example, there is a SNP at basepair 53 within the locus 704.
 
 **OUTDIR** : Directory where primer output files will be saved. This directory must already exist.
+
 **PRIMER3_PATH** : Path to primer3_core file.
 
 
