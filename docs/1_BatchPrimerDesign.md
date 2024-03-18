@@ -19,7 +19,7 @@ For primer3_batch_design to run, ***primer3.sh*** must be found in the same fold
 ### Command line syntax
 `cd multiplex_wormhole/scripts`
 
-`primer3_batch_design IN_CSV OUTDIR PRIMER3_PATH`
+`python3 primer3_batch_design.py IN_CSV OUTDIR PRIMER3_PATH`
 
 ### Arguments
 **IN_CSV** : Path to CSV file containing DNA template sequences in the following format (including headers):
@@ -93,6 +93,8 @@ If primers can't be found for the above settings, constraints are relaxed:
 - Max End GC: 5
 - Max Poly X: 5
 
+## Outputs
+For each template sequence, a Primer3 output file and error file will be saved with naming based on the template SEQUENCE_ID: <SEQUENCE_ID>.out and <SEQUENCE_ID>.err. All outputs will be saved to `OUTDIR`. See the [primer3 Manual](https://primer3.org/manual.html) for interpreting output files.
 
 
 ## Citations
