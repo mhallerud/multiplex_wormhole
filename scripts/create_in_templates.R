@@ -5,13 +5,13 @@ library(stringr)
 
 
 #### READ IN SEQUENCES
-setwd('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNP Panel/Panel2_200initialpairs/')
+setwd('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPPanel/Panel2_200initialpairs/')
 # load template sequences
 marten_seq <- read_templates('CoastalMartenMAF10.MAMA.trimmed.fa') #input fasta file
 #View(as.data.frame(marten_seq$Sequence))
 
 # load VCF
-marten_vcf <- read.vcfR('CoastalMartens.MAF10.recode.vcf')
+marten_vcf <- read.vcfR('CoastalMartens.maf10.Mar2024.recode.vcf')
 marten_fix <- as.data.frame(marten_vcf@fix) #this file holds SNP positions 
 #names(marten_fix) <- c("CHROM","POS","ID","MAJOR","MINOR","UNK","UNK","ALLELE_FREQ")
 
@@ -77,6 +77,34 @@ nrow(marten_seq)
 # check that there's only one line per locus
 nrow(marten_seq)
 length(unique(marten_seq$Header))
+
+## check correlations between loci
+# extract genotypes
+gt <- extract.gt(marten_vcf, element="GT")
+for (i in 1:nrow(gt)){
+  gt[i,gt[i,]=="0/0"] <- 0
+  gt[i,gt[i,]=="0/1"] <- 1
+  gt[i,gt[i,]=="1/1"] <- 2
+}#for
+gt <- as.data.frame(gt)
+gt <- apply(gt, MARGIN=1, function(X) {as.numeric(X)})
+
+# calc correlations, sum high correlations per SNP
+cors <- cor(gt, use="pairwise.complete")
+cors <- as.data.frame(cors)
+high_cors <- apply(cors, MARGIN=1, function(X) as.numeric(X>0.6))
+#sum(high_cors,na.rm=T)-nrow(high_cors)
+totalcorrs <- rowSums(high_cors, na.rm=T)
+
+# grab loci IDs w/ > 400 high corrs (correlated with ~10% of SNPs)
+sum(totalcorrs>400)
+highcorIDs <- rownames(cors)[totalcorrs>400]
+highcor_loci <- unlist(lapply(highcorIDs, function(X){ strsplit(X, ":")[[1]][1]}))
+
+for (l in highcor_loci){
+  l <- paste0(">",l)
+  marten_seq <- marten_seq[which(marten_seq$ID!=l),]
+}#for
 
 
 # double check that everything looks OK...

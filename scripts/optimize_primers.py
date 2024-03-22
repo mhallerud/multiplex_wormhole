@@ -42,7 +42,7 @@ Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair
 
 ## SIMULATED ANNEALING PARAMETERS:
 # BURNIN (# iterations to sample space)
-BURNIN = 100
+BURNIN = 0
 # ADJUSTMENT (proportion of dimer load rand to consider when setting initial temp)
 # - values closer to 1 will accept nearly any change - extremely long run time and very 'bad' changes accepted
 # - values closer to 0 will only accept changes very similar to the 'least bad' options - quicker but won't explore much of the space
@@ -56,9 +56,9 @@ ITERATIONS = 5000
 # - more iterations: slower but better for optimization
 # - fewer iterations may be OK for simpler problems where local minima are not expected to be a problem
 # SIMPLE = # iterations in simple iterative improvement
-SIMPLE = 500
+SIMPLE = 1000
 # DECAY_RATE
-DECAY_RATE = 0.95 #must be between 0 and 1 (non-inclusive)
+DECAY_RATE = 0.98 #must be between 0 and 1 (non-inclusive)
 # - closer to 1: algorithm will spend more time at high temperatures, and take more risks (adding more dimers)
 # - closer to 0.5: algorithm will spend little time at high temperatures and take few risks
 # - closer to 0: algorithm will spend virtually no time at high temperatures
@@ -66,6 +66,8 @@ DECAY_RATE = 0.95 #must be between 0 and 1 (non-inclusive)
 # 1000 iterations - 0.98
 # 10000 iterations - 0.90
 # 5000 iterations - 0.95
+T_INIT = 2
+T_FINAL = 1.2
 
 
 # load dependencies
@@ -77,7 +79,7 @@ import math
 
 
 
-def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None, SEED=None):
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None, SEED=None, VERBOSE=False):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences
@@ -118,18 +120,17 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         whitelist_loci = []
         n_whitelist = 0
     
+    ## STEP 1: Choose initial primer set based on pseudo-Greedy algorithm
+    # Choose initial set of loci based on loci with minimum dimer counts
+    # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
+    print("Generating initial primer set........")
+    # make list of unique loci
+    # convert to list because new versions of random.sample won't be able to handle sets...
+    uniq_loci = list(set(primer_loci))
+    nloci = len(uniq_loci)
+    # grab best primer pairs for each locus
+    best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
     if SEED is None:
-        ## STEP 1: Choose initial primer set based on pseudo-Greedy algorithm
-        # Choose initial set of loci based on loci with minimum dimer counts
-        # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
-        print("Generating initial primer set........")
-        # make list of unique loci
-        # convert to list because new versions of random.sample won't be able to handle sets...
-        uniq_loci = list(set(primer_loci))
-        nloci = len(uniq_loci)
-        # grab best primer pairs for each locus
-        best_primer_pairs = BestPrimers(
-            uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
         # if there are fewer loci than desired, use all of them
         if nloci < N_LOCI:
             print("WARNING: Fewer loci passed filtering than desired in panel")
@@ -143,6 +144,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                         best_primer_pairs.pop(k)
                 # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
                 initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_whitelist])
+                # grab random subset of pairs
+                #initial_keys = rand.sample(best_primer_pairs.items(), N_LOCI-n_whitelist)
                 # append all whitelist pairs to initial pairs
                 for pair in set(whitelist_pairs):
                     pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x] == pair][0]
@@ -153,11 +156,21 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     
     ## If a SEED file is provided, use this as the initial primer set....
     else:
-        initial_pairs = []
+        seed_pairs = []
         with open(SEED, 'r') as file:
             lines = file.readlines()
             for line in lines:
-                initial_pairs.append(lines[0])
+                line = line.split(",")
+                seed_pairs.append(line[0])
+        n_seed = len(seed_pairs)
+        
+        if n_seed < N_LOCI:
+            initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_seed])
+        else:
+            initial_pairs = dict()
+        for pair in set(seed_pairs):
+            pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x] == pair][0]
+            initial_pairs.update({pair: pair_dimers})
 
     # grab locus IDs for primer pairs
     current_pairIDs = list(initial_pairs.keys())
@@ -201,9 +214,15 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     # B) set initial and final temps and temp schedule
     print("Setting temperature schedule...")
     # set initial and final temps
-    T_end = float(min(change))
+    if T_FINAL is None:
+        T_end = float(min(change))
+    else:
+        T_end = T_FINAL
     # initial temp should accept most changes
-    T_init = min(change) + ADJUSTMENT * (max(change) - min(change))
+    if T_INIT is None:
+        T_init = min(change) + ADJUSTMENT * (max(change) - min(change))
+    else:
+        T_init = T_INIT
 
     # partition iteration space across temp range
     if ITERATIONS > PARTITIONS:
@@ -252,6 +271,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
             # in simulated annealing, no need to keep track of what's been tested
             # repeat until # iterations at this temp finishes
             i+=1
+            if VERBOSE:
+                print(curr_total)
         # decrease the temp via exponential decay - this makes the algorithm spend less time in 
         # 'risky' space and more time in productive optimization space
         step+=1
@@ -280,6 +301,29 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     allowed_pairs = [primer_pairs[i] for i in allowed_idx]
     allowed_pairs = list(set(allowed_pairs))
     
+    ## STEP 4: Export selected primers, dimer loads, and cost trace
+    # export the current dimers and their totals as CSV
+    with open(OUTPATH+'_SAdimers.csv', 'w') as file:
+        file.write("PrimerPairID,DimerLoad\n")
+        for key in curr_dimer_totals.keys():
+            # line = curr_dimer_totals[]
+            #line_str = str(line)[1:-1].replace("'","")
+            file.write(key+","+str(curr_dimer_totals[key])+"\n")
+
+    # export selected primers to CSV
+    current_pairs_index = list(
+        filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
+    outpairs = [primer_IDs[x] for x in current_pairs_index]
+    outseqs = [primer_seqs[x] for x in current_pairs_index]
+    with open(OUTPATH+'_SAprimers.csv', 'w') as file:
+        file.write("PrimerPairID,Sequence\n")
+        for i in range(len(outpairs)):
+            file.write(outpairs[i]+","+outseqs[i]+"\n")
+    
+    # export cost changes
+    with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
+        for line in costs:
+            file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
     
     ### STEP 3: Simple iterative improvement with swapping worst values
     # only attempt iterative improvement if no final solution found with simulated annealing
@@ -309,9 +353,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     
             # if there are fewer dimers in new set than previous, then update the set
             if comparison < 0:
-                update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
+                update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                 current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
-                costs.append(['NA', curr_total])
+                costs.append(['NA', i, curr_total])
     
             # otherwise, loop through remaining replacement options
             # this avoids retesting the same options for this replacement
@@ -363,7 +407,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_pairID)
                         # keep new set if it has fewer dimers
                         if comparison < 0:
-                            update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
+                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                             current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
                             break  # exit this loop if a replacement was found
                         else:
@@ -389,6 +433,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     
             # update iteration #
             i += 1
+            if VERBOSE:
+                print(curr_total)
             if i==SIMPLE:
                 print("Iterative improvement algorithm stopped because max # of iterations reached.")
             # progress tracking

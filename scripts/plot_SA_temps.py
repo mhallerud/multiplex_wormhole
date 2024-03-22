@@ -93,8 +93,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 uniq_loci = list(set(primer_loci))
                 nloci = len(uniq_loci)
                 # grab best primer pairs for each locus
-                best_primer_pairs = BestPrimers(
-                    uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
+                best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
                 # if there are fewer loci than desired, use all of them
                 if nloci < N_LOCI:
                     print("WARNING: Fewer loci passed filtering than desired in panel")

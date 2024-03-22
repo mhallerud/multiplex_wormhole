@@ -40,7 +40,7 @@ Input preparation:
 import os
 
 # set working dir to location of multiplex_wormhole
-os.chdir('/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/multiplex_wormhole')
+os.chdir('/Users/maggiehallerud/Desktop/multiplex_wormhole')
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
 from scripts.check_primer_specificity import main as specificityCheck
@@ -53,11 +53,11 @@ from scripts.plot_SA_temps import main as plotSAtemps
 ## SET INPUTS:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
-TEMPLATES='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed.csv'
+TEMPLATES='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/0_Inputs/CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed_subset1.csv'
 WHITELIST_FA='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/Marten_Panel1_whitelist.fa'
 OUTDIR='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole'
 #GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
-N_LOCI = 100
+N_LOCI = 150
 
 
 
@@ -88,8 +88,8 @@ primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
 
 
 ## Step 2: filter out primers with dimers
-filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
-              OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
+filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers/Subset1'), 
+              OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers_subset1'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
               dG_END_LIMIT=-5000,
@@ -100,8 +100,8 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
 
 ## Step 3A Checking primer specificity 
 # Step 3A: Check primer specificity against provided loci
-specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
-specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
+specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates_subset1')
+specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers_subset1.csv'),
                  TARGET = TEMPLATES, 
                  OUTPATH = specificity_output)
 # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
@@ -120,9 +120,9 @@ specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
 WHITELIST_FA = os.path.join(INPUTDIR, os.path.basename(WHITELIST_FA))
 if os.path.exists(WHITELIST_FA):
     addWhitelistFasta(specificity_output+'_passed.fa', WHITELIST_FA)
-    INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
+    INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_subset1_passed_plusWhitelist.fa')
 else:
-    INPUT=os.path.join(OUTDIR2, 'SpecificityCheckGenome_passed.fa')
+    INPUT=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_subset1_passed.fa')
 
 ## Here is another helper script to convert CSV format primers to FA format:
 #csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
@@ -135,8 +135,8 @@ else:
 # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
 # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
 # set output paths
-ALL_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers.txt')
-END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
+ALL_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_subset1.txt')
+END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends_subset1.txt')
 # MFEprimer parameters:
 # -i = input FASTA of primer sequences 
 # -o = output file
@@ -159,7 +159,7 @@ os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70
 ## (which means pairwise interactions between individual primers won't be calculated)
 tabulateDimers(ALL_DIMERS, 
                 END_DIMERS, 
-                os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
+                os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1'), 
                 "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
@@ -170,12 +170,12 @@ tabulateDimers(ALL_DIMERS,
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_defaults'),
-            PRIMER_FASTA=None, 
-            DIMER_SUMS=None, 
-            DIMER_TABLE=None, 
-            N_LOCI=None, 
-            WHITELIST=None, 
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_200loci'),
+            PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_subset1_passed.fa'), 
+            DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_sum.csv'), 
+            DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_wide.csv'), 
+            N_LOCI=100, 
+            WHITELIST=WHITELIST_FA, 
             SEED=None, 
             BURNIN=100)
 plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_decayRate98'),
@@ -191,12 +191,13 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_decayRate98'),
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including whitelist loci)
 # To run once:
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run0"), 
-                  N_LOCI = N_LOCI, 
-                  WHITELIST = WHITELIST_FA)
+optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_subset1_passed.fa'), 
+                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_binary_sum.csv'), 
+                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_binary_wide.csv'), 
+                  OUTPATH = os.path.join(OUTDIR4,"Run0_150Loci_9pm"), 
+                  N_LOCI = 150, 
+                  WHITELIST = WHITELIST_FA,
+                  VERBOSE=True)
 # Outputs are found under 4_OptimizedSets/*
 
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
