@@ -253,8 +253,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
             comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
             SAvalue = math.exp(-comparison/Temp)
             if SAvalue > rand.uniform(0,1):
-                update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
-                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=False)
+                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs = update #parse output into components
                 # log updated cost whenever a change is made
                 costs.append([n_iter+i, Temp, curr_total])
                 # keep track of set with minimum dimers
@@ -283,7 +283,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
             print("Solution with 0 dimers found!")
             break
         print(curr_total)
-    
+        
     # proceed with best set found during simulated annealing- which isn't necessarily the final set
     current_pairIDs = min_pairIDs
     curr_total = min_dimers
@@ -353,8 +353,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     
             # if there are fewer dimers in new set than previous, then update the set
             if comparison < 0:
-                update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
-                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=False)
+                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs = update #parse output into components
                 costs.append(['NA', i, curr_total])
     
             # otherwise, loop through remaining replacement options
@@ -407,8 +407,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_pairID)
                         # keep new set if it has fewer dimers
                         if comparison < 0:
-                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
-                            current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs_rmv, verbose=False)
+                            current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs_rmv = update #parse output into components
                             break  # exit this loop if a replacement was found
                         else:
                             try:
@@ -569,7 +569,7 @@ def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_p
     return comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total
 
 
-def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=True):
+def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=True):
         if verbose:
             print(".........."+swap_id + " replaced with " + new_id)
     # if this primer set has fewer dimers overall, keep it and proceed
@@ -581,9 +581,13 @@ def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dim
         primerset_dimers, nonset_dimers = new_primerset_dimers, new_nonset_dimers
         curr_dimer_totals = new_dimer_totals
         curr_total = new_total
-        return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
-    # else:
-    #    return False
+        # update allowed pairs
+        allowed_pairs.append(swap_id)
+        try:
+            allowed_pairs.remove(new_id)
+        except Exception:
+            pass
+        return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs
 
 
 def AddSwapLocusToAllowed(swap_pair, inlist, primer_loci, primer_pairs):
@@ -745,6 +749,7 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
             dimer_table.update({row[0]: row[1:]})
             dimer_pairID.append(row[0])
     return dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
+
 
 
 # run main function when called from the command line
