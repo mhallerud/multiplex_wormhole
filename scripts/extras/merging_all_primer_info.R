@@ -1,7 +1,9 @@
 library(stringr)
+library(vcfR)
+library(adegenet)
 
 # adding template info to primer pairs
-pairs <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/Run0_150Loci_allLoci_dimers.csv',
+pairs <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/Run12_150Loci_allLoci_dimers.csv',
                   colClasses=c("PrimerPairID"="character"))
 templates <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/0_Inputs/CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed.csv')
 names(templates)
@@ -13,7 +15,7 @@ merged <- merge(pairs, templates, by="SEQUENCE_ID")
 head(merged)
 
 # add primer info
-primers <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/Run0_150Loci_allLoci_primers.csv')
+primers <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/Run12_150Loci_allLoci_primers.csv')
 design <- read.csv('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/2_FilteredPrimers/SpecificityCheckTemplates_passed.csv')
 names(primers) <- c("PrimerID", "Sequence")
 primers$SEQUENCE_ID <- unlist(lapply(primers$PrimerID, function(x) strsplit(as.character(x), "\\.")[[1]][1]))
@@ -40,12 +42,14 @@ merged$REVlen <- NA
 merged$REVpropbound <- NA
 for (pair in merged$PrimerPairID){
   primersub = merged_primers[merged_primers$PrimerPairID==pair,]
-  merged$FW[merged$PrimerPairID==pair] <- primersub$PrimerSeq[which(primersub$Direction.x=="FW")]
-  merged$FWtemp[merged$PrimerPairID==pair] <- primersub$AnnealingTempC[which(primersub$Direction.x=="FW")]
-  merged$FWpropbound[merged$PrimerPairID==pair] <- primersub$PropBound[which(primersub$Direction.x=="FW")]
-  merged$REV[merged$PrimerPairID==pair] <- primersub$PrimerSeq[which(primersub$Direction=="REV")]
-  merged$REVtemp[merged$PrimerPairID==pair] <- primersub$AnnealingTempC[which(primersub$Direction.x=="REV")]
-  merged$REVpropbound[merged$PrimerPairID==pair] <- primersub$PropBound[which(primersub$Direction.x=="REV")]
+  if (nrow(primersub)>0){
+    merged$FW[merged$PrimerPairID==pair] <- primersub$PrimerSeq[which(primersub$Direction.x=="FW")]
+    merged$FWtemp[merged$PrimerPairID==pair] <- primersub$AnnealingTempC[which(primersub$Direction.x=="FW")]
+    merged$FWpropbound[merged$PrimerPairID==pair] <- primersub$PropBound[which(primersub$Direction.x=="FW")]
+    merged$REV[merged$PrimerPairID==pair] <- primersub$PrimerSeq[which(primersub$Direction=="REV")]
+    merged$REVtemp[merged$PrimerPairID==pair] <- primersub$AnnealingTempC[which(primersub$Direction.x=="REV")]
+    merged$REVpropbound[merged$PrimerPairID==pair] <- primersub$PropBound[which(primersub$Direction.x=="REV")]
+  }#if
 }#pair
 merged$FWlen <- nchar(merged$FW)
 merged$REVlen <- nchar(merged$REV)
@@ -81,6 +85,50 @@ for (i in 1:nrow(merged)){
 
 merged$AmpSize <- nchar(merged$Amplicon)
 
-View(merged)
 
-write.csv(merged, '/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/FullPrimerInfo_Run0_150allloci.csv')
+# calculate allele frequencies
+vcf <- read.vcfR('/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/0_Inputs/CoastalMartens.maf10.Mar2024.recode.vcf')
+fixes <- as.data.frame(getFIX(vcf))
+
+genind <- vcfR2genind(vcf)
+maf <- minorAllele(genind)
+
+merged$POS <- NA
+merged$MAF <- NA
+merged$Major <- NA
+merged$Minor <- NA
+for (row in 1:nrow(merged)){
+  locus = merged$SEQUENCE_ID[row]
+  snp = fixes$POS[which(fixes$CHROM==locus)]
+  pos <- paste(locus, snp, sep=":")
+  merged$POS[row] <- paste(snp, collapse=", ")
+  major <- fixes$REF[which(fixes$ID%in%pos)]
+  minor <- fixes$ALT[which(fixes$ID%in%pos)]
+  af <- maf[rownames(maf)%in%pos]
+  if (length(af)>1){
+    if(length(unique(af))>1){
+      merged$MAF[row] <- paste(af, collapse=", ")
+      merged$Major[row] <- paste(major, collapse=", ")
+      merged$Minor[row] <- paste(minor, collapse=", ")
+    }else{
+      merged$MAF[row] <- unique(af)
+      merged$Major[row] <- str_flatten(major)
+      merged$Minor[row] <- str_flatten(minor)
+    }#ifelse
+  }else{
+    merged$MAF[row] <- af
+    merged$Major[row] <- major
+    merged$Minor[row] <- minor
+  }#ifelse
+}#for
+
+# save CSV
+View(merged)
+write.csv(merged, '/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/4_OptimizedSets/FullPrimerInfo_Run12_150allloci.csv')
+
+# check distributions
+hist(as.numeric(merged$MAF), main="MAF", xlab="MAF")
+hist(c(merged$FWtemp, merged$REVtemp), main="Annealing Temp", xlab="Temp C")
+hist(merged$AmpSize, main="Amplicon Size", xlab="BP")
+hist(c(merged$FWpropbound, merged$REVpropbound), main="Primer Binding", xlab="Proportion Bound")
+hist(c(merged$FWlen, merged$REVlen), main="Primer Length", xlab="BP")

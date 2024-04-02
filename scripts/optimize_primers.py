@@ -52,11 +52,11 @@ PARTITIONS = 1000
 # - fewer partitions means algorithm stays in each temperature space longer
 # - partitions are overriden if iterations < partitions
 # ITERATIONS = # iterations in adaptive simulated annealing (after temps are set)
-ITERATIONS = 5000
+ITERATIONS = 1000
 # - more iterations: slower but better for optimization
 # - fewer iterations may be OK for simpler problems where local minima are not expected to be a problem
 # SIMPLE = # iterations in simple iterative improvement
-SIMPLE = 1000
+SIMPLE = 5000
 # DECAY_RATE
 DECAY_RATE = 0.98 #must be between 0 and 1 (non-inclusive)
 # - closer to 1: algorithm will spend more time at high temperatures, and take more risks (adding more dimers)
@@ -67,7 +67,7 @@ DECAY_RATE = 0.98 #must be between 0 and 1 (non-inclusive)
 # 10000 iterations - 0.90
 # 5000 iterations - 0.95
 T_INIT = 2
-T_FINAL = 1.2
+T_FINAL = 1
 
 
 # load dependencies
@@ -159,7 +159,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         seed_pairs = []
         with open(SEED, 'r') as file:
             lines = file.readlines()
-            for line in lines:
+            for line in lines[1:]: #skip header
                 line = line.split(",")
                 seed_pairs.append(line[0])
         n_seed = len(seed_pairs)
@@ -200,7 +200,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
                                                   dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
-                                                  random=True, whitelist=whitelist_loci)
+                                                  random=True, whitelist=whitelist_pairs)
 
         # compare newSet to original set
         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
@@ -253,13 +253,14 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
             comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
             SAvalue = math.exp(-comparison/Temp)
             if SAvalue > rand.uniform(0,1):
-                update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=False)
-                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs = update #parse output into components
+                update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
+                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                allowed_pairs = UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs, new_id)
                 # log updated cost whenever a change is made
                 costs.append([n_iter+i, Temp, curr_total])
                 # keep track of set with minimum dimers
                 # this allows the best set to be kept while the algorithm continues to explore more of the space
-                if curr_total < min_dimers:
+                if curr_total <= min_dimers:
                     min_pairIDs = current_pairIDs
                     min_dimers = curr_total
                     min_dimer_totals = curr_dimer_totals
@@ -353,8 +354,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     
             # if there are fewer dimers in new set than previous, then update the set
             if comparison < 0:
-                update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=False)
-                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs = update #parse output into components
+                update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
+                current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs)
                 costs.append(['NA', i, curr_total])
     
             # otherwise, loop through remaining replacement options
@@ -367,7 +369,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                 except:
                     pass
                 # add indices for the other primer pairs for the current worst locus to the allowed list
-                AddSwapLocusToAllowed(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
+                UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
                 # avoid trying the same values...
                 orig_swap = swap_id
                 orig_best = new_best_id
@@ -407,8 +409,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_pairID)
                         # keep new set if it has fewer dimers
                         if comparison < 0:
-                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs_rmv, verbose=False)
-                            current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs_rmv = update #parse output into components
+                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
+                            current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                            allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
                             break  # exit this loop if a replacement was found
                         else:
                             try:
@@ -445,7 +448,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         for b in range(len(blacklist)):
             print("\t\t" + blacklist[b])
     
-    
+    if i==SIMPLE:
+        print("Ran out of iterations during simple iterative improvement! Try increasing the SIMPLE parameter for a better optimized set.")
+
     ## STEP 4: Export selected primers, dimer loads, and cost trace
     # export the current dimers and their totals as CSV
     with open(OUTPATH+'_dimers.csv', 'w') as file:
@@ -482,10 +487,11 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
 
     # if swapping randomly, choose a random pairID (not including whitelist) to replace
     if random:
-        options =  pairIDs.copy()
+        # option to replace
+        options = []
         for p in pairIDs:
-            if p in whitelist:
-                options.remove(p)
+            if p not in whitelist:
+                options.append(p)
         swap = rand.choice(options)
     
     # otherwise, replace the current worst (most dimers) pair in the set
@@ -511,7 +517,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
                 return None
 
     # add other primers for the swap locus back to the allowed list
-    AddSwapLocusToAllowed(swap, allowed_pairs_edit, primer_loci, primer_pairs)
+    allowed_pairs_edit = UpdateAllowedPairs(swap, allowed_pairs_edit, primer_loci, primer_pairs)
 
     # subset nonset dimer table to include only allowed primer pairs (i.e., primer pairs for loci not in the set)
     # gets all pair IDs that aren't in current pairs
@@ -569,7 +575,7 @@ def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_p
     return comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total
 
 
-def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, allowed_pairs, verbose=True):
+def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=True):
         if verbose:
             print(".........."+swap_id + " replaced with " + new_id)
     # if this primer set has fewer dimers overall, keep it and proceed
@@ -581,16 +587,11 @@ def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dim
         primerset_dimers, nonset_dimers = new_primerset_dimers, new_nonset_dimers
         curr_dimer_totals = new_dimer_totals
         curr_total = new_total
-        # update allowed pairs
-        allowed_pairs.append(swap_id)
-        try:
-            allowed_pairs.remove(new_id)
-        except Exception:
-            pass
-        return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers, allowed_pairs
+        return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
 
 
-def AddSwapLocusToAllowed(swap_pair, inlist, primer_loci, primer_pairs):
+def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = None):
+    # add alternative primer pairs for swap locus back to list
     swap_locus = swap_pair.split(".")[0]
     swap_idx = list(
         filter(lambda x: primer_loci[x] == swap_locus, range(len(primer_loci))))
@@ -603,6 +604,18 @@ def AddSwapLocusToAllowed(swap_pair, inlist, primer_loci, primer_pairs):
         pass
     for p in swap_pairs:
         inlist.append(p)
+    # remove primer pairs for new pair ID
+    if new_pair is not None:
+        new_locus = new_pair.split(".")[0]
+        new_idx = list(filter(lambda x: primer_loci[x] == new_locus, range(len(primer_loci))))
+        new_pairs = [primer_pairs[i] for i in new_idx]
+        new_pairs = (set(new_pairs))  # extract unique values only
+        for p in new_pairs:
+            try:
+                inlist.remove(p)
+            except Exception:
+                pass
+    # return new allowed list
     return inlist
 
 
