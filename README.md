@@ -34,7 +34,7 @@ The [multiplex_primer_design](multiplex_primer_design.py) script provides a work
 
    *Whitelist primers should be added to the previous step's output before proceeding to the next step. This is automatically handled in the multiplex_primer_design script.*
 
-4. [Predict Cross-Primer Dimers](docs/4_PrimerPrediction.md): Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers.
+4. [Predict Cross-Primer Dimers](docs/4_DimerPrediction.md): Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers.
 5. [Tabulate Dimers](docs/5_TabulateDimers.md): Primer dimer reports are translated into tables counting pairwise primer pair interactions and total interactions per primer pair.
 
    *Simulated annealing parameter space may be explored before proceeding to optimization. See [plot_SA_parameters](docs/6A_ExploreOptimParameters.md) for details.*
