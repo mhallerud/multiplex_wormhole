@@ -1,4 +1,4 @@
-# Primer Prediction with `MFEprimer dimer`
+# Primer Dimer Prediction with `MFEprimer dimer`
 
 ## Purpose
 Primer dimers are predicted using MFEprimer. MFEprimer dimer is run twice: first for all primer dimers expected to form, and then for primer dimers forming specifically on the 3' end of primers. This allows different filtering parameters to be used for end dimers and other dimers during dimer prediction.
