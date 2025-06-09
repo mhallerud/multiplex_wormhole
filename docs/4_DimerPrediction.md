@@ -32,6 +32,7 @@ This step has a text file output for each run of MFEprimer dimer. The output is 
 
 ## MFEprimer parameters & Defaults used in multiplex_wormhole
 These values are specified in the <multiplex_primer_design> script and may be altered. Specifications include:
+
 `-d` : maximum delta G threshold for structures in kcal/mol (Default: all dimers: -6, end dimers: -3)
 
 `-s` : score limit for including predicted dimers, calculated with +1 for each bp match and -1 for each bp mismatch (Default: 3)
