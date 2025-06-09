@@ -30,12 +30,12 @@ The [multiplex_primer_design](multiplex_primer_design.py) script provides a work
 0. Set up a folder structure for storing inputs and outputs
 1. [Batch Primer Design](docs/1_BatchPrimerDesign.md): Primers are designed for each template sequence using primer3, including predicting secondary structures (hairpins, homodimers, and heterodimers) within the primer pair.
 2. [Filter Primers](docs/2_FilterPrimers.md): Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
-3. [Check Primer Specificity](docs/3_CheckPrimerSpecificity): Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
+3. [Check Primer Specificity](docs/3_CheckPrimerSpecificity.md): Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
 
    *Whitelist primers should be added to the previous step's output before proceeding to the next step. This is automatically handled in the multiplex_primer_design script.*
 
 4. [Predict Cross-Primer Dimers](docs/4_PrimerPredictions.md): Primer dimers are predicted using MFEprimer, with one MFEprimer output including all primer dimers expected to form and a second output including only primer dimers forming on the 3' end of primers.
-5. [Tabulate Dimers](5_TabulateDimers.md): Primer dimer reports are translated into tables counting pairwise primer pair interactions and total interactions per primer pair.
+5. [Tabulate Dimers](docs/5_TabulateDimers.md): Primer dimer reports are translated into tables counting pairwise primer pair interactions and total interactions per primer pair.
 
    *Simulated annealing parameter space may be explored before proceeding to optimization. See [plot_SA_parameters](docs/6A_ExploreOptimParameters.md) for details.*
 
