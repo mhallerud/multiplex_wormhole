@@ -69,3 +69,5 @@ Testing parameters based on known cost values (provided values are defaults). If
 
 ![TestingASAparams_DimerAcceptanceProbs](https://github.com/mhallerud/multiplex_wormhole/assets/43869036/c661c219-89ae-4724-89a1-60a63a059339)
 
+
+[Previous](5_TabulateDimers.md)		[Next](6_OptimizeMultiplexPrimerSet.md)

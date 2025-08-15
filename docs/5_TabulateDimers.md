@@ -38,3 +38,6 @@ Optionally, tables can also be output for per-primer interactions between indivi
 
 If you want to prioritize minimizing the number of pairwise interactions in a multiplex, use the binary outputs in the optimziation step. 
 If you want to prioritize minimizing the total dimer load in a multiplex, use the count outputs in the optimization step.
+
+
+[Previous](4_DimerPrediction.md)		[Next](6A_ExploreOptimParameters.md)

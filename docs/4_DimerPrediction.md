@@ -56,3 +56,6 @@ See the [MFEprimer website](https://www.mfeprimer.com) for more details on MFE p
 
 ## Citation
 Wang, K. et al., MFEprimer-3.0: quality control for PCR primers. Nucleic acids research 47, W610–W613 (2019).
+
+
+[Previous](3_CheckPrimerSpecificity.md)		[Next](5_TabulateDimers.md)

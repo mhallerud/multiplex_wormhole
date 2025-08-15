@@ -64,3 +64,6 @@ Primers that pass filtering are output to a CSV file (`OUTPATH`.csv) that includ
 PrimerIDs are defined by templateID.pairN.FW/REV. For example, the primerID "CLocus_704.5.FW" corresponds to the forward primer for primer pair 5 for template locus CLocus_704.
 
 A list of template sequence IDs that had >1 primer pair(s) pass filtering are output to a text file named `OUTPATH`_LocusIDs.txt
+
+
+[Previous](1_BatchPrimerDesign.md)		[Next](3_CheckPrimerSpecificity.md)

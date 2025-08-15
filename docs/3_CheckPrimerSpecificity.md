@@ -35,3 +35,6 @@ When a genome for the target species is available, this step should be used in c
 **`OUTPATH`_passed.fa** : Fasta file containing all primers passing the specificity check. Sequence IDs are primer IDs.
 
 **`OUTPATH`_failed.csv** : CSV file containing primers that failed the specificity check. File format is equivalent to the other CSVs.
+
+
+[Previous](2_FilterPrimers.md)		[Next](4_DimerPrediction.md)

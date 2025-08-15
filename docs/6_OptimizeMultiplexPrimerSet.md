@@ -106,3 +106,5 @@ Optimization is constrained by the number of options available relative to the n
 
 There is a tradeoff between computation time in simulated annealing (`ITERATIONS`) and optimization. For complex problems, longer runtimes and more runs will help explore more of the space. When in doubt, try plotting the trace of costs. If it is continuing to decrease at the tail end of iterations, increase the iterations. If the final cost is very variable between runs, increase the number of runs. You can also try subsetting the number of options to simplify the problem. Finally, if none of those work, you may have to consider aiming for a smaller target set.
 
+
+[Previous](5_TabulateDimers.md)
