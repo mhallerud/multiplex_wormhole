@@ -147,7 +147,7 @@ primerinfo$FW <- toupper(primerinfo$FW)
 primerinfo$REV <- toupper(primerinfo$REV)
 
 # add prefix to primer pair names (if desired)
-primerinfo$PrimerPairID <- paste("MACA", primerinfo$PrimerPairID, sep='_')
+primerinfo$Locus <- paste("MACA", primerinfo$Locus, sep='_')
 
 # check & export
 head(primerinfo)
@@ -161,7 +161,7 @@ extract_probes <- function(row){ #row = merged[index,]
   poss <- as.numeric(strsplit(row$POS, ",")[[1]])
 
   # if there is more than 1 SNP - choose which one to use
-  if (length(pos>1)){
+  if (length(poss>1)){
     mafs <- as.numeric(strsplit(row$MAF, ",")[[1]])
     # if maf is same- just choose the first
     if (length(mafs==1)){
@@ -178,7 +178,7 @@ extract_probes <- function(row){ #row = merged[index,]
   
   # NOTE: This is the position in the template, so we'll have to adjust by where the FW primer starts
   pos <- poss[index]
-  pos <- pos - row$FWstart
+  pos <- pos - row$FWstart + 1
   
   # find 6 bp before and after SNP
   start <- pos - 6
@@ -206,6 +206,12 @@ extract_probes <- function(row){ #row = merged[index,]
   major <- strsplit(row$Major, ",")[[1]][index]
   minor <- strsplit(row$Minor, ",")[[1]][index]
   
+  # grab out first allele if microhaplotype with equal MAF
+  if (nchar(major) > 1){
+    major <- strsplit(major, "")[[1]][1]
+    minor <- strsplit(minor, "")[[1]][1]
+  }#if
+  
   # create probe1
   probe1 <- split
   probe1[pos] <- major # substitute allele1 in position
@@ -221,21 +227,19 @@ extract_probes <- function(row){ #row = merged[index,]
   probe2 <- toupper(probe2) # capitalize all
   
   # account for other SNPs that may occur in probe....
-  snps <- poss[-index]
-  i <- 1
-  while(i<=length(snps)){
+  for (snp in poss[-index]){
     # adjust position based on amplicon instead of template
-    snp <- snps[i]
-    snp <- snp - row$FWstart
+    index <- which(poss==snp)
+    snp <- snp - row$FWstart + 1
     # check if snp is in probe region
     if (snp %in% start:end){
       # find position of snp in probe
       snppos <- which(start:end==snp)
       # grab alleles for SNP
-      major <- strsplit(row$Major,",")[[1]][i]
-      minor <- strsplit(row$Minor,",")[[1]][i]
+      mjr <- strsplit(strsplit(row$Major,",")[[1]], "")[[1]][index]
+      mnr <- strsplit(strsplit(row$Minor,",")[[1]], "")[[1]][index]
       # convert to GTseq syntax
-      alleles <- str_flatten(c("[", major, minor, "]"))
+      alleles <- str_flatten(c("[", mjr, mnr, "]"))
       # replace position in probes with GTseq SNP
       probe1 <- strsplit(probe1,"")[[1]]
       probe1[snppos] <- alleles
@@ -249,16 +253,16 @@ extract_probes <- function(row){ #row = merged[index,]
   }#while
 
   # return probes
-  return(c(probe1,probe2))
+  return(c(major,minor,probe1,probe2))
 }#function extract_probes
 
 
 # set up output dataframe
-locusinfo <- data.frame(LocusID=merged$PrimerPairID, Probe1=NA, Probe2=NA, FW_primer=toupper(merged$FW))
+locusinfo <- data.frame(LocusID=merged$PrimerPairID, Allele1=NA, Allele2=NA, Probe1=NA, Probe2=NA, FW_primer=toupper(merged$FW))
 
 # grab probe info for all rows
 for (row in 1:nrow(merged)){
-  locusinfo[row, c("Probe1","Probe2")] <- extract_probes(merged[row,])
+  locusinfo[row, 2:5] <- extract_probes(merged[row,])
 }#for
 
 # add prefix to primer pair names (if desired)
@@ -266,4 +270,4 @@ locusinfo$LocusID <- paste("MACA", locusinfo$LocusID, sep='_')
 
 # check & export
 head(locusinfo)
-write.csv(primerinfo, 'GTseq_LocusInfo_150plex_newPrimers.csv', row.names=FALSE)
+write.csv(locusinfo, 'GTseq_LocusInfo_150plex_newPrimers.csv', row.names=FALSE)

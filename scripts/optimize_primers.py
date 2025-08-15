@@ -132,7 +132,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
     if SEED is None:
         # if there are fewer loci than desired, use all of them
-        if nloci < N_LOCI:
+        if nloci < (N_LOCI-n_whitelist):
             print("WARNING: Fewer loci passed filtering than desired in panel")
             print("# loci used: " + str(nloci))
             initial_pairs = best_primer_pairs
