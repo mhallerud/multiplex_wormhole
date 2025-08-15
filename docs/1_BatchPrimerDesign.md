@@ -99,5 +99,4 @@ If primers can't be found for the above settings, constraints are relaxed:
 ## Citations
 Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(4): 10.1111/1755-0998.13208.
 
-
-		[Next](2_FilterPrimers.md)
+[Next](2_FilterPrimers.md)
