@@ -166,10 +166,10 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
     missingCols = list(itertools.filterfalse(lambda x: x in primersCol, primerIDs))
     # add rows for missing pairs (otherwise they won't be included in table)
     for primer in missingRows:
-        pair = primer.replace('.REV', '').replace('.FW', '')
+        pair = primer.replace('.REV', '').replace('.FWD', '')
         dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
     for primer in missingCols:
-        pair = primer.replace('.REV', '').replace('.FW', '')
+        pair = primer.replace('.REV', '').replace('.FWD', '')
         dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
     if pairs:
         # cross-tabulate pair1 vs pair2 counts
