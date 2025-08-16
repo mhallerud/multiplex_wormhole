@@ -1,27 +1,52 @@
 # multiplex_wormhole
-Optimizing PCR primer design for multiplex amplicon sequencing by minimizing predicted dimer loads. The target audience is GT-seq panel development, however the process is transferable to any application where multiple distinct amplicons are being targeted for multiplex PCR.
+*In silico* optimization for multiplex PCR assays by minimizing predicted primer dimer loads. The target audience is GT-seq panel developers, however the process is transferable to any application where many amplicons are targeted in multiplex PCR.
 
-multiplex_wormhole was created for optimizing large multiplex PCR assays for the purpose of SNP-based genotyping wildlife from noninvasive genetic samples. Defaults are tailored towards amplifying degraded DNA from low quality samples. 
+multiplex_wormhole was created for the purpose of optimizing large multiplex PCR panels that are applied to noninvasive wildlife genetic samples for the purposes of SNP-based individual identification and relatedness analysis.  Default settings are therefore tailored towards amplifying degraded DNA from low quality samples. 
 
 **Important: This pipeline is still in development. Use at your own risk!**
+**Please report any problems or potential enhancements in the GitHub Issues page.**
+
 
 # Dependencies
-This pipeline relies on primer3 for primer design and MFEprimer for dimer calculations. To setup your files to run:
-- Primer3 can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be added at line 55 in multiplex_primer_design.py.
-- MFEprimer can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
+- Primer3 is used for primer design and can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be added at line 55 in multiplex_primer_design.py.
+- MFEprimer is used for dimer calculations and can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
 
 The following (normally pre-installed) Python dependencies are required:
 - pandas: install by running "pip install pandas" in the command line. Developed with pandas version 1.4.4
-General Python modules required (these come pre-installed with many Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, mathplotlib
+General Python modules required (these come pre-installed with most Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, mathplotlib
 
 multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. 
 
-# Running the pipeline
-1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position (following primer3 <start bp>,<length> format). For SNPs, the create_in_templates.R file takes a paired VCF and FASTA (FASTA loci match VCF CHROM field) and outputs the templates CSV. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
 
-2. Run multiplex_primer_design.py by changing the filepaths on lines 43, 54-60. Default parameters are provided throughout the script but may be changed as desired.
+# Quick-Start Guide
+1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position following primer3 format: <start bp>,<length>. The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using a VCF and FASTA as inputs. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). The R script handles two input types:
 
-***This pipeline has very specific file requirements and naming conventions. For simplicity, it is recommended to run the pipeline from the beginning for each new run to avoid problems.***
+* *de novo*: Matches formatting output of *de novo* Stacks pipeline where the FASTA was created using `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a prefix such as "CLocus_".
+
+* *reference-aligned: Assumes the FASTA sequence header is in the format `CHROM`:`startBP`-`endBP` where `CHROM` matches the reference sequence denoted as 'CHROM' field in the VCF, `startBP` is the position in the reference sequence where the FASTA sequence starts, and `endBP` is the position in the reference sequence where the FASTA sequence ends. This format can be extracted from reference-aligned SNP data in VCF format (e.g., output from Stacks, bcftools mpileup, etc.) using the following commands with REF.FASTA as the reference genome:
+
+```
+# NOTE: Flanking regions of 100-bp are used here as this is roughly the amplicon length targeted and provides good primer binding space on either side of the target SNP, but this can be adjusted if longer or shorter amplicons are desired. 
+# thin to 1 SNP per 100-bp to avoid overlapping template sequences
+# this step is not necessary if linkage disequilibrium pruning has already been performed on the input VCF
+vcftools --vcf <IN.VCF> --thin 100 --out Thinned100bp --recode
+
+# convert SNPs into bed format 
+bcftools query -f '%CHROM\t%POS\n' Thinned100bp.recode.vcf | awk '{print $1"\t"$2-1"\t"$2}' | awk '{print $0"\t"$1":"$3}' > Thinned100bp.bed
+
+# make tab-delimited file with reference sequence IDs in the first field and sequence lengths in the second field
+seqkit fx2tab --length --name <REF.FASTA> chr_lengths.txt 
+
+# grab 100-bp flanking regions around thinned SNPs
+bedtools slop -b 100 -i Thinned100bp.bed -g chr_lengths.txt > Thinned100bp_Flanking100bp.bed
+
+# make fasta of these
+bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.FA>
+```
+
+2. Run multiplex_primer_design.py by changing the filepaths on lines 43, 54-61. Default parameters are provided but can be adjusted within this script.
+
+***This pipeline has very specific file requirements and naming conventions. Problems can be avoided by running the full pipeline from start to finish for each new dataset.***
 
 
 # Steps in the pipeline
