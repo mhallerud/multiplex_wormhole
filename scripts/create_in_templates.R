@@ -7,6 +7,7 @@ fasta <- "MAF30All.CENSORed.fa"
 invcf <- "MAF30AllGrayFoxPops.Filtered.recode.vcf"
 type <- "refbased"
 #type <- "denovo"
+prefix <- "CLocus_" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
 minflankbp <- 18 # minimum size of flanking regions (i.e., min primer binding site size)
 maxSNP <- 3 # maximum number of SNPs allowed in a template
 ## TODO: Consider adjusting this to a SNP density, e.g. for variable template lengths
@@ -16,6 +17,7 @@ maxSNP <- 3 # maximum number of SNPs allowed in a template
 # load template sequences
 templates <- openPrimeR::read_templates(fasta) #input fasta file
 templates$ID <- gsub(">","", templates$ID)
+templates$ID <- gsub(prefix,"", templates$ID)
 #View(as.data.frame(templates$Sequence))
 
 # load VCF
@@ -42,6 +44,7 @@ if(type=="refbased"){
   #head(lociinfo)
   # for each site in the VCF, find the associated locus based on the chromosome and position
   newfixes <- data.frame(CHROM=c(),POS=c(),ID=c(), REF=c(), ALT=c())
+  excluded <- newfixes
   for (i in 1:nrow(fix)){
     sub <- lociinfo[lociinfo$CHROM==fix$CHROM[i],] # subset to the chromosome level
     locus <- sub[which(sub$StartBP<fix$POS[i] & sub$EndBP>fix$POS[i]),] # find locus based on SNP position
@@ -57,8 +60,15 @@ if(type=="refbased"){
     new$POS <- new$POS-locus$StartBP
     # add to DF
     newfixes <- rbind(newfixes, new) # add to new SNP df
+    # keep track of SNPs not found in templates
+    if(nrow(new)==0){
+      excluded <- rbind(excluded, new)
+    }#if
   }#fix
   #head(newfixes)#check
+  if(nrow(excluded)>0){
+    print(paste("WARNING!",nrow(excluded),"SNPs","out of", nrow(fix), "were excluded. Check 'excluded' object for details."))
+  }#if
   fix <- newfixes
 }#if
 ## NOTE: The adjusted SNP position will be flanking regions + 1 
@@ -66,11 +76,15 @@ if(type=="refbased"){
 
 
 
+
 #### IDENTIFY PRIMER BINDING LOCATIONS ####
 # reset allowed primer binding locations for each template based on SNP position(s)
+nosnps <- c()
 for (i in 1:nrow(templates)){
-  id <- str_split(templates$ID[i], '>')[[1]][2] # grab locusID
-  snps <- as.numeric(fix$POS[fix$CHROM==id])
+  snps <- as.numeric(fix$POS[fix$CHROM==templates$ID[i]])
+  if(length(snps)==0){
+    nosnps <- templates$ID[i]
+  }#if
   min_snp <- min(snps)
   max_snp <- max(snps)
   if (min_snp==Inf) min_snp <- templates$Sequence_Length[i]
@@ -79,6 +93,12 @@ for (i in 1:nrow(templates)){
   templates$Allowed_Start_rev[i] <- max_snp+1
   templates$Allowed_End_rev[i] <- templates$Sequence_Length[i]
 }#for i
+
+# raise warning if any sequences contained 0 SNPs
+if(length(nosnps)>0){
+  print(paste("WARNING:",length(snps), "FASTA sequences contained 0 SNPs in the VCF. See the 'nosnps' object for sequence IDs."))
+}#if
+
 
 # check all are populated correctly
 templates$Allowed_Start_fw #these should all be 1
@@ -96,6 +116,10 @@ for (i in 1:nrow(templates)){
 head(templates$Allowed_fw)
 head(templates$Allowed_rev)
 
+
+
+# check whether all templates have SNPs and vice versa
+unique(templates$ID[!templates$ID %in% fix$CHROM])
 
 
 #### FILTERING TEMPLATES ####
@@ -157,6 +181,9 @@ nrow(microhaps_seq)
 microhaps <- fix[fix$CHROM%in%names(counts)[counts>1],]
 microhaps[microhaps$CHROM==microhaps$CHROM[1],]
 templates[templates$ID==paste0(">",microhaps$CHROM[1]),]
+
+# remove any periods in template IDs- these will cause problems with multiplex wormhole
+templates$ID <- gsub("\\.1","",templates$ID)
 
 # export IDs, templates, and targets as CSV in primer3 format
 target_len <- templates$Allowed_Start_rev - templates$Allowed_End_fw + 1
