@@ -51,13 +51,14 @@ from scripts.plot_SA_temps import main as plotSAtemps
 
 
 ## SET INPUTS:
+os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
-TEMPLATES='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole/0_Inputs/CoastalMartenTemplates_MAF10_CENSOR_Martesmartes_trimmed_subset1.csv'
-WHITELIST_FA='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/Marten_Panel1_whitelist.fa'
-OUTDIR='/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/multiplex_wormhole'
+TEMPLATES='../Input_SNPs/GrayFox_primer3Templates.csv'
+WHITELIST_FA=None#'/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/Marten_Panel1_whitelist.fa'
+OUTDIR='individualID'
 #GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
-N_LOCI = 150
+N_LOCI = 75
 
 
 
@@ -68,7 +69,8 @@ INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
 if not os.path.exists(INPUTDIR):
     os.mkdir(INPUTDIR)
 os.system("cp "+TEMPLATES+" "+INPUTDIR)
-os.system("cp "+WHITELIST_FA+" "+INPUTDIR)
+if WHITELIST_FA is not None:
+    os.system("cp "+WHITELIST_FA+" "+INPUTDIR)
 OUTDIR2 = os.path.join(OUTDIR, "2_FilteredPrimers")
 if not os.path.exists(OUTDIR2):
     os.mkdir(OUTDIR2)
@@ -88,8 +90,8 @@ primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
 
 
 ## Step 2: filter out primers with dimers
-filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers/Subset1'), 
-              OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers_subset1'),
+filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
+              OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
               dG_END_LIMIT=-5000,
@@ -101,15 +103,12 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers/Subset1'),
 ## Step 3A Checking primer specificity 
 # Step 3A: Check primer specificity against provided loci
 specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
-specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers_subset1.csv'),
+specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
                  TARGET = TEMPLATES, 
                  OUTPATH = specificity_output)
 # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
 
-# Step 3B: Check AMPLICON specificity against a genome
-#specificityCheck(os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.csv'), 
-#                  GENOME, 
-#                  os.path.join(OUTDIR2,'SpecificityCheckGenome'))
+INPUT=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa')#this is input for step 4
 
 
 
@@ -117,12 +116,12 @@ specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers_subset1.csv'),
 ## BEFORE RUNNING THIS STEP: Check that whitelist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
 
 ## Here's a helper script to automate combining these files:
-WHITELIST_FA = os.path.join(INPUTDIR, os.path.basename(WHITELIST_FA))
-if os.path.exists(WHITELIST_FA):
-    addWhitelistFasta(specificity_output+'_passed.fa', WHITELIST_FA)
-    INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
-else:
-    INPUT=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa')
+if WHITELIST_FA is not None:
+    WHITELIST_FA = os.path.join(INPUTDIR, os.path.basename(WHITELIST_FA))
+    if os.path.exists(WHITELIST_FA):
+        addWhitelistFasta(specificity_output+'_passed.fa', WHITELIST_FA)
+        # adjust input for step 4 to include whitelist
+        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
 
 ## Here is another helper script to convert CSV format primers to FA format:
 #csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
@@ -158,9 +157,9 @@ os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70
 ## It will run substantially faster if you leave the 4th argument blank 
 ## (which means pairwise interactions between individual primers won't be calculated)
 tabulateDimers(ALL_DIMERS, 
-                END_DIMERS, 
-                os.path.join(OUTDIR3, 'PrimerPairInteractions_'), 
-                "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
+               END_DIMERS, 
+               os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
+               "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
 
@@ -170,21 +169,30 @@ tabulateDimers(ALL_DIMERS,
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_200loci'),
-            PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_subset1_passed.fa'), 
-            DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_sum.csv'), 
-            DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_subset1_wide.csv'), 
-            N_LOCI=100, 
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_75loci'),
+            PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+            DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+            DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+            N_LOCI=75, #number of target loci in panel
             WHITELIST=WHITELIST_FA, 
             SEED=None, 
-            BURNIN=100)
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_decayRate98'),
+            BURNIN=100)#number iterations with dimer loads used to sample cost space
+# decay rate closer to 1: 
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
+            # dimer counts to plot and calculate temps from (if not set)
             MIN_DIMER=1,
-            MAX_DIMER=15, #update this value based on the max observed in the default plot!
-            DECAY_RATE=0.98, 
-            T_INIT=None, 
-            T_FINAL=None, 
-            ADJUSTMENT=0.1)
+            MAX_DIMER=5, #update this value based on the max observed in the default plot!
+            # parameter determining temperature decay in negative exponential
+            DECAY_RATE=0.95, #default is 0.98
+            # initial temperature to start from - higher=more risk accepted
+            T_INIT=2, 
+            # final temperature to stop at - 1=no risk, higher=more risk accepted
+            T_FINAL=0, 
+            #proportion of max dimer load considered when setting temperature schedule
+            #closer to 0 = accepts fewer errors
+            DIMER_ADJ=0.1,
+            # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
+            PROB_ADJ=1)
 
 
 
@@ -192,111 +200,12 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_decayRate98'),
 # N_LOCI here is the number of loci you want in the final panel (including whitelist loci)
 # To run once:
 optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run01_200Loci_allLoci"), 
-                  N_LOCI = 200, 
+                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
+                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
+                  OUTPATH = os.path.join(OUTDIR4,"Run01_75Loci_MAF30"), 
+                  N_LOCI = N_LOCI, 
                   WHITELIST = WHITELIST_FA,
                   VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run02_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run03_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run04_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run05_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run06_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run07_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run08_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run09_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run10_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run11_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run12_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run13_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run14_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run15_200Loci_allLoci"), 
-                  N_LOCI = 200, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
-
 # Outputs are found under 4_OptimizedSets/*
 
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
@@ -305,9 +214,9 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
 from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 15, 
                       PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_sum.csv'), 
-                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions__binary_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"150Loci_allloci_Run"), 
+                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
+                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
+                      OUTPATH = os.path.join(OUTDIR4,"MAF30_75loci"), 
                       N_LOCI = N_LOCI, 
                       WHITELIST = WHITELIST_FA, 
                       TIMEOUT = 120)#time allowed per run- runs >10 minutes will break

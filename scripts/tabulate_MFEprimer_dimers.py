@@ -198,8 +198,8 @@ def ReadDimerTXT(infile):
             primer1 = line1[2]
             primer2 = line1[4]
             # we'll extract these later to reduce some memory reqs
-            pair1 = primer1.replace('.FW','').replace('.REV','')
-            pair2 = primer2.replace('.FW','').replace('.REV','')
+            pair1 = primer1.replace('.FWD','').replace('.REV','')
+            pair2 = primer2.replace('.FWD','').replace('.REV','')
             score = line2[1].replace(',','')
             delta_g = line2[5]
             #structure = lines[i+4:i+7] # no use for this yet

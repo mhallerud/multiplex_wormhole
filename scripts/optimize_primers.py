@@ -16,7 +16,6 @@ Inputs: Fasta file of primer inputs, sums of primer pair interactions and pairwi
 Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair.
 
 """
-
 # objective function = sumcost + missingLoci*penalty
 # penalty = N_LOCI / 10 (i.e., a primer can only NOT be added if it forms dimers with >10% of the existing set)
 
@@ -43,10 +42,10 @@ Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair
 ## SIMULATED ANNEALING PARAMETERS:
 # BURNIN (# iterations to sample space)
 BURNIN = 0
-# ADJUSTMENT (proportion of dimer load rand to consider when setting initial temp)
+# DIMER_ADJ (proportion of dimer load rand to consider when setting initial temp)
 # - values closer to 1 will accept nearly any change - extremely long run time and very 'bad' changes accepted
 # - values closer to 0 will only accept changes very similar to the 'least bad' options - quicker but won't explore much of the space
-ADJUSTMENT = 0.1
+DIMER_ADJ = 0.1
 # PARTITIONs (# partitions for temperature space)
 PARTITIONS = 1000
 # - fewer partitions means algorithm stays in each temperature space longer
@@ -67,7 +66,8 @@ DECAY_RATE = 0.98 #must be between 0 and 1 (non-inclusive)
 # 10000 iterations - 0.90
 # 5000 iterations - 0.95
 T_INIT = 2
-T_FINAL = 1
+T_FINAL = 0.1
+PROB_ADJ = 1
 
 
 # load dependencies
@@ -76,6 +76,7 @@ import sys
 import csv
 import random as rand
 import math
+import numpy as np
 
 
 
@@ -185,9 +186,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
     # calculate # primer dimers per pair for current set of primers
     primerset_dimers, nonset_dimers = SubsetDimerTable(
         current_pairIDs, dimer_table, dimer_pairID, True)
-    curr_dimer_totals = CalcTotalDimers(
-        primerset_dimers)  # totals for current primers
-    curr_total = sum(curr_dimer_totals.values())
+    curr_dimer_totals = CalcTotalDimers(primerset_dimers)  
+    # totals for current primers- diagonal of cost matrix
+    df = curr_dimer_totals
+    curr_total = sum(df.where(np.triu(np.ones(df.shape)).astype(np.bool)).values)#total 
     
     
     # STEP 2: Adaptive simulated annealing
@@ -220,7 +222,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
         T_end = T_FINAL
     # initial temp should accept most changes
     if T_INIT is None:
-        T_init = min(change) + ADJUSTMENT * (max(change) - min(change))
+        T_init = min(change) + DIMER_ADJ * (max(change) - min(change))
     else:
         T_init = T_INIT
 
@@ -251,7 +253,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None,
                                                       random=True, whitelist=whitelist_loci)
             # if e^(-change/temp) < random number (0,1), accept the change
             comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
-            SAvalue = math.exp(-comparison/Temp)
+            SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
             if SAvalue > rand.uniform(0,1):
                 update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                 current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components

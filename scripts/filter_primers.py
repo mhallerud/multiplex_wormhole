@@ -90,7 +90,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
                     for DIR in ["LEFT","RIGHT"]:
                         # set strings based on direction
                         if DIR=="LEFT":
-                            DIRNAME="FW"
+                            DIRNAME="FWD"
                         elif DIR=="RIGHT":
                             DIRNAME="REV"
                         else:
@@ -136,10 +136,10 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
                         ampSize = ampSize_line.split("=")[1]
                     
                         # add FW and REV primers separately to the array
-                        filtered_primers.append([locusID+"."+N+".FW", # primer ID
+                        filtered_primers.append([locusID+"."+N+".FWD", # primer ID
                                                  locusID, # locus ID
                                                  N, # primer pair #
-                                                 "FW", # primer direction
+                                                 "FWD", # primer direction
                                                  FWseq, # primer sequence
                                                  FWpos[0], # primer position (start BP)
                                                  FWpos[1], # primer position (length)

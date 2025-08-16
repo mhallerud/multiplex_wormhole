@@ -21,7 +21,7 @@ import math
 
 
 def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, WHITELIST=None, SEED=None, 
-         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, BURNIN=100, ADJUSTMENT=0.1):
+         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences
@@ -49,8 +49,10 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         Ending temperature for filxed schedule simulated annealing
     BURNIN : Numeric
         Iterations used to sample cost space before calculating temperatures
-    ADJUSTMENT = Numeric (0-1)
+    DIMER_ADJ : Numeric (0-1)
         Proportion of max dimer load to consider when setting T_INIT (high values = more 'bad' changes accepted)
+    PROB_ADJ : Numeric (1-Inf)
+        Parameters used to adjust dimer acceptance probabilities in exponential model (higher = lower 'bad' changes accepted)
     -------
     Iteratively optimizes a multiplex primer set of given size to minimize
             predicted dimer content. NOTE: This script relies on having a large ratio of 
@@ -175,10 +177,10 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     print("Setting temperature schedule...")
     if T_FINAL is None:
         # set initial and final temps
-        T_FINAL = float(MIN_DIMER)
+        T_FINAL = 0
     if T_INIT is None:
         # initial temp should accept most changes
-        T_INIT = MIN_DIMER + ADJUSTMENT * (MAX_DIMER - MIN_DIMER)
+        T_INIT = MIN_DIMER + DIMER_ADJ * (MAX_DIMER)#assuming MIN_DIMER=0
     # calculate temperatures across 100 iterations
     temps = [T_INIT]
     i=0
@@ -196,28 +198,49 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     plt.savefig(OUTPATH+"_TemperatureSchedule.png")
     
     
-    ## STEP 4: Calculate and plot probabilities across range of dimer load changes
+    ## STEP 3: Calculate and plot probabilities across range of dimer load changes
     print("Plotting acceptance probabilities for dimers across temperatures...")
+    plt.figure() # new plotting figure
     # grab color gradient
     reds = mpl.colormaps['Reds']
     cspace = 1 / len(dimers) # rescale dimer length to 0-1
     # plot each dimer load
+    costs = []
     i = 0
     n = 0 # starting value for color scale
     while i<len(dimers):
         d = dimers[i]
-        n+=cspace#update color scale value
+        #update color scale value
+        n+=cspace
         c = reds(n)
-        plt.plot(temps, ([math.exp(-d/x) for x in temps]), color=c, label=str(d)+' dimers')
+        costs.append([math.exp(-d/x) for x in temps])
+        plt.plot(temps, costs[i], color=c, label=str(d)+' dimers')
         i+=1
     # rescale axes and add labels
-    plt.title("Dimer Acceptance as Simulated Annealing Progresses")
+    plt.title("Dimer Acceptance By Simulated Annealing Temperature")
     plt.xlabel("Temperature decay")
     plt.ylabel("Probability of accepting dimers")
     plt.legend(loc='upper right')
-    plt.xlim(T_INIT, T_FINAL)
-    plt.ylim(0, 1)
-    plt.savefig(OUTPATH+"_DimerAcceptanceProbs.png")
+    #plt.xlim(T_INIT, T_FINAL)
+    #plt.ylim(0, 1)
+    plt.savefig(OUTPATH+"_DimerAcceptanceByTemp.png")
+    
+    
+    ## STEP 4: Plot calculated probabilities against SA iterations
+    plt.figure()
+    i=0; n=0
+    while i<len(costs):
+        d=dimers[i]
+        n+=cspace
+        c = reds(n)
+        plt.plot(costs[i], color=c, label=str(d)+' dimers')
+        i+=1
+    plt.title("Dimer Acceptance As Simulated Annealing Progresses")
+    plt.xlabel("Iterations")
+    plt.ylabel("Probability of acceptance")
+    plt.legend(loc="upper right")
+    plt.savefig(OUTPATH+"_DimerAcceptanceByIteration.png")
+    
 
 
 
