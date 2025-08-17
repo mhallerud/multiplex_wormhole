@@ -1,7 +1,7 @@
 # Optimize a Primer Set for Multiplex PCR with `optimize_primers`
 
 ## Purpose
-A set of primers for "N" loci is selected that minimizes the number of negative interactions between primer pairs. Optionally, a "whitelist" set of primers (containing primers from a previous assay, primers for important loci, etc.) may be provided that *must* be included in the final primer set.
+A set of primers for "N" loci is selected that minimizes the number of negative interactions between primer pairs. Optionally, a "keeplist" set of primers (containing primers from a previous assay, primers for important loci, etc.) may be provided that *must* be included in the final primer set.
 
 ## Usage
 ### Python syntax
@@ -15,41 +15,52 @@ Minimum parameters:
 `optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI)`
 
 All optional parameters:
-`optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST, BURNIN, ITERATIONS, SIMPLE, T_INIT, T_FINAL, DECAY_RATE, PARTITIONS, ADJUSTMENT)`
+```
+optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, #basic required inputs
+			     KEEPLIST, #FASTA of primers required to be included in final multiplex
+			     SEED, #CSV from a previous optimization run to use as the initial starting point
+			     VERBOSE, #True/False for printing dimer cost at each iteration
+			     SIMPLE, ITERATIONS, BURNIN, DECAY_RATE, T_INIT, T_FINAL, PARTITIONS, DIMER_ADJ, PROB_ADJ) #simulated annealing parameters
+```
 
 ### Command line syntax
-`cd .../multiplex_wormhole/scripts/`
-
-`python3 optimize_primers.py PRIMER_FASTA DIMER_SUMS DIMER_TABLE OUTPATH N_LOCI WHITELIST BURNIN ITERATIONS SIMPLE T_INIT T_FINAL DECAY_RATE PARTITIONS ADJUSTMENT`
+`cd .../multiplex_wormhole/scripts/
+python3 optimize_primers.py PRIMER_FASTA DIMER_SUMS DIMER_TABLE OUTPATH N_LOCI KEEPLIST SEED VERBOSE SIMPLE ITERATIONS BURNIN DECAY_RATE T_INIT T_FINAL PARTITIONS DIMER_ADJ PROB_ADJ
 
 ### Arguments & Defaults
-**PRIMER_FASTA** : Filepath to FASTA containing all primers that will be considered in the multiplex. *Important: Primer pair IDs in this file must match the IDs found in the DIMER_SUMS and DIMER_TABLE inputs!*
+**PRIMER_FASTA** : FASTA containing all primers that will be considered in the multiplex. *Important: Primer pair IDs in this file must match the IDs found in the DIMER_SUMS and DIMER_TABLE inputs!*
 
-**DIMER_SUMS** : Filepath to CSV containing dimer totals for each primer pair. Output from `tabulate_MFEprimer_dimers`.
+**DIMER_SUMS** : CSV containing dimer totals for each primer pair. Output from `tabulate_MFEprimer_dimers`.
 
-**DIMER_TABLE** : Filepath to CSV containing pairwise dimer interactions between primer pairs. Output from `tabulate_MFEprimer_dimers`. 
+**DIMER_TABLE** : CSV containing pairwise dimer interactions between primer pairs. Output from `tabulate_MFEprimer_dimers`. 
 
-**OUTPATH** : Directory path and prefix for outputs.
+**OUTPATH** : Prefix for outputs, including directory path.
 
 **N_LOCI** : Number of loci (primer pairs) to be included in the final multiplex set.
 
-**WHITELIST** (Optional) : Filepath to a FASTA containing primer pairs that MUST be included in the multiplex (e.g., primer pairs from a previous set, primer pairs for sex ID, etc.). *Important: These primer pairs must have been considered in dimer formation! Primer IDs must match IDs in the DIMER_SUMS and DIMER_TABLE inputs.*
+**KEEPLIST** (Optional) : FASTA containing primer pairs that MUST be included in the multiplex (e.g., primer pairs from a previous set, primer pairs for sex ID, etc.). *Important: These primer pairs must have been considered in dimer formation! Primer IDs must match IDs in the DIMER_SUMS and DIMER_TABLE inputs.* (default: None)
 
-**BURNIN** (Optional) : Number of iterations used to sample changes in dimer costs at each step before proceeding to temperature calculations in adaptive simulated annealing. Only steps that cause increased cost are counted so that this number equals the number of 'mistakes' sampled. (Default: 100)
+**SEED** (Optional) : CSV containing a multiplex primer set to use as a starting point in optimization, in the format output by the present optimization function. (default: None)
 
-**ITERATIONS** (Optional) : Number of iterations to run simulated annealing algorithm, with all steps (improvements and not) are counted. (Default: 5000)
+**VERBOSE** (Optional) : Boolean for whether to print dimer costs at each optimization step (default: True)
 
-**SIMPLE** (Optional) : Number of iterations to run simple iterative improvement. (Default: 500)
+**SIMPLE** (Optional) : Number of iterations to run simple iterative improvement optimization. (default: 1000)
 
-**T_INIT** (Optional) : Initial temperature to use in fixed schedule simulated annealing. By default, T_INIT is adaptively set based on the problem at hand. Higher initial temperatures means that more of the cost optimization state is explored, but more "mistakes" will also be allowed. (Default: None; Calculated adaptively as `MIN_DIMERS + ADJUSTMENT * (MAX_DIMERS - MIN_DIMERS)` with MAX_DIMERS and MIN_DIMERS equal to the maximum and minimum 'bad' changes observed during the BURNIN stage.
+**ITERATIONS** (Optional) : Number of iterations to run simulated annealing algorithm, where all steps (accepted and rejected changes) are counted. (default: 2000)
 
-**T_FINAL** (Optional) : Final temperature to use in fixed schedule simulated annealing. By default, T_FINAL is adaptively set based on the problem at hand. (Default: None. Calculated as `MIN_DIMERS` - normally =1)
+**BURNIN** (Optional) : Number of iterations used to sample changes in dimer costs at each step before proceeding to temperature calculations in adaptive simulated annealing. Only steps that cause increased cost are counted so that this number equals the number of 'mistakes' sampled. (default: 100)
 
-**DECAY_RATE** (Optional) : Multiplier for exponential decay function of simulated annealing temperatures. Values closer to 1 result in a slower decay from the initial to final temperature (and more "mistakes"), and values closer to 0.5 result in rapid decay towards the final temperature. (Default: 0.95)
+**DECAY_RATE** (Optional) : Parameter for exponential decay function of simulated annealing temperatures. Values closer to 1 result in a slower decay from the initial to final temperature (and more "mistakes"), and values closer to 0.5 result in rapid decay towards the final temperature. (default: 0.98)
 
-**PARTITIONS** (Optional) : Number of temperature changes occurring in the simulated annealing process, so that there are `ITERATIONS/PARTITIONS` iterations at each temperature step before proceeding to the next step in the temperature gradient. If `ITERATIONS > PARTITIONS`, then there will be `ITERATIONS` temperature changes and 1 iteration per temperature change. (Default: 1000)
+**T_INIT** (Optional) : Initial temperature to use in fixed schedule simulated annealing. By default, T_INIT is adaptively set based on the problem at hand. Higher initial temperatures means that more of the cost optimization space is explored, but more "mistakes" will also be allowed in the process. (default: None) By default, T_FINAL is set adaptively based on the problem at hand where: `T_FINAL=MIN_DIMERS + DIMER_ADJ * (MAX_DIMERS - MIN_DIMERS)` with MAX_DIMERS and MIN_DIMERS calculated from changes observed during the BURNIN stage.
 
-**ADJUSTMENT** (Optional) : Multiplier used to adjust initial temperature value calculation. Values close to 1 result in very high initial temperatures that cause many mistakes to be allowed, while values close to zero result in initial temperatures close to final temperatures that explore little of the cost optimziation space. (Default: 0.1)
+**T_FINAL** (Optional) : Final temperature to use in fixed schedule simulated annealing. As temperatures approach 0, simulated annealing allows fewer 'mistakes' and approaches simple iterative improvement. (default: 0.1)
+
+**PARTITIONS** (Optional) : Number of temperature changes occurring in the simulated annealing process, so that there are `ITERATIONS/PARTITIONS` iterations at each temperature step before proceeding to the next step in the temperature gradient. (default: 1000)
+
+**DIMER_ADJ** (Optional) : Multiplier used to adjust initial temperature value calculation. Values close to 1 result in very high initial temperatures that cause many mistakes to be allowed, while values close to zero result in initial temperatures close to final temperatures that explore little of the cost optimziation space. (Default: 0.1)
+
+**PROB_ADJ** (Optional) : Multiplier used to adjust dimer acceptance probabilities. Increased values result in lower dimer acceptance probabilities at the cost of exploring less of the cost optimization space. (Default: 2)
 
 
 ## Outputs
@@ -74,9 +85,9 @@ At each iteration in the algorithm, a primer pair is randomly swapped with an al
 
 In multiplex_wormhole, an adaptive simulated annealing approach is used to set the temperature schedule. After sampling `BURNIN` "mistakes" where a random change resulted in a worse primer set, temperatures are set based on the least bad (`MIN_DIMERS`) and worst (`MAX_DIMERS`) changes observed. Specifically,
 
-`T_INIT = MIN_DIMERS + 0.1 * (MAX_DIMERS - MIN_DIMERS)` with 0.1 as the default `ADJUSTMENT` parameter.
+`T_INIT = MIN_DIMERS + DIMER_ADJ * (MAX_DIMERS - MIN_DIMERS)` with 0.1 as the default `DIMER_ADJ` parameter.
 
-`T_FINAL = MIN_DIMERS`
+`T_FINAL = 0.1`
 
 Higher temperatures correspond with allowing riskier decisions, and lower temperatures correspond with less risky decisions. A negative exponential function is used for the temperature gradient so that temperatures decline rapidly and most of the algorithm's time is spent in the "less risky" optimization space. The temperature schedule follows the function:
 
@@ -84,23 +95,24 @@ Higher temperatures correspond with allowing riskier decisions, and lower temper
 
 Temperatures proceed to the next 'step' based on the `PARTITIONS` parameter which defines how many temperature changes will occur during simulated annealing. By default, with 1000 `PARTITIONS` and 5000 `ITERATIONS`, the temperature is reduced every 5 iterations.
 
-At each iteration, the probability of accepting a change is governed by the formula:
+At each iteration, the probability of accepting a change that increases dimer load is governed by the formula:
 
-`e^(-cost / temperature)`
+`e^(-PROB_ADJ*cost / temperature)`
 
+where PROB_ADJ is set by the user, temperature is the simulated annealing temperature at the current step, and cost is the increase in dimer load relative to the previous iteration. 
 
 ### 3. Fine-tuning the optimized set: Simple iterative improvement algorithm
 The best set (lowest dimer load) from simulated annealing is used as input into an iterative improvement algorithm. In iterative improvement, the worst primer pair is identified and swapped with a random alternative. If the new primer pair has fewer dimers than the previous, then it is kept and the new primer set is used as the starting point for the next iteration. If not, all other alternatives for this worst primer pair are tried until either a better option is found or alternatives are exhausted. Then, the algorithm proceeds to the next worst primer pair. This process continues until either A) the primer set is fully optimized (0 dimers), B) no alternatives can improve the set anymore, or C) the user-defined number of iterations `SIMPLE` have passed.
 
 
 ## Additional notes and recommendations on optimization...
-See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FIXED`, and `ADJUSTMENT` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
+See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FIXED`, `DIMER_ADJ`, and `PROB_ADJ` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
 
 The optimization process is inherently random and results will vary across runs. As such, it's recommended to run multiple times and select the "best" result. `multiple_run_optimization` provides an easy wrapper for running `optimize_primers` multiple times in Python, however if you have cluster access I recommend running many runs on separate nodes instead.
 
 For simple problems (e.g., selecting 50 primer pairs from a 200-locus set), the iterative improvement is sufficient and more efficient. To run the simple iterative improvement algorithm, set `SIMPLE` high and `ITERATIONS=0` to bypass simulated annealing. 
 
-For challenging problems (e.g., many options and/or many `N_LOCI`), you may consider proceeding stepwise where first, an initial small set of loci is optimized from a subset of available loci, then next provided as a `WHITELIST` into a run where `N_LOCI` is increased and the full set of options is provided.
+For challenging problems (e.g., many options and/or many `N_LOCI`), you may consider proceeding stepwise where first, an initial small set of loci is optimized from a subset of available loci, then next provided as a `KEEPLIST` into a run where `N_LOCI` is increased and the full set of options is provided.
 
 Optimization is constrained by the number of options available relative to the number of primer pairs desired. In general, a ratio of 1:4 for desired:wanted primer pairs seems to work best. Providing more options will slow the process down, while providing too few options may result in unwanted high dimer loads. Providing an overabundance of options may also saturate the optimization space with an exponential number of extra options, thereby making the algorithm not only inefficient but also ineffective and preventing a good set from being found. For complex problems where dimer loads are consistent across all loci, more options are necessary. For problems where pairwise dimer loads vary widely, fewer options may be required. 
 

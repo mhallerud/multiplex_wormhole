@@ -13,9 +13,18 @@ import csv
 
 
 def main(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA):
+    """
+    IN_CSV : CSV containing primer IDs and sequences [filepath]
+    ID_FIELD : field name containing sequence IDs [string]
+    SEQ_FIELD : field name containing sequences [string]
+    OUT_FA : FASTA file to be output [filepath]
+    -------
+    Converts input sequences in CSV to FASTA format
+    """
+    
     
     # check that output ends with FASTA or FA
-    if not OUT_FA.endswith('.fa') or OUT_FA.endswith('.fasta'):
+    if not (OUT_FA.endswith(".fa") or OUT_FA.endswith(".fasta")):
         raise InputError("OUT_FA must end with .fa or .fasta extension")
    
     # set up empty arrays to hold sequences and ids separately
@@ -25,11 +34,14 @@ def main(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA):
     # read in csv
     with open(IN_CSV, 'r') as file:
         reader = csv.reader(file)
-        next(reader)#skip header line
+        # grab column index for each field
+        header = next(reader)
+        seqi = [header.index(i) for i in [SEQ_FIELD]][0]
+        idi = [header.index(i) for i in [ID_FIELD]][0]
         for line in reader:
             # extract sequence and id based on field numbers
-            sequences.append(line[SEQ_FIELD-1])
-            ids.append(line[ID_FIELD-1])
+            sequences.append(line[seqi])
+            ids.append(line[idi])
     
     # export data to fasta
     with open(OUT_FA, 'w') as file:

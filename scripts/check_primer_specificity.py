@@ -74,7 +74,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
-                print("Specificity check passed for "+primerID)
+                #print("Specificity check passed for "+primerID)
             os.remove("grep.tmp")#clean up
     # use normal grep if input is a *.fasta or *.fastq file
     elif TARGET.endswith(".fna") or TARGET.endswith(".fasta") or TARGET.endswith(".fastq") or TARGET.endswith(".fa") or TARGET.endswith(".fq") or TARGET.endswith(".csv"):
@@ -102,7 +102,7 @@ def main(PRIMERS, TARGET, OUTPATH):
                 primerID = primers[i][0]
                 passed_seq.append(">"+primerID)
                 passed_seq.append(primer_seq)
-                print("Specificity check passed for "+primerID)
+                #print("Specificity check passed for "+primerID)
             os.remove("grep.tmp")
     # if neither fastq.gz, fasta, or fastq file, raise error
     else:
@@ -127,6 +127,10 @@ def main(PRIMERS, TARGET, OUTPATH):
         writer = csv.writer(file)
         for row in failed:
             writer.writerow(row)
+    
+    # printout for # input, # output
+    print("# Input primer pairs: "+str(len(primers)))
+    print("# Primer pairs passing specificity check: "+str(len(passed)-1))
 
 
 

@@ -20,8 +20,8 @@ import math
 
 
 
-def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, WHITELIST=None, SEED=None, 
-         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
+def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, SEED=None, 
+         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.98, T_INIT=0.1, T_FINAL=None, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences
@@ -33,7 +33,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         Output path and prefix
     N_LOCI : integer
         Number of loci in final set
-    WHITELIST : Fasta path
+    KEEPLIST : Fasta path
         Contains primers that must be included in panel (Default: None)
     SEED : CSV path
         Initial primer set to start with from previous multiplex_wormhole run
@@ -76,14 +76,14 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
             dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(
                 DIMER_SUMS, DIMER_TABLE)
         
-            # read in whitelist info
-            if WHITELIST is not None:
-                whitelist_loci, whitelist_pairs = LoadPrimers(WHITELIST, True)
-                n_whitelist = len(whitelist_pairs)
+            # read in keeplist info
+            if KEEPLIST is not None:
+                keeplist_loci, keeplist_pairs = LoadPrimers(KEEPLIST, True)
+                n_keeplist = len(keeplist_pairs)
             else:
-                whitelist_pairs = []
-                whitelist_loci = []
-                n_whitelist = 0
+                keeplist_pairs = []
+                keeplist_loci = []
+                n_keeplist = 0
             
             if SEED is None:
                 ## A) Choose initial primer set based on pseudo-Greedy algorithm
@@ -95,22 +95,22 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 uniq_loci = list(set(primer_loci))
                 nloci = len(uniq_loci)
                 # grab best primer pairs for each locus
-                best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist_pairs)
+                best_primer_pairs = BestPrimers(uniq_loci, dimer_loci, dimer_tallies, dimer_primerIDs, keeplist_pairs)
                 # if there are fewer loci than desired, use all of them
                 if nloci < N_LOCI:
                     print("WARNING: Fewer loci passed filtering than desired in panel")
                     print("# loci used: " + str(nloci))
                     initial_pairs = best_primer_pairs
                 else:
-                    if len(whitelist_pairs) > 0:
+                    if len(keeplist_pairs) > 0:
                         # remove these options
                         for k in list(best_primer_pairs.keys()):
-                            if k in set(whitelist_pairs):
+                            if k in set(keeplist_pairs):
                                 best_primer_pairs.pop(k)
-                        # grab N primer pairs with min dimer count (accounting for space filled by whitelist pairs)
-                        initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_whitelist])
-                        # append all whitelist pairs to initial pairs
-                        for pair in set(whitelist_pairs):
+                        # grab N primer pairs with min dimer count (accounting for space filled by keeplist pairs)
+                        initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_keeplist])
+                        # append all keeplist pairs to initial pairs
+                        for pair in set(keeplist_pairs):
                             pair_dimers = [dimer_tallies[x] for x in range(len(dimer_tallies)) if dimer_primerIDs[x] == pair][0]
                             initial_pairs.update({pair: pair_dimers})
                     else:
@@ -154,7 +154,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 # newset: 1) replaced ID, 2) new ID, 3) current pair list
                 swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
                                                           dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
-                                                          random=True, whitelist=whitelist_loci)
+                                                          random=True, keeplist=keeplist_loci)
         
                 # compare newSet to original set
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
@@ -221,7 +221,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     plt.xlabel("Temperature decay")
     plt.ylabel("Probability of accepting dimers")
     plt.legend(loc='upper right')
-    #plt.xlim(T_INIT, T_FINAL)
+    plt.xlim(T_INIT, T_FINAL)
     #plt.ylim(0, 1)
     plt.savefig(OUTPATH+"_DimerAcceptanceByTemp.png")
     
@@ -244,17 +244,17 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
 
 
 
-def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, dimer_primerIDs, dimer_table,
-               dimer_pairID, primer_pairs, primer_loci, blacklist2=[], random=False, whitelist=None):
+def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist, dimer_primerIDs, dimer_table,
+               dimer_pairID, primer_pairs, primer_loci, blockedlist2=[], random=False, keeplist=None):
     # create copy of original list, otherwise links them and affects both lists when using update/remove
     update_pairIDs = pairIDs.copy()
     allowed_pairs_edit = allowed.copy()
 
-    # if swapping randomly, choose a random pairID (not including whitelist) to replace
+    # if swapping randomly, choose a random pairID (not including keeplist) to replace
     if random:
         options =  pairIDs.copy()
         for p in pairIDs:
-            if p in whitelist:
+            if p in keeplist:
                 options.remove(p)
         swap = rand.choice(options)
     
@@ -264,8 +264,8 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
         #curr_max = worst[1]
         swap = worst[0]
 
-        # if the chosen ID is in the blacklist of loci that can't be fixed, then choose the next max value
-        if swap in blacklist:
+        # if the chosen ID is in the blockedlist of loci that can't be fixed, then choose the next max value
+        if swap in blockedlist:
             j = -2
             n = len(curr_dimer_totals)
             while n >= abs(j):
@@ -273,7 +273,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
                     j:(j+1)]  # get next worst
                 #curr_max = next_worst[0][1]
                 swap = next_worst[0][0]
-                if swap not in blacklist:
+                if swap not in blockedlist:
                     break
                 else:
                     j = j-1
@@ -307,7 +307,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blacklist, di
     #new_best_id = nonset_pairs_allowed[new_best_idx]
 
     # Remove any primer pairs that cause infinite loops
-    for pair in blacklist2:
+    for pair in blockedlist2:
         try:
             allowed_pairs_edit.remove(pair)
         except:
@@ -364,18 +364,18 @@ def AddSwapLocusToAllowed(swap_pair, inlist, primer_loci, primer_pairs):
 
 
 
-def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs, whitelist):
+def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs, keeplist):
     """loci: """
     """dimer_tally_dict: """
-    # replace "best" with whitelist pair if in whitelist
-    whitelist_loci = [whitelist[x].split('.')[0] for x in range(len(whitelist))]
+    # replace "best" with keeplist pair if in keeplist
+    keeplist_loci = [keeplist[x].split('.')[0] for x in range(len(keeplist))]
     best_primer_pairs = dict()
     for locus in loci:
-        if locus in whitelist_loci:
-            # assign whitelist pairs as best
-            whitelist_indx = list(
-                filter(lambda x: whitelist_loci[x] == locus, range(len(whitelist_loci))))
-            bestPair = [whitelist[x] for x in whitelist_indx][0]
+        if locus in keeplist_loci:
+            # assign keeplist pairs as best
+            keeplist_indx = list(
+                filter(lambda x: keeplist_loci[x] == locus, range(len(keeplist_loci))))
+            bestPair = [keeplist[x] for x in keeplist_indx][0]
             # extract dimer tally for this pair
             dimer_idx = list(
                 filter(lambda x: dimer_primerIDs[x] == bestPair, range(len(dimer_primerIDs))))
@@ -436,7 +436,7 @@ def CalcTotalDimers(dimerDict):
     return outDict
 
 
-def LoadPrimers(PRIMER_FASTA, whitelist=False):
+def LoadPrimers(PRIMER_FASTA, keeplist=False):
     # read in files as lists
     primer_loci = []
     primer_IDs = []
@@ -458,7 +458,7 @@ def LoadPrimers(PRIMER_FASTA, whitelist=False):
             else:
                 line = line.rstrip()
                 primer_seqs.append(line)
-    if whitelist:
+    if keeplist:
         primer_pairs = list(set(primer_pairs))
         primer_loci = []
         for i in primer_pairs:

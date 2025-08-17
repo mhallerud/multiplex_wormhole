@@ -70,6 +70,7 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
         next(reader) # skip header line
         for line in reader: 
             templates.append(line)
+    print("     "+str(len(templates))+" target sequences input")
     
     # design FW and REV primers for each sequence
     print("Designing initial primers......")
@@ -80,19 +81,19 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
         snp = templates[row][2]
         
         # run primer3 based on strict settings
-        print(" - Designing primers for "  + ids)
+        #print(" - Designing primers for "  + ids)
         os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ ids +' '+ seq +' '+ snp +' '+ strict +' '+ outprimers)
     
     	# rerun with broad settings if no primers were found
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
         if len(primers)==0:
-            print("     No primers found! Retrying with broader parameters.")
+            print("     No primers found for "+ids+"! Retrying with broader settings.")
             os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
             
         # raise message if no primers were found for broad settings either
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
         if len(primers)==0:
-            print("     No primers found with broader settings!")
+            print("     No primers found for "+ids+" even with broader settings!")
             
         # raise message if there are errors in primer design
         error_file = os.path.join(outprimers, ids +'.err')
@@ -107,7 +108,12 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
                     outErrors.append(line)
                     
         if len(errErrors)>0 | len(outErrors)>0:
-            print("     ERROR in primer design!")
+            print("     ERROR in primer design for "+ids+"!")
+        
+        # progress tracking
+        if row%100 == 0:
+            print("      primers designed for "+str(row)+" sequences")
+
 
 
 

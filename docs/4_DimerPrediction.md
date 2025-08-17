@@ -4,6 +4,8 @@
 Primer dimers are predicted using MFEprimer. MFEprimer dimer is run twice: first for all primer dimers expected to form, and then for primer dimers forming specifically on the 3' end of primers. This allows different filtering parameters to be used for end dimers and other dimers during dimer prediction.
 
 ## Usage
+Note: All candidate primers need to be included at this step, not just newly designed primers. Previously designed primers in FASTA format can be added to newly 
+
 ### Python syntax
 `import os`
 

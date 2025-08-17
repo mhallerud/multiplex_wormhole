@@ -47,7 +47,6 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     # raise error if no primer3 output files in PRIMER_DIR
     if len(locus_files)==0:
         raise InputError("PRIMER_DIR must contain .out and .err files from primer3 primer design")
-            
     
     # set up an empty array to store primers that pass filtering
     filtered_primers=[]
@@ -55,6 +54,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     ids=[] # array for locus IDs that pass
     
     failed_loci = []
+    tot_pairs = 0
     
     for locus in locus_files:
         try:
@@ -73,10 +73,11 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
             # find number of primer pairs
             primerpairs_line = list(filter(re.compile("PRIMER_PAIR_NUM_RETURNED*.").match, lines))[0]
             primerpairs = int(primerpairs_line.split("=")[1])
-            
+            tot_pairs+=primerpairs
+
             # proceed if there are primers designed for this locus
             if primerpairs > 0:
-                print("Testing "+locusID+"..............................")
+                #print("Testing "+locusID+"..............................")
                 
                 # loop through each primer pair to test criteria
                 for N in range(primerpairs):
@@ -173,7 +174,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
         print("Filtering failed for the following loci. Retry manually if you want these included:")
         for l in failed_loci:
             print("          "+l)
-    
+        
     # Export filtered primers as CSV
     OUTCSV= OUTPATH + '.csv'
     if os.path.exists(OUTCSV):
@@ -192,6 +193,12 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     with open(OUTIDS, 'w', newline="\n") as file:
         for row in ids:
             file.write(row+'\n')
+    
+    # Print number loci in filtered output
+    print("# Input loci: "+str(len(locus_files)))
+    print("# Loci with primers passing filtering: "+str(len(ids)))
+    print("# Input primer pairs: "+str(tot_pairs))
+    print("# Primer pairs passing filtering: "+str(len(filtered_primers)))
 
 
 

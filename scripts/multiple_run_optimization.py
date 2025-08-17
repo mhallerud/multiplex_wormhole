@@ -7,9 +7,18 @@ Created on Fri Mar 15 14:31:28 2024
 """
 
 import signal
+import os
+import sys
+
+sys.path.append(os.path.dirname(__file__))
 from optimize_primers import main as optimizeMultiplex
 
-def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, WHITELIST=None, TIMEOUT=10):
+
+
+def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
+                          KEEPLIST=None, TIMEOUT=10, VERBOSE=False, SEED=None,
+                          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
+                          T_INIT=0.1, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'TotalDimers']]
     
@@ -18,10 +27,10 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
     while run <= N_RUNS:
         signal.alarm(TIMEOUT*60) # set timer- this helps to timeout runs with infinite loops in the optimization process
         try:
-            if WHITELIST is None:
-                cost = optimizeMultiplex(PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH+"_Run"+str(run), N_LOCI, WHITELIST=None)
+            if KEEPLIST is None:
+                cost = optimizeMultiplex(PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH+"_Run"+str(run), N_LOCI, KEEPLIST=None, VERBOSE=VERBOSE)
             else:
-                cost = optimizeMultiplex(PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH+"_Run"+str(run), N_LOCI, WHITELIST)
+                cost = optimizeMultiplex(PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH+"_Run"+str(run), N_LOCI, KEEPLIST, VERBOSE=VERBOSE)
             loads.append([str(run), str(cost)])
         except TimeoutException:
             continue

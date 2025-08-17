@@ -173,7 +173,7 @@ View(templates)
 # extract microhaplotypes
 tbl <- table(fix$CHROM,fix$POS) #rows=CHROM,cols=POS
 counts <- apply(tbl, 1, function(X) sum(X>0)) #count SNPs (this accounts for possible duplicates at same POS)
-microhaps_seq <- templates[which(templates$ID %in% paste0(">",microhaps$CHROM)),]
+microhaps_seq <- templates[which(templates$ID %in% microhaps$CHROM),]
 nrow(microhaps_seq)
 #microhaps_seq <- microhaps_seq[which(nchar(microhaps_seq$Allowed_rev)>=18 | nchar(microhap_seq$Allowed_fw)>=18),]
 #write.csv(microhaps_seq$ID, 'microhaplotypes.csv', row.names=FALSE)

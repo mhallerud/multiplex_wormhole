@@ -27,11 +27,11 @@ Input preparation:
         containing target SNPs and a FASTA file containing the sequences associated with these SNPs 
         (with FASTA seq IDs matching the CHROM field in the VCF)
         
-    WHITELIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
+    KEEPLIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
         assay that you are looking to add to. 
         Forward primers must be designated with ".FWD" or ".FW" as a suffix and reverse primers with ".REV"
     
-    Note that locus IDs in the TEMPLATES file and primer IDs in the WHITELIST_FA must be unique
+    Note that locus IDs in the TEMPLATES file and primer IDs in the KEEPLIST_FA must be unique
     for multiplex_wormhole to function properly. IDs may not contain periods.
 """
 
@@ -44,7 +44,7 @@ os.chdir('/Users/maggiehallerud/Desktop/multiplex_wormhole')
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
 from scripts.check_primer_specificity import main as specificityCheck
-from scripts.add_whitelist_to_fasta import main as addWhitelistFasta
+from scripts.add_keeplist_to_fasta import main as addKeeplistFasta
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
 from scripts.plot_SA_temps import main as plotSAtemps
@@ -54,11 +54,11 @@ from scripts.plot_SA_temps import main as plotSAtemps
 os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
-TEMPLATES='../Input_SNPs/GrayFox_primer3Templates.csv'
-WHITELIST_FA=None#'/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Marten/SNPpanel/Panel2_200initialpairs/Marten_Panel1_whitelist.fa'
-OUTDIR='individualID'
+TEMPLATES='../Input_SNPs/GrayFox_microhapsTemplates.csv'
+KEEPLIST_FA=None #"MartenPanel1.fa"
+OUTDIR='OnlyMicrohaplotypes'
 #GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
-N_LOCI = 75
+N_LOCI = 50
 
 
 
@@ -69,8 +69,8 @@ INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
 if not os.path.exists(INPUTDIR):
     os.mkdir(INPUTDIR)
 os.system("cp "+TEMPLATES+" "+INPUTDIR)
-if WHITELIST_FA is not None:
-    os.system("cp "+WHITELIST_FA+" "+INPUTDIR)
+if KEEPLIST_FA is not None:
+    os.system("cp "+KEEPLIST_FA+" "+INPUTDIR)
 OUTDIR2 = os.path.join(OUTDIR, "2_FilteredPrimers")
 if not os.path.exists(OUTDIR2):
     os.mkdir(OUTDIR2)
@@ -108,22 +108,23 @@ specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
                  OUTPATH = specificity_output)
 # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
 
-INPUT=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa')#this is input for step 4
+INPUT=specificity_output+"_passed.fa" #this is input for step 4
 
 
 
 ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-## BEFORE RUNNING THIS STEP: Check that whitelist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
+## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
 
 ## Here's a helper script to automate combining these files:
-if WHITELIST_FA is not None:
-    WHITELIST_FA = os.path.join(INPUTDIR, os.path.basename(WHITELIST_FA))
-    if os.path.exists(WHITELIST_FA):
-        addWhitelistFasta(specificity_output+'_passed.fa', WHITELIST_FA)
-        # adjust input for step 4 to include whitelist
-        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusWhitelist.fa')
+if KEEPLIST_FA is not None:
+    KEEPLIST_FA = os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA))
+    if os.path.exists(KEEPLIST_FA):
+        addKeeplistFasta(specificity_output+'_passed.fa', KEEPLIST_FA)
+        # adjust input for step 4 to include keeplist
+        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusKeeplist.fa')
 
 ## Here is another helper script to convert CSV format primers to FA format:
+#from scripts.extras.CSVtoFasta import main as CSVtoFASTA
 #csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
 
 
@@ -147,8 +148,8 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -6 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
 
 
 
@@ -169,13 +170,13 @@ tabulateDimers(ALL_DIMERS,
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_75loci'),
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_50loci'),
             PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
             DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
             DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-            N_LOCI=75, #number of target loci in panel
-            WHITELIST=WHITELIST_FA, 
-            SEED=None, 
+            N_LOCI=N_LOCI, #number of target loci in panel
+            KEEPLIST=KEEPLIST_FA, 
+            SEED=None, #this would be an output from optimizeMultiplex
             BURNIN=100)#number iterations with dimer loads used to sample cost space
 # decay rate closer to 1: 
 plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
@@ -193,31 +194,82 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
             DIMER_ADJ=0.1,
             # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
             PROB_ADJ=1)
-
+## NOTE: These are currently hard-coded into the optimize_primers script, but can be adjusted in
+## lines 75-103 if desired.
 
 
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
-# N_LOCI here is the number of loci you want in the final panel (including whitelist loci)
+# N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
 # To run once:
 optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                   DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                   DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run01_75Loci_MAF30"), 
+                  OUTPATH = os.path.join(OUTDIR4,"Run01_150Loci_MAF30"), 
                   N_LOCI = N_LOCI, 
-                  WHITELIST = WHITELIST_FA,
-                  VERBOSE=True)
+                  KEEPLIST = KEEPLIST_FA,
+                  VERBOSE=False,#set to true to print dimers at each change
+                  SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
+                  ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                  BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                  DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
+                      # closer to 1 - least conservative, explores more cost space at higher risk
+                      # closer to 0 - most conservative, explores less cost space at lower risk
+                      # recommendations: 0.90-0.98, higher with fewer iterations
+                  T_INIT=0.1, # starting temp for fixed SA schedule (default=0.1)
+                  T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                      # temperatures=0 is equivalent to simple iterative improvement, while 
+                      # higher temperatures explore more of the cost space at higher risk of accepting dimers
+                      # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
+                  PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
+                  DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
+                      # values closer to 1 will create a temp schedule with higher risk / more cost exploration
+                      # values closer to 0 will create a temp schedule with lower risk / less cost exploration
+                  PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
+                      # increase if too many dimers are being accepted during simulated annealing, 
+                      # decrease if local optima are not being overcome
+                  SEED=None)#primer set from previous optimization run to start with, in CSV format
 # Outputs are found under 4_OptimizedSets/*
 
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
 ## random process and each run may be slightly different.
-## Here's a helper function for running N times:
+## Here's a helper function:
 from scripts.multiple_run_optimization import multipleOptimizations
-multipleOptimizations(N_RUNS = 15, 
+multipleOptimizations(N_RUNS = 10, 
                       PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                       DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"MAF30_75loci"), 
-                      N_LOCI = N_LOCI, 
-                      WHITELIST = WHITELIST_FA, 
-                      TIMEOUT = 120)#time allowed per run- runs >10 minutes will break
+                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
+                      N_LOCI = 50, 
+                      KEEPLIST = KEEPLIST_FA, 
+                      TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
+                      VERBOSE=False,#set to true to print dimers at each change
+                      SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
+                      ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                      BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                      DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
+                          # closer to 1 - least conservative, explores more cost space at higher risk
+                          # closer to 0 - most conservative, explores less cost space at lower risk
+                          # recommendations: 0.90-0.98, higher with fewer iterations
+                      T_INIT=0.1, # starting temp for fixed SA schedule (default=0.1)
+                      T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                          # temperatures=0 is equivalent to simple iterative improvement, while 
+                          # higher temperatures explore more of the cost space at higher risk of accepting dimers
+                          # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
+                      PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
+                      DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
+                          # values closer to 1 will create a temp schedule with higher risk / more cost exploration
+                          # values closer to 0 will create a temp schedule with lower risk / less cost exploration
+                      PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
+                          # increase if too many dimers are being accepted during simulated annealing, 
+                          # decrease if local optima are not being overcome
+                      SEED=None)#primer set from previous optimization run to start with, in CSV format
 
+#OUTPUT: MAF30_150loci_RunSummary.csv
+
+
+## STEP 7: Convert selected primer set to FASTA format for additional screening
+from scripts.extras.CSVtoFasta import main as CSVtoFASTA
+CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.csv"), 
+           ID_FIELD = "PrimerID", 
+           SEQ_FIELD = "Sequence", 
+           OUT_FA = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.fasta"))

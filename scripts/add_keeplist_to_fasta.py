@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Title: Add Whitelist Primers to Fasta
-Input: whitelist primers fasta and main primers fasta
+Title: Add Keeplist Primers to Fasta
+Input: Keeplist primers fasta and main primers fasta
+Purpose: Combines FASTA files so that there is one record per unique primer, based on primer IDs.
 Created on Thu Mar 14 15:00:12 2024
 
 @author: maggiehallerud
@@ -13,37 +14,38 @@ import sys
 
 
 
-def main(MAIN_FA, WHITELIST_FA):
+def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     """
     Parameters
     ----------
     MAIN_FA : Fasta
         Specificity check passed output from step 3
-    WHITELIST_FA : Fasta
-        Existing primer set to include
+    KEEPLIST_FA : Fasta
+        Previously designed primers to add to newly designed primers
 
     Returns
     -------
-    Output fasta in same folder as MAIN_FA
+    Outputs combined FASTA
 
     """
     # read in fastas
     main, main_ids = readFasta(MAIN_FA)
-    whitelist, whitelist_ids = readFasta(WHITELIST_FA)
+    keeplist, keeplist_ids = readFasta(KEEPLIST_FA)
    
     # check for duplicate ids
-    all_ids = main_ids + whitelist_ids
-    if len(whitelist_ids) != len(set(whitelist_ids)):
-        raise Exception("Non-unique primer IDs found in whitelist fasta! Fix IDs and then rerun.")
+    all_ids = main_ids + keeplist_ids
+    if len(keeplist_ids) != len(set(keeplist_ids)):
+        raise Exception("Non-unique primer IDs found in KEEPLIST_FA! Fix IDs and then rerun.")
     elif len(set(all_ids)) != len(all_ids):
-        raise Exception("Whitelist has primer IDs that are also found in main fasta! Rename non-unique whitelist primers IDs, then try again.")
+        raise Exception("KEEPLIST_FA has primer IDs that are also found in main fasta! Rename non-unique KEEPLIST primers IDs, then try again.")
     else:
         pass
         
     # combine fastas and write to file
-    combo_fa = main + whitelist
-    outpath = MAIN_FA.split('.')[0] + '_plusWhitelist.fa'
-    with open(outpath, 'w') as file:
+    combo_fa = main + keeplist
+    if OUTPATH=None:
+    	OUTPATH= MAIN_FA.split('.')[0] + '_plusKeeplist.fa'
+    with open(OUTPATH, 'w') as file:
         for line in combo_fa:
             file.write(line)
 
