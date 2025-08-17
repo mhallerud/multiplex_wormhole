@@ -5,17 +5,15 @@ A set of primers for "N" loci is selected that minimizes the number of negative 
 
 ## Usage
 ### Python syntax
-`import os`
-
-`os.chdir('/multiplex_wormhole')`
-
-`from optimize_primers import main as optimizeMultiplex`
-
-Minimum parameters:
-`optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI)`
-
-All optional parameters:
 ```
+import os
+os.chdir('/multiplex_wormhole')
+from optimize_primers import main as optimizeMultiplex
+
+# with minimum parameters:
+optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI)
+
+# with all parameters:
 optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, #basic required inputs
 			     KEEPLIST, #FASTA of primers required to be included in final multiplex
 			     SEED, #CSV from a previous optimization run to use as the initial starting point
@@ -24,8 +22,10 @@ optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, #basic
 ```
 
 ### Command line syntax
-`cd .../multiplex_wormhole/scripts/
+```
+cd .../multiplex_wormhole/scripts/
 python3 optimize_primers.py PRIMER_FASTA DIMER_SUMS DIMER_TABLE OUTPATH N_LOCI KEEPLIST SEED VERBOSE SIMPLE ITERATIONS BURNIN DECAY_RATE T_INIT T_FINAL PARTITIONS DIMER_ADJ PROB_ADJ
+```
 
 ### Arguments & Defaults
 **PRIMER_FASTA** : FASTA containing all primers that will be considered in the multiplex. *Important: Primer pair IDs in this file must match the IDs found in the DIMER_SUMS and DIMER_TABLE inputs!*

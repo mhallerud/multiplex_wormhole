@@ -851,7 +851,7 @@ if __name__ == "__main__":
          sys.argv[3], #DIMER_TABLE
          sys.argv[4], #OUTPATH
          int(sys.argv[5]), #N_LOCI
-         int(sys.argv[6]), #KEEPLIST
+         sys.argv[6], #KEEPLIST
          sys.argv[7], #SEED
          sys.arv[8], #VERBOSE
          sys.argv[9], #SIMPLE

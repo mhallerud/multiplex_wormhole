@@ -17,23 +17,21 @@ By default, primer pairs are discarded if the following criteria are met:
 ## Usage
 
 ### Python syntax
-`import os`
+```
+import os
+os.chdir('/multiplex_wormhole')
+from scripts.filter_primers import main as filterPrimers
+filterPrimers(PRIMER_DIR, OUTPATH)
 
-`os.chdir('/multiplex_wormhole')`
-
-`from scripts.filter_primers import main as filterPrimers`
-
-`filterPrimers(PRIMER_DIR, OUTPATH)`
-
-with optional parameters:
-
-`filterPrimers(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000, dG_MID_LIMIT=-10000)`
-
+# Or with optional parameters:
+filterPrimers(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000, dG_MID_LIMIT=-10000)
+```
 
 ### Command line syntax
-`cd multiplex_wormhole/scripts`
-
-`python3 filter_primers.py PRIMER_DIR OUTPATH Tm_LIMIT dG_HAIRPINS dG_END_LIMIT dG_MID_LIMIT`
+```
+cd multiplex_wormhole/scripts
+python3 filter_primers.py PRIMER_DIR OUTPATH Tm_LIMIT dG_HAIRPINS dG_END_LIMIT dG_MID_LIMIT
+```
 
 
 ### Arguments

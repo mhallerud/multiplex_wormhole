@@ -8,18 +8,18 @@ When a genome for the target species is available, this step should be used in c
 ## Implementation
 
 ### Python syntax
-`import os`
-
-`os.chdir('/multiplex_wormhole')`
-
-`from scripts.check_primer_specificity import main as specificityCheck`
-
-`specificityCheck(PRIMERS, TARGET, OUTPATH)`
+```
+import os
+os.chdir('/multiplex_wormhole')
+from scripts.check_primer_specificity import main as specificityCheck
+specificityCheck(PRIMERS, TARGET, OUTPATH)
+```
 
 ## Command line syntax
-`cd multiplex_wormhole/scripts`
-
-`python3 check_primer_specificity.py PRIMERS TARGET OUTPATH`
+```
+cd multiplex_wormhole/scripts
+python3 check_primer_specificity.py PRIMERS TARGET OUTPATH
+```
 
 ## Arguments
 **PRIMERS** : Filepath of primer CSV that was output from the filtering step.

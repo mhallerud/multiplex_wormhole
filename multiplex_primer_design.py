@@ -40,7 +40,7 @@ Input preparation:
 import os
 
 # set working dir to location of multiplex_wormhole
-os.chdir('/Users/maggiehallerud/Desktop/multiplex_wormhole')
+os.chdir('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
 from scripts.check_primer_specificity import main as specificityCheck
@@ -51,14 +51,13 @@ from scripts.plot_SA_temps import main as plotSAtemps
 
 
 ## SET INPUTS:
-os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")
-MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'
-PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #path to primer3 location
-TEMPLATES='../Input_SNPs/GrayFox_microhapsTemplates.csv'
-KEEPLIST_FA=None #"MartenPanel1.fa"
-OUTDIR='OnlyMicrohaplotypes'
-#GENOME='/Users/maggiehallerud/Marten_Primer_Design/Plate2_Oct2023/0_Inputs/CoastalMartens.maf30.CENSORmask.fa'
-N_LOCI = 50
+os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
+MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
+PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
+TEMPLATES='../Input_SNPs/GrayFox_microhapsTemplates.csv'#CSV containing candidate sequences (path relative to project folder)
+KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
+OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
+N_LOCI = 50 # target panel size (# sequences amplified)
 
 
 

@@ -5,18 +5,18 @@ Converts text files output by MFEprimer dimer into tables of pairwise primer pai
    
 ## Usage
 ### Python syntax
-`import os`
-
-`os.chdir('/multiplex_wormhole')`
-
-`from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers`
-
-`tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False")`
+```
+import os
+os.chdir('/multiplex_wormhole')
+from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
+tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False")
+```
 
 ### Command line syntax
-`cd multiplex_wormhole/scripts`
-
-`python3 tabulate_MFEprimer_dimers.py ALL_DIMERS END_DIMERS OUTPATH False`
+```
+cd multiplex_wormhole/scripts
+python3 tabulate_MFEprimer_dimers.py ALL_DIMERS END_DIMERS OUTPATH False
+```
 
 ### Arguments
 **ALL_DIMERS** : Text file output for all dimers output from MFE primer.

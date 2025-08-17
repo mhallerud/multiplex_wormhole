@@ -7,16 +7,17 @@ Primer dimers are predicted using MFEprimer. MFEprimer dimer is run twice: first
 Note: All candidate primers need to be included at this step, not just newly designed primers. Previously designed primers in FASTA format can be added to newly 
 
 ### Python syntax
-`import os`
-
-`os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")`
-
-`os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")`
+```
+import os
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+```
 
 ### Command line syntax
-`<MFEprimer_PATH> dimer -i <INPUT> -o <ALL_DIMERS> -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50`
-
-`<MFEprimer_PATH> dimer -i <INPUT> -o <END_DIMERS> -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p`
+```
+<MFEprimer_PATH> dimer -i <INPUT> -o <ALL_DIMERS> -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50
+<MFEprimer_PATH> dimer -i <INPUT> -o <END_DIMERS> -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p
+```
 
 ### Arguments
 **MFEprimer_PATH** : Filepath to MFEprimer run file (e.g., mfeprimer-3.2.7-darwin-10.6-amd64).

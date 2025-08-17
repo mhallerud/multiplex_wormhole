@@ -18,10 +18,15 @@ General Python modules required (these come pre-installed with most Python insta
 multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. 
 
 
-# Quick-Start Guide
-1. Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position following primer3 format: <start bp>,<length>. The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using a VCF and FASTA as inputs. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). The R script handles two input types:
+# Quick-Start Guide for Novel Panel Design
+## 1. Set up input data
+Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position following primer3 format: <start bp>,<length>. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
 
-* *de novo*: Matches formatting output of *de novo* Stacks pipeline where the FASTA was created using `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a prefix such as "CLocus_".
+Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). 
+
+The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using a VCF and FASTA as inputs. The R script handles two input types:
+
+* *de novo*: Matches formatting output of *de novo* Stacks pipeline with FASTA created by `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a set prefix such as "CLocus_".
 
 * *reference-aligned: Assumes the FASTA sequence header is in the format `CHROM`:`startBP`-`endBP` where `CHROM` matches the reference sequence denoted as 'CHROM' field in the VCF, `startBP` is the position in the reference sequence where the FASTA sequence starts, and `endBP` is the position in the reference sequence where the FASTA sequence ends. This format can be extracted from reference-aligned SNP data in VCF format (e.g., output from Stacks, bcftools mpileup, etc.) using the following commands with REF.FASTA as the reference genome:
 
@@ -44,18 +49,25 @@ bedtools slop -b 100 -i Thinned100bp.bed -g chr_lengths.txt > Thinned100bp_Flank
 bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.FA>
 ```
 
-2. Run multiplex_primer_design.py by changing the filepaths on lines 43, 54-61. Default parameters are provided but can be adjusted within this script.
+## 2. Run the multiplex_wormhole pipeline
+Edit input filepaths and settings on lines 43 and 54-60 multiplex_primer_design.py by changing the filepaths on lines 43, 54-61. Default parameters are provided but can be adjusted within this script.
 
-***This pipeline has very specific file requirements and naming conventions. Problems can be avoided by running the full pipeline from start to finish for each new dataset.***
+# Workflows for Various Applications
+A) Designing a new panel --> Start at Step 1
+B) Test dimer load of a pre-existing panel --> Steps 4-5
+C) Combining pre-existing panels or primer sets --> Start at Step 3
+D) Expand a current panel with newly designed primers --> Start at Step 1
 
-
-# Steps in the pipeline
-The [multiplex_primer_design](multiplex_primer_design.py) script provides a workflow for running the pipeline. For more details on arguments and defaults for each function, click on the function links to see documentation.
+# Steps in the Pipeline
+See [multiplex_primer_design](multiplex_primer_design.py) to run the full pipeline.
 
 0. Set up a folder structure for storing inputs and outputs
-1. [Batch Primer Design](docs/1_BatchPrimerDesign.md): Primers are designed for each template sequence using primer3, including predicting secondary structures (hairpins, homodimers, and heterodimers) within the primer pair.
-2. [Filter Primers](docs/2_FilterPrimers.md): Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
-3. [Check Primer Specificity](docs/3_CheckPrimerSpecificity.md): Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
+1. [Batch Primer Design](docs/1_BatchPrimerDesign.md)
+Primers are designed for each template sequence using primer3, including predicting secondary structures (hairpins, homodimers, and heterodimers) within the primer pair.
+2. [Filter Primers](docs/2_FilterPrimers.md) 
+Primer pairs are filtered to avoid likely secondary structures based on Gibbs free energy (deltaG) and annealing temperatures. 
+3. [Check Primer Specificity](docs/3_CheckPrimerSpecificity.md)
+Specificity of primers are checked against all templates. Any primer pairs that aren't specific to one locus are discarded to avoid off-target amplification.
 
    *Keeplist primers should be added to the previous step's output before proceeding to the next step. This is automatically handled in the multiplex_primer_design script.*
 
@@ -66,20 +78,23 @@ The [multiplex_primer_design](multiplex_primer_design.py) script provides a work
 
 6. [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md): A set of primers for "N" loci is selected that minimizes the number of secondary interactions (i.e., dimer load) between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives. Because these algorithms have an element of randomness, try running this optimization step multiple times and choosing the best outcome.
 
-   *The multiple_run_optimization script automates multiple runs of the optimization process. Code for running this can be found within the multiplex_primer_design script.*
+   *The multiple_run_optimization script automates multiple runs of the optimization process. The **multiple_run_optimization** script automates this process and is included in the multiplex_primer_design script.*
 
-# Notes on the optimization process
+# A Note on Inputs and Outputs
+Multiplex wormhole treats all candidate loci equally, it is therefore the responsibility of the user to select initial candidate loci based on their objectives. For example, in the case of SNP panels for individual identification, SNPs should be filtered for basic quality, missingness, and information content (e.g., high minor allele frequencies). Similarly, multiplex wormhole does not perform any objective-specific post-filtering of selected primers. Users are encouraged to perform additional **in silico** checks of multiplex wormhole primer outputs, e.g. using PRIMER-BLAST. Finally, multiplex wormhole is designed for **in silico** multiplex PCR design- additional lab testing and optimization is HIGHLY ENCOURAGED prior to panel application.
+
+If sufficient interest is expressed, additional capabilities for pre-processing and post-processing can be built into the pipeline. 
+
+# A Note on the Optimization Process
 Optimization works best when there are >4 times as many candidates relative to the number of target loci. Problems with few candidates relative to targets (e.g., 50 inputs loci for a 40-locus target) are likely to underperform because relatively few combinations are possible. The number of candidate loci needed to build dimer-free primer sets increases substantially with the number of target loci because finding primers that do not interact becomes more difficult. For example, we have had success designing 50-plexes from 200 input sequences, but designing a 150-plex with minimal primer interactions required >2000 candidate sequences.
 
-# Using other dimer calculation tools
+# Alternative dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples).
 
-One alternative to MFEprimer dimer is Primer Suite's Primer Dimer tool. To use this tool to calculate dimers:
-1. Copy the *_specificityCheck_passed.csv file into [primer-dimer.com](https://primer-dimer.com), select 'Multiplex Analysis' and 'Dimer Structure Report', and click Submit. Depending on how many loci you provided, this step may take awhile (~20 minutes for primers for 50 loci, ~xx hours for 1200 loci).
+One alternative to MFEprimer dimer is Primer Suite's Primer Dimer tool, though we have found dimers to be overestimated using this tool. To use this tool to calculate dimers:
+1. Copy the *_specificityCheck_passed.csv file into [primer-dimer.com](https://primer-dimer.com), select 'Multiplex Analysis' and 'Dimer Structure Report', and click Submit. Depending on how many loci you provided, this step may take awhile (~20 minutes for primers for 50 loci, multiple hours for 1200 loci).
 
-2. Run scripts/translate_primerSuite_report.R on the PrimerDimerReport.txt file downloaded from primer-dimer.com to convert this to a CSV. This can either be run directly in R or via the command line following the syntax:
-   Rscript --vanilla scripts/translate_primerSuite_report.R <PATH_TO_PrimerDimerReport.txt> <DELTA_G_THRESHOLD>
-The delta G threshold specified will filter out any primer dimers with delta G above this value.
+2. Run scripts/translate_primerSuite_report.R on the PrimerDimerReport.txt file downloaded from primer-dimer.com to convert this to a CSV. The delta G threshold specified will filter out any primer dimers with delta G above this value.
 
 Another alternative is [ThermoFisher's Multiplex Primer Design](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html), however multiplex_wormhole currently has no support for translating these outputs into tables.
 
