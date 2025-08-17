@@ -191,4 +191,4 @@ targets <- paste0(as.character(templates$Allowed_End_fw+1), ",", as.character(ta
 templates_csv <- data.frame(SEQUENCE_ID=gsub(">","",templates$ID,'>',''),
                             SEQUENCE_TEMPLATE=templates$Sequence,
                             SEQUENCE_TARGET=targets)
-write.csv(templates_csv, "GrayFox_primer3Templates.csv", row.names=FALSE)                         
+write.csv(templates_csv, "GrayFox_primer3Templates.csv", row.names=FALSE)

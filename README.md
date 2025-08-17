@@ -20,7 +20,7 @@ multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in Spyder an
 
 # Quick-Start Guide for Novel Panel Design
 ## 1. Set up input data
-Create a CSV file with a row for each target and columns for locus ID, template sequence, and target position following primer3 format: <start bp>,<length>. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
+Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: <start bp>,<length>. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
 
 Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). 
 

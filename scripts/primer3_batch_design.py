@@ -23,12 +23,14 @@ import sys
 import shutil
 import csv
 import glob
+import pandas as pd
+import warnings
 
 
 
 def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     """
-    IN_CSV : csv filepath
+    IN_CSV : CSV containing template sequences in primer3 format with header
         field1=ID, field2=DNA sequence, field3=amplicon (start_bp,length)
 
     OUTDIR : directory path
@@ -40,8 +42,33 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     Designs primers for all loci in IN_CSV; 
     Returns primer output files in OUTDIR/1_InitialPrimers
     """
+    # check inputs before proceeding
+    if not os.path.exists(IN_CSV):
+        raise InputPathError("Could not find IN_CSV <"+IN_CSV+">")
+    if not os.path.exists(PRIMER3_PATH):
+        raise InputPathError("Could not find PRIMER3_PATH <"+PRIMER3_PATH+">")
+    if not os.path.exists(OUTDIR):
+        raise InputPathError("Could not find OUTDIR <"+OUTDIR+">")
+    
     # find script directory 
     SCRIPTPATH=os.path.dirname(__file__)
+
+    # define paths to primer3 settings
+    primer3_sh = os.path.join(SCRIPTPATH, 'primer3.sh')
+    basedir = os.path.dirname(SCRIPTPATH)
+    strict = os.path.join(basedir, 'primer3_settings/primer3_Base_NoSecondaryFilters.txt')
+    broad = os.path.join(basedir, 'primer3_settings/primer3_Broad_NoSecondaryFilters.txt')
+    if not os.path.exists(strict):
+        raise InputPathError("Could not find primer3 settings <"+strict+">." + \
+                             "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
+    if not os.path.exists(broad):
+        raise InputPathError("Could not find primer3 settings <"+broad+">." + \
+                             "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
+
+    # read in input sequences
+    print("Reading in sequences......")
+    # check that input sequences follow the proper formatting
+    ids, seqs, snps = readCheckInputCSV(IN_CSV)
 
     # set up output folder structure
     if not os.path.exists(OUTDIR):
@@ -52,43 +79,22 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     # if the folder already exists, delete and remake
     # this avoids issues building up between runs
     if os.path.exists(outprimers):
+        print("Removing previous outputs in "+outprimers+"...")
         shutil.rmtree(outprimers)
     os.mkdir(outprimers)
     
-    # define paths to scripts and settings
-    primer3_sh = os.path.join(SCRIPTPATH, 'primer3.sh')
-    basedir = os.path.dirname(SCRIPTPATH)
-    strict = os.path.join(basedir, 'primer3_settings/primer3_Base_NoSecondaryFilters.txt')
-    broad = os.path.join(basedir, 'primer3_settings/primer3_Broad_NoSecondaryFilters.txt')
-    
-    # load templates CSV file with SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET in columns
-    # use create_in_templates.R script lines 1-90 to create this CSV
-    print("Reading in sequences......")
-    templates = [] # empty array to store lines
-    with open(IN_CSV, 'r', newline="\n") as file:
-        reader = csv.reader(file, delimiter=",")
-        next(reader) # skip header line
-        for line in reader: 
-            templates.append(line)
-    print("     "+str(len(templates))+" target sequences input")
-    
     # design FW and REV primers for each sequence
     print("Designing initial primers......")
-    for row in range(len(templates)):
-        # pull in inputs
-        ids = templates[row][0]
-        seq = templates[row][1]
-        snp = templates[row][2]
-        
+    for row in range(len(ids)):        
         # run primer3 based on strict settings
         #print(" - Designing primers for "  + ids)
-        os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ ids +' '+ seq +' '+ snp +' '+ strict +' '+ outprimers)
+        os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ ids[row] +' '+ seqs[row] +' '+ snps[row] +' '+ strict +' '+ outprimers)
     
     	# rerun with broad settings if no primers were found
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
         if len(primers)==0:
             print("     No primers found for "+ids+"! Retrying with broader settings.")
-            os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ ids +' '+ seq +' '+ snp +' '+ broad +' '+ outprimers)
+            os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ ids[row] +' '+ seqs[row] +' '+ snps[row] +' '+ broad +' '+ outprimers)
             
         # raise message if no primers were found for broad settings either
         primers = glob.glob(os.path.join(outprimers, ids +'.out'))
@@ -113,6 +119,70 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
         # progress tracking
         if row%100 == 0:
             print("      primers designed for "+str(row)+" sequences")
+
+
+# define class expected for each row in IN_CSV
+def readCheckInputCSV(IN_CSV):
+    try:
+        # Read the CSV file using the specified delimiter and header settings
+        df = pd.read_csv(IN_CSV, delimiter=",", header=0)
+
+        # Check header names
+        head = df.columns
+        if 'SEQUENCE_ID' not in head:
+            raise InputParseError("SEQUENCE_ID field missing from "+IN_CSV)
+        if 'SEQUENCE_TEMPLATE' not in head:
+            raise InputParseError("SEQUENCE_TEMPLATE field missing from "+IN_CSV)
+        if 'SEQUENCE_TARGET' not in head:
+            raise InputParseError("SEQUENCE_TARGET field missing from "+IN_CSV)
+        
+        # Check that sequence IDs don't have "."
+        ids = df["SEQUENCE_ID"]
+        if any(['.' in ids[i] for i in range(len(ids))]):
+            raise InputParseError("Some SEQUENCE_ID values contain a period '.' - remove any periods from SEQUENCE_ID and try again.")
+        # Check that sequence IDs are unique
+        if len(set(ids))<len(ids):
+            raise InputParseError("SEQUENCE_ID field contains non-unique values - rename or remove duplicates and try again.")
+
+        # Check that templates only contain ACTGN characters
+        seqs = df["SEQUENCE_TEMPLATE"]
+        allowed = {'a','c','g','t','n','A','C','G','T','N'}
+        if any([len(set(seqs[i])-allowed)!=0 for i in range(len(seqs))]):
+            raise InputParseError("SEQUENCE_TEMPLATE field contains characters other than ACTGN or actgn - remove these other characters and try again.")
+        
+        # Check that targets follow the <start>,<length> format
+        snps = df["SEQUENCE_TARGET"]
+        if any([len(snps[i].split(","))!=2 for i in range(len(snps))]):
+            raise InputParseError("Some SEQUENCE_TARGET values do not match the format STARTBP,LENGTH - fix and try again")
+        
+        # Check that targets don't extend past end of template sequence
+        seqlens = [len(seqs[i]) for i in range(len(seqs))]
+        startbps = [int(snps[i].split(",")[0]) for i in range(len(snps))]
+        if any([startbps[i]>seqlens[i] for i in range(len(seqs))]):
+            warnings.warn("Some target's startBP are beyond the sequence - no primers will be created." + \
+                          "Check that your SEQUENCE_TARGET format is in the format STARTBP,LENGTH "+ \
+                           "and that targets are paired with their corresponding sequences.", InputWarning)
+        targlens = [int(snps[i].split(",")[1]) for i in range(len(snps))]
+        endbps = [startbps[i]+targlens[i] for i in range(len(snps))]
+        if any([endbps[i]>seqlens[i] for i in range(len(seqs))]):
+            warnings.warn("Some target's length extends beyond sequence - no primers will be created." + \
+                          "Check that your SEQUENCE_TARGET format is in the format STARTBP,LENGTH "+ \
+                          "and that targets are paired with their corresponding sequences.", InputWarning)
+        
+        return([ids, seqs, snps])  # Return fields
+    except pd.errors.ParserError:
+        raise InputParseError("IN_CSV <"+IN_CSV+"> was found but could not be read!")
+
+
+
+
+# define custom exception and warning types
+class InputPathError(Exception):
+    pass
+class InputParseError(Exception):
+    pass
+class InputWarning(UserWarning):
+    pass
 
 
 
