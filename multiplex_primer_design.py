@@ -207,15 +207,15 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                   N_LOCI = N_LOCI, 
                   KEEPLIST = KEEPLIST_FA,
                   VERBOSE=False,#set to true to print dimers at each change
-                  SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
-                  ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                  SIMPLE=2000, # iterations for simple iterative improvement optimization (default=5000)
+                  ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
                   BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                   DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
                       # closer to 1 - least conservative, explores more cost space at higher risk
                       # closer to 0 - most conservative, explores less cost space at lower risk
                       # recommendations: 0.90-0.98, higher with fewer iterations
-                  T_INIT=0.1, # starting temp for fixed SA schedule (default=0.1)
-                  T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                  T_INIT=None, # starting temp for fixed SA schedule (default=0.1)
+                  T_FINAL=0.1, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                       # temperatures=0 is equivalent to simple iterative improvement, while 
                       # higher temperatures explore more of the cost space at higher risk of accepting dimers
                       # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1

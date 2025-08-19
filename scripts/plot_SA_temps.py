@@ -408,6 +408,7 @@ def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs, keeplist):
     return best_primer_pairs
 
 
+
 def SubsetDimerTable(primer_pairs, dimer_table, dimer_ids, return_complement=False):
     """primer_pairs"""
     """dimer_tally_dict"""

@@ -63,6 +63,9 @@ Adaptively calculated as `MIN_DIMER + DIMER_ADJ * (MAX_DIMER - MIN_DIMER)`
 The probability of accepting an increase in dimer load follows `e^(-PROB_ADJ*cost / temperature)`
 
 ## Outputs
+
+Probabilities reflect default parameters, although the initial (higher) temperature will vary depending on the dataset.
+
 `OUTPATH`_TemperatureSchedule.png
 
 ![SAparams_TemperatureSchedule](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/SimulatedAnnealingParams_DimerAcceptanceByIteration.png)

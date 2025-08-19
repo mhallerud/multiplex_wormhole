@@ -66,8 +66,14 @@ python3 optimize_primers.py PRIMER_FASTA DIMER_SUMS DIMER_TABLE OUTPATH N_LOCI K
 ## Outputs
 1. **`OUTPATH`_dimers.csv** : Table with total dimer load per primer pair.
 2. **`OUTPATH`_primers.csv** : Table with Primer IDs and (adapter-ligated) sequences. 
-3. **`OUTPATH`_ASA_costs.csv** : Trace of dimer load cost, temperatures, and iterations as the algorithm progressed. Only accepted changes are reported.
+3. **`OUTPATH`_SAdimers.csv** : Same as 1, but output after simulated annealing step as a "checkpoint".
+4. **`OUTPATH`_SAprimers.csv** : Same as 2, but output after simulated annealing step as a "checkpoint".
+5.**`OUTPATH`_ASA_costs.csv** : Trace of dimer load cost, temperatures, and iterations as the algorithm progressed. Only accepted changes are reported.
+6. **`OUTPATH`_DimerLoad.png** : Plot of dimer load trace across optimization iterations. Example below, with dashed line showing the transition between simulated annealing and simple iterative improvement.
 
+![SimulatedAnnealing_DimerLoadExample](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/SimulatedAnnealingExample_DimerLoad.png)
+
+When ITERATIONS>0, [simulated annealing plots](6A_ExploreOptimParameters.md) are also output into the optimization directory.
 
 ## The optimization process
 An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives.
@@ -119,4 +125,4 @@ Optimization is constrained by the number of options available relative to the n
 There is a tradeoff between computation time in simulated annealing (`ITERATIONS`) and optimization. For complex problems, longer runtimes and more runs will help explore more of the space. When in doubt, try plotting the trace of costs. If it is continuing to decrease at the tail end of iterations, increase the iterations. If the final cost is very variable between runs, increase the number of runs. You can also try subsetting the number of options to simplify the problem. Finally, if none of those work, you may have to consider aiming for a smaller target set.
 
 
-[Previous](5_TabulateDimers.md)
+[Previous](6A_ExploreOptimParameters.md)
