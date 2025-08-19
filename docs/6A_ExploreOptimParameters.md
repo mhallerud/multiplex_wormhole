@@ -65,14 +65,14 @@ The probability of accepting an increase in dimer load follows `e^(-PROB_ADJ*cos
 ## Outputs
 `OUTPATH`_TemperatureSchedule.png
 
-![SAparams_TemperatureSchedule](https://github.com/mhallerud/multiplex_wormhole/examples/SimulatedAnnealingParams_DimerAcceptanceByIteration.png)
+![SAparams_TemperatureSchedule](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/SimulatedAnnealingParams_DimerAcceptanceByIteration.png)
 
 `OUTPATH`_DimerAcceptanceByTemp.png
 
-![SAparams_DimerAcceptanceByTemperature](https://github.com/mhallerud/multiplex_wormhole/examples/SimulatedAnnealingParams_DimerAcceptanceByTemp.png)
+![SAparams_DimerAcceptanceByTemperature](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/SimulatedAnnealingParams_DimerAcceptanceByTemp.png)
 
 `OUTPATH`_DimerAcceptanceByIteration.png
 
-![SAparams_DimerAcceptanceByIteration](https://github.com/mhallerud/multiplex_wormhole/examples/SimulatedAnnealingParams_DimerAcceptanceByIteration.png)
+![SAparams_DimerAcceptanceByIteration](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/SimulatedAnnealingParams_DimerAcceptanceByIteration.png)
 
 [Previous](5_TabulateDimers.md)		[Next](6_OptimizeMultiplexPrimerSet.md)
