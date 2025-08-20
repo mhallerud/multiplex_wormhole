@@ -20,7 +20,7 @@ multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in the Spyde
 
 # Quick-Start Guide
 ## 1. Set up input data
-Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: <start bp>,<length>. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
+Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: *startBP*,*length*. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
 
 Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). 
 
@@ -72,22 +72,25 @@ python3 multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR 'None' 'None' 10 5000 2000
 ### Running piecewise steps of the pipeline
 The multiplex_primer_design.py script is set up for running multiplex_wormhole one step at a time within a Python environment. Update the paths to your multiplex_wormhole scripts on line 44, dependencies on lines 54-55, then inputs can be specified on lines 58-62. Default parameters are provided for all steps but can be adjusted within the script. 
 ### Parameters
-* TEMPLATES: Input CSV containing candidate DNA template IDs, sequences, and targets.
-* N_LOCI: Number of target sequences in final multiplex primer set.
-* OUTDIR: Directory where outputs and intermediates will be stored.
-* PREFIX: Prefix for output optimization files.
-* KEEPLIST_FA: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences.
-* N_RUNS: Number of times to run the full optimization process.
-* ITERATIONS: Number of iterations to run adaptive simulated annealing algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
-* SIMPLE: Number of iterations to run simple iterative improvement algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
+* **TEMPLATES**: Input CSV containing candidate DNA template IDs, sequences, and targets.
+* **N_LOCI**: Number of target sequences in final multiplex primer set.
+* **OUTDIR**: Directory where outputs and intermediates will be stored.
+* **PREFIX**: Prefix for output optimization files.
+* **KEEPLIST_FA**: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences.
+* **N_RUNS**: Number of times to run the full optimization process.
+* **ITERATIONS**: Number of iterations to run adaptive simulated annealing algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
+* **SIMPLE**: Number of iterations to run simple iterative improvement algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
 Note that optimization will stop before the full number of iterations is run if a primer set with 0 dimers is found.
 Multiplex_wormhole uses many additional parameters including filtering thresholds for including primers or dimers, simulated annealing algorithm parameters, and output names. Defaults for these are set in the multiplex_wormhole.py script but can be adjusted as desired, or you can run the pipeline one step at a time to further explore these parameters.
 
 
 # Workflows for Various Applications
 A) Designing a new panel --> Start at Step 1
+
 B) Test dimer load of a pre-existing panel --> Steps 4-5
+
 C) Combining pre-existing panels or primer sets --> Start at Step 3
+
 D) Expand a current panel with newly designed primers --> Start at Step 1
 
 # Steps in the Pipeline
