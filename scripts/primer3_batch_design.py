@@ -86,39 +86,41 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     # design FW and REV primers for each sequence
     print("Designing initial primers......")
     for row in range(len(ids)):        
+        id = ids[row]
         # run primer3 based on strict settings
         #print(" - Designing primers for "  + ids)
-        os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ ids[row] +' '+ seqs[row] +' '+ snps[row] +' '+ strict +' '+ outprimers)
+        os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ id +' '+ seqs[row] +' '+ snps[row] +' '+ strict +' '+ outprimers)
     
     	# rerun with broad settings if no primers were found
-        primers = glob.glob(os.path.join(outprimers, ids +'.out'))
+        primers = glob.glob(os.path.join(outprimers, id +'.out'))
         if len(primers)==0:
-            print("     No primers found for "+ids+"! Retrying with broader settings.")
-            os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ ids[row] +' '+ seqs[row] +' '+ snps[row] +' '+ broad +' '+ outprimers)
+            print("     No primers found for "+ids[row]+"! Retrying with broader settings.")
+            os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ id +' '+ seqs[row] +' '+ snps[row] +' '+ broad +' '+ outprimers)
             
         # raise message if no primers were found for broad settings either
-        primers = glob.glob(os.path.join(outprimers, ids +'.out'))
+        primers = glob.glob(os.path.join(outprimers, id +'.out'))
         if len(primers)==0:
-            print("     No primers found for "+ids+" even with broader settings!")
+            print("     No primers found for "+id+" even with broader settings!")
             
         # raise message if there are errors in primer design
-        error_file = os.path.join(outprimers, ids +'.err')
+        error_file = os.path.join(outprimers, id +'.err')
         file = open(error_file, 'r')
         errErrors = file.readlines()
         file.close()
         
         outErrors = []
-        with open(os.path.join(outprimers, ids+'.out')) as file:
+        with open(os.path.join(outprimers, id+'.out')) as file:
             for line in file.readlines():
                 if "ERROR" in line:
                     outErrors.append(line)
                     
         if len(errErrors)>0 | len(outErrors)>0:
-            print("     ERROR in primer design for "+ids+"!")
+            print("     ERROR in primer design for "+ids[row]+"!")
         
         # progress tracking
         if row%100 == 0:
             print("      primers designed for "+str(row)+" sequences")
+
 
 
 # define class expected for each row in IN_CSV

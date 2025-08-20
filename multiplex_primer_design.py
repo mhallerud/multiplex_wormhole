@@ -38,9 +38,10 @@ Input preparation:
 
 # load dependencies and modules
 import os
+import sys
 
-# set working dir to location of multiplex_wormhole
-os.chdir('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
+# load multiplex wormhole functions
+sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
 from scripts.check_primer_specificity import main as specificityCheck
@@ -49,11 +50,12 @@ from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
 from scripts.plot_SA_temps import main as plotSAtemps
 
+## SET PATHS TO DEPENDENCIES:
+MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
+PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
 ## SET INPUTS:
 os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
-MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
-PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 TEMPLATES='../Input_SNPs/GrayFox_microhapsTemplates.csv'#CSV containing candidate sequences (path relative to project folder)
 KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
@@ -99,8 +101,7 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
 
 
 
-## Step 3A Checking primer specificity 
-# Step 3A: Check primer specificity against provided loci
+## Step 3: Checking primer specificity 
 specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
 specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
                  TARGET = TEMPLATES, 
@@ -193,8 +194,6 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
             DIMER_ADJ=0.1,
             # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
             PROB_ADJ=1)
-## NOTE: These are currently hard-coded into the optimize_primers script, but can be adjusted in
-## lines 75-103 if desired.
 
 
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
@@ -226,7 +225,8 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                   PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                       # increase if too many dimers are being accepted during simulated annealing, 
                       # decrease if local optima are not being overcome
-                  SEED=None)#primer set from previous optimization run to start with, in CSV format
+                  SEED=None,#primer set from previous optimization run to start with, in CSV format
+                  MAKEPLOT=False)#whether to run plotSAtemps within
 # Outputs are found under 4_OptimizedSets/*
 
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
@@ -261,7 +261,8 @@ multipleOptimizations(N_RUNS = 10,
                       PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
-                      SEED=None)#primer set from previous optimization run to start with, in CSV format
+                      SEED=None,#primer set from previous optimization run to start with, in CSV format
+                      MAKEPLOT=False)#whether to run plotSAtemps within
 
 #OUTPUT: MAF30_150loci_RunSummary.csv
 
@@ -269,6 +270,6 @@ multipleOptimizations(N_RUNS = 10,
 ## STEP 7: Convert selected primer set to FASTA format for additional screening
 from scripts.extras.CSVtoFasta import main as CSVtoFASTA
 CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.csv"), 
+           OUT_FA = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.fasta"),
            ID_FIELD = "PrimerID", 
-           SEQ_FIELD = "Sequence", 
-           OUT_FA = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.fasta"))
+           SEQ_FIELD = "Sequence")

@@ -12,12 +12,12 @@ import csv
 
 
 
-def main(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA):
+def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence"):
     """
     IN_CSV : CSV containing primer IDs and sequences [filepath]
-    ID_FIELD : field name containing sequence IDs [string]
-    SEQ_FIELD : field name containing sequences [string]
     OUT_FA : FASTA file to be output [filepath]
+    ID_FIELD : field name containing sequence IDs [string] default: PrimerID
+    SEQ_FIELD : field name containing sequences [string] default: Sequence
     -------
     Converts input sequences in CSV to FASTA format
     """

@@ -197,6 +197,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     print(".....Initial temp for adaptive simulated annealing: "+str(T_INIT))
     print(".....Final temp for adaptive simulated annealing: "+str(T_FINAL))
     print("Plotting temperature schedule over 100 iterations")
+    plt.figure() # new plotting figure
     plt.plot(temps)
     plt.ylabel("Temperature")
     plt.xlabel("% of Iterations")

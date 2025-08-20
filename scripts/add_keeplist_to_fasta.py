@@ -28,39 +28,53 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     Outputs combined FASTA
 
     """
-    # read in fastas
-    main, main_ids = readFasta(MAIN_FA)
-    keeplist, keeplist_ids = readFasta(KEEPLIST_FA)
-   
-    # check for duplicate ids
-    all_ids = main_ids + keeplist_ids
-    if len(keeplist_ids) != len(set(keeplist_ids)):
-        raise Exception("Non-unique primer IDs found in KEEPLIST_FA! Fix IDs and then rerun.")
-    elif len(set(all_ids)) != len(all_ids):
-        raise Exception("KEEPLIST_FA has primer IDs that are also found in main fasta! Rename non-unique KEEPLIST primers IDs, then try again.")
-    else:
-        pass
-        
-    # combine fastas and write to file
-    combo_fa = main + keeplist
-    if OUTPATH=None:
+    # set output filepath if not provided
+    if OUTPATH==None:
     	OUTPATH= MAIN_FA.split('.')[0] + '_plusKeeplist.fa'
+
+    # read in fastas
+    main_seqs, main_ids = readFasta(MAIN_FA)
+    print(str(len(main_ids))+" MAIN sequences read.")
+    keeplist_seqs, keeplist_ids = readFasta(KEEPLIST_FA)
+    print(str(len(keeplist_ids))+" KEEPLIST sequences read.")
+   
+    # check for duplicate ids in each file
+    if len(keeplist_ids) != len(set(keeplist_ids)):
+        raise Exception("Non-unique primer IDs found in KEEPLIST_FA! Sequence headers in FASTA must be unique.")
+    if len(main_ids) != len(set(main_ids)):
+        raise Exception("Non-unique primer IDs found in MAIN_FA! Sequence headers in FASTA must be unique.")
+    
+    # if MAIN_FA contains primerIDs matching those in KEEPLIST_FA, remove from MAIN_FA to avoid duplicates
+    dup_ids = [keeplist_ids[x] for x in range(len(keeplist_ids)) if keeplist_ids[x] in main_ids]
+    if len(dup_ids)>0:
+        main_seqs = [main_seqs[x] for x in range(len(main_seqs)) if main_ids[x] not in dup_ids]
+        main_ids = [main_ids[x] for x in range(len(main_ids)) if main_ids[x] not in dup_ids]
+        
+    
+    # combine fastas and write to file
+    combo_seqs = main_seqs + keeplist_seqs
+    combo_ids = main_ids + keeplist_ids
     with open(OUTPATH, 'w') as file:
-        for line in combo_fa:
-            file.write(line)
+        for row in range(len(combo_seqs)):
+            file.write(combo_ids[row])
+            file.write(combo_seqs[row])
+    print("     Output saved to: "+OUTPATH)
 
 
 def readFasta(FA):
-    # empty array to hold ids
+    # empty array to hold ids & seqs
     ids = []    
+    seqs = []
     # read in lines
     with open(FA, 'r') as file:
         lines = file.readlines()
-        # make list of ids
+        # make list of ids and seqs
         for line in lines:
             if '>' in line:
                 ids.append(line)
-    return lines, ids
+            else:
+                seqs.append(line)
+    return seqs, ids
 
 
 
