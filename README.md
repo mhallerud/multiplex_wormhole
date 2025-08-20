@@ -8,17 +8,17 @@ multiplex_wormhole was created for the purpose of optimizing large multiplex PCR
 
 
 # Dependencies
-- Primer3 is used for primer design and can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be added at line 55 in multiplex_primer_design.py.
-- MFEprimer is used for dimer calculations and can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
+- Primer3 is used for primer design and can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be updated at line 55 in multiplex_primer_design.py and line 89 in multiplex_wormhole.py.
+- MFEprimer is used for dimer calculations and can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py and line 88 in multiplex_wormhole.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
 
 The following (normally pre-installed) Python dependencies are required:
 - pandas: install by running "pip install pandas" in the command line. Developed with pandas version 1.4.4
-General Python modules required (these come pre-installed with most Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, mathplotlib
+General Python modules required (these come pre-installed with most Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, mathplotlib, datetime
 
-multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in Spyder and bash 3.2.57(1)-release. 
+multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in the Spyder IDE.
 
 
-# Quick-Start Guide for Novel Panel Design
+# Quick-Start Guide
 ## 1. Set up input data
 Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: <start bp>,<length>. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
 
@@ -50,7 +50,39 @@ bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.F
 ```
 
 ## 2. Run the multiplex_wormhole pipeline
-Edit input filepaths and settings on lines 43 and 54-60 multiplex_primer_design.py by changing the filepaths on lines 43, 54-61. Default parameters are provided but can be adjusted within this script.
+### Running the full pipeline
+Edit filepaths to primer3 and MFEprimer dependencies on lines 88-89 of multiplex_wormhole.py (this only needs to be done once), then the script can be run in python:
+```
+# add multiplex wormhole folder to your PATH file
+import sys
+sys.path.append("~/multiplex_wormhole")
+# load the module
+from multiplex_wormhole import main as multiplex_wormhole
+# run multiplex wormhole with defaults
+multiplex_wormhole(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=5000, SIMPLE=2000)
+```
+or from the linux command line:
+```
+# run multiplex wormhole with all options
+python3 multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR PREFIX KEEPLIST_FA N_RUNS ITERATIONS SIMPLE
+# run multiplex wormhole with defaults
+python3 multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR 'None' 'None' 10 5000 2000
+```
+
+### Running piecewise steps of the pipeline
+The multiplex_primer_design.py script is set up for running multiplex_wormhole one step at a time within a Python environment. Update the paths to your multiplex_wormhole scripts on line 44, dependencies on lines 54-55, then inputs can be specified on lines 58-62. Default parameters are provided for all steps but can be adjusted within the script. 
+### Parameters
+* TEMPLATES: Input CSV containing candidate DNA template IDs, sequences, and targets.
+* N_LOCI: Number of target sequences in final multiplex primer set.
+* OUTDIR: Directory where outputs and intermediates will be stored.
+* PREFIX: Prefix for output optimization files.
+* KEEPLIST_FA: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences.
+* N_RUNS: Number of times to run the full optimization process.
+* ITERATIONS: Number of iterations to run adaptive simulated annealing algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
+* SIMPLE: Number of iterations to run simple iterative improvement algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
+Note that optimization will stop before the full number of iterations is run if a primer set with 0 dimers is found.
+Multiplex_wormhole uses many additional parameters including filtering thresholds for including primers or dimers, simulated annealing algorithm parameters, and output names. Defaults for these are set in the multiplex_wormhole.py script but can be adjusted as desired, or you can run the pipeline one step at a time to further explore these parameters.
+
 
 # Workflows for Various Applications
 A) Designing a new panel --> Start at Step 1
