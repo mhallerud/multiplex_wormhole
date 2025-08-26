@@ -76,7 +76,7 @@ The multiplex_primer_design.py script is set up for running multiplex_wormhole o
 * **N_LOCI**: Number of target sequences in final multiplex primer set.
 * **OUTDIR**: Directory where outputs and intermediates will be stored.
 * **PREFIX**: Prefix for output optimization files.
-* **KEEPLIST_FA**: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences.
+* **KEEPLIST_FA**: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences. Primer names must be in the format `LOCUS_ID`.`Pair`.`FWD/REV` to avoid designing multiple primer pairs for the same LOCUS_ID.
 * **N_RUNS**: Number of times to run the full optimization process.
 * **ITERATIONS**: Number of iterations to run adaptive simulated annealing algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
 * **SIMPLE**: Number of iterations to run simple iterative improvement algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
