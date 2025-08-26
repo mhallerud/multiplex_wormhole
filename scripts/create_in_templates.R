@@ -3,13 +3,13 @@ library(openPrimeR)
 library(vcfR)
 
 # set input variables
-fasta <- "MAF30All.CENSORed.fa"
-invcf <- "MAF30AllGrayFoxPops.Filtered.recode.vcf"
+fasta <- "../NCSO_BC_microhaps_CENSORed.fasta"
+invcf <- "../NCSO_BC_microhaps.vcf"
 type <- "refbased"
 #type <- "denovo"
-prefix <- "CLocus_" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
+prefix <- "PEPE_" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
 minflankbp <- 18 # minimum size of flanking regions (i.e., min primer binding site size)
-maxSNP <- 3 # maximum number of SNPs allowed in a template
+maxSNP <- 6 # maximum number of SNPs allowed in a template
 ## TODO: Consider adjusting this to a SNP density, e.g. for variable template lengths
 
 
@@ -47,6 +47,9 @@ if(type=="refbased"){
   excluded <- newfixes
   for (i in 1:nrow(fix)){
     sub <- lociinfo[lociinfo$CHROM==fix$CHROM[i],] # subset to the chromosome level
+    if(nrow(sub)==0){
+      warning(paste("WARNING: chromosome ID ",fix$CHROM[i]," not found in templates"))
+    }#if
     locus <- sub[which(sub$StartBP<fix$POS[i] & sub$EndBP>fix$POS[i]),] # find locus based on SNP position
     # copy over SNP info & create a new row for each template the SNP occurs in
     # (this approach adds one row for each locus the SNP occurs in, in case of overlapping loci)
@@ -124,13 +127,19 @@ unique(templates$ID[!templates$ID %in% fix$CHROM])
 
 #### FILTERING TEMPLATES ####
 ## 1. remove any templates with insufficient binding space (due to SNPs at start/end of sequence)
-templates$ID[-which(nchar(templates$Allowed_fw)>=minflankbp & nchar(templates$Allowed_rev)>=minflankbp)]
-templates <- templates[which(nchar(templates$Allowed_fw)>=minflankbp & nchar(templates$Allowed_rev)>=minflankbp),]
+remove <- templates$ID[-which(nchar(templates$Allowed_fw)>=minflankbp & nchar(templates$Allowed_rev)>=minflankbp)]
+remove
+if (length(remove)>0){
+  templates <- templates[which(nchar(templates$Allowed_fw)>=minflankbp & nchar(templates$Allowed_rev)>=minflankbp),]
+}#if
 nrow(templates)
 
 ## 2. remove any templates with more than 3 SNPs (these are likely paralogs, mRNA transcript variants, etc.)
+counts <- table(fix$CHROM)
 names(counts)[counts>maxSNP]
-templates <- templates[!templates$ID %in% paste0(">",names(counts)[counts>maxSNP]),]
+if (length(counts)>0){
+  templates <- templates[!templates$ID %in% paste0(">",names(counts)[counts>maxSNP]),]
+}#iff
 
 # double check that there's only one line per locus
 nrow(templates)
@@ -191,4 +200,4 @@ targets <- paste0(as.character(templates$Allowed_End_fw+1), ",", as.character(ta
 templates_csv <- data.frame(SEQUENCE_ID=gsub(">","",templates$ID,'>',''),
                             SEQUENCE_TEMPLATE=templates$Sequence,
                             SEQUENCE_TARGET=targets)
-write.csv(templates_csv, "GrayFox_primer3Templates.csv", row.names=FALSE)
+write.csv(templates_csv, "Fisher_microhap_primer3Templates.csv", row.names=FALSE)

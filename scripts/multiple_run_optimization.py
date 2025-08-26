@@ -30,7 +30,7 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
         signal.alarm(TIMEOUT*60) # set timer- this helps to timeout runs with infinite loops in the optimization process
         try:
             cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA,
-                                     DIMERS_SUMS=DIMER_SUMS, 
+                                     DIMER_SUMS=DIMER_SUMS, 
                                      DIMER_TABLE=DIMER_TABLE,
                                      OUTPATH=OUTPATH+"_Run"+str(run).zfill(2),
                                      N_LOCI=N_LOCI, 

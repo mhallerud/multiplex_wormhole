@@ -55,11 +55,11 @@ MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_S
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
 ## SET INPUTS:
-os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
-TEMPLATES='../Input_SNPs/GrayFox_microhapsTemplates.csv'#CSV containing candidate sequences (path relative to project folder)
-KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
+os.chdir("/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Fisher/SNPpanel/NCSO_BC_Panel")#path to project folder
+TEMPLATES="Fisher_microhap_primer3Templates.csv"#CSV containing candidate sequences (path relative to project folder)
+KEEPLIST_FA="Fisher_Primers_33plex_sub.fa" #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
-N_LOCI = 50 # target panel size (# sequences amplified)
+N_LOCI = 24+30 # target panel size (# sequences amplified)
 
 
 
@@ -148,8 +148,8 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -6 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
 
 
 
@@ -170,7 +170,7 @@ tabulateDimers(ALL_DIMERS,
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_50loci'),
+plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microhaps'),
             PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
             DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
             DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
@@ -238,7 +238,7 @@ multipleOptimizations(N_RUNS = 10,
                       DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
                       OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
-                      N_LOCI = 50, 
+                      N_LOCI = N_LOCI, 
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
                       VERBOSE=False,#set to true to print dimers at each change
