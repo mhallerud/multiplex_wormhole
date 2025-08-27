@@ -278,7 +278,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         while i < BURNIN:
             # make a new set by randomly swapping a primer pair
             # newset: 1) replaced ID, 2) new ID, 3) current pair list
-            swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
+            swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                       dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
                                                       random=True, keeplist=keeplist_pairs)
     
@@ -352,9 +352,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             i = 1  # reset iterations for each temperature
             while i <= T_iter:
                 # make a random change
-                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, None,
+                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                           dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci,
-                                                          random=True, keeplist=keeplist_loci)
+                                                          random=True, keeplist=keeplist_pairs)
                 # if e^(-change/temp) < random number (0,1), accept the change
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
                 SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
@@ -382,7 +382,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     print(curr_total)
                 # progress tracking
                 if (n_iter+i)%1000==0:
-                    print("          finished "+str(n_iter+i)+" iterations")
+                    print("          finished "+str(n_iter+i)+" iterations -- dimer load: "+str(curr_total))
 
             # decrease the temp via exponential decay - this makes the algorithm spend less time in 
             # 'risky' space and more time in productive optimization space
@@ -458,7 +458,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
             # create new set by replacing current worst pair with a random pair
             newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blockedlist,
-                                dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci)
+                                dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, keeplist=keeplist_pairs)
             if newSet is None:
                 comparison = False
             else:
@@ -497,7 +497,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         prev_best = new_best_id
                         # make new set
                         newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
-                                            dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, blockedlist2)
+                                            dimer_primerIDs, dimer_table, dimer_pairID, primer_pairs, primer_loci, blockedlist2, keeplist=keeplist_pairs)
                         if newSet is None:
                             print("No new sets can be found for "+swap_id+"! Removing from swap options.")
                             blockedlist.append(swap_id)
@@ -605,43 +605,38 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     return curr_total
 
 
-
 def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist, dimer_primerIDs, dimer_table,
-               dimer_pairID, primer_pairs, primer_loci, blockedlist2=[], random=False, keeplist=None):
+               dimer_pairID, primer_pairs, primer_loci, blockedlist2=[], random=False, keeplist=[]):
     # create copy of original list, otherwise links them and affects both lists when using update/remove
     update_pairIDs = pairIDs.copy()
     allowed_pairs_edit = allowed.copy()
-
+    
     # if swapping randomly, choose a random pairID (not including keeplist) to replace
     if random:
-        # option to replace
-        options = []
-        for p in pairIDs:
-            if p not in keeplist:
-                options.append(p)
+        # remove keeplist and blocklist loci from options
+        options = [x for x in pairIDs if x not in keeplist]
+        options = [x for x in options if x not in blockedlist]
         swap = rand.choice(options)
     
     # otherwise, replace the current worst (most dimers) pair in the set
     else:
-        worst = sorted(curr_dimer_totals.items(), key=lambda x: x[1])[-1]
-        #curr_max = worst[1]
-        swap = worst[0]
-
-        # if the chosen ID is in the blockedlist of loci that can't be fixed, then choose the next max value
-        if swap in blockedlist:
-            j = -2
-            n = len(curr_dimer_totals)
-            while n >= abs(j):
-                next_worst = sorted(curr_dimer_totals.items(), key=lambda x: x[1])[
-                    j:(j+1)]  # get next worst
-                #curr_max = next_worst[0][1]
-                swap = next_worst[0][0]
-                if swap not in blockedlist:
-                    break
-                else:
-                    j = j-1
-            if n < abs(j):
-                return None
+        dimersub = {k: v for k, v in curr_dimer_totals.items() if k not in keeplist}
+        if len(dimersub)>0:
+            worst = sorted(dimersub.items(), key=lambda x: x[1])
+            worst_pair = worst[-1]
+            swap = worst_pair[0]
+        else:
+            return None
+        
+        # if the chosen ID is in the keeplist or the blockedlist of loci that can't be fixed, 
+        # then choose the next max value
+        while swap in blockedlist:
+            worst.remove(worst_pair)
+            if len(worst)>0:    
+                worst_pair = worst[-1]
+                swap = worst_pair[0]
+            else:
+                return None # this means no options could be found
 
     # add other primers for the swap locus back to the allowed list
     allowed_pairs_edit = UpdateAllowedPairs(swap, allowed_pairs_edit, primer_loci, primer_pairs)

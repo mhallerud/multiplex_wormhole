@@ -149,7 +149,7 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
 os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
 
 
 
@@ -235,9 +235,9 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
 from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 10, 
                       PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
+                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_64loci"), 
                       N_LOCI = N_LOCI, 
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
