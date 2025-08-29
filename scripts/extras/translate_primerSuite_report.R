@@ -43,7 +43,7 @@ uniquePairLabels <- function(df, field1, field2){
 }#uniquePairs
 
 # export # dimers per primer
-filtered_dimers$DeltaG <- 1 # convert delta G to binary (1=dimer present)
+filtered_dimers$Dimers <- 1 # convert delta G to binary (1=dimer present)
 #remove self-dimers since we've already screened for these
 filtered_dimers <- filtered_dimers[!filtered_dimers$Primer1==filtered_dimers$Primer2,] 
 # check that there's only one interaction per primer pair...
@@ -52,37 +52,46 @@ filtered_dimers <- filtered_dimers[!filtered_dimers$Primer1==filtered_dimers$Pri
 #unique(dimers_agg$DeltaG)
 # set up matrix to store wide format results
 primers=sort(unique(c(filtered_dimers$Primer1, filtered_dimers$Primer2)))
-primer_interactions=matrix(NA, nrow=length(primers), ncol=length(primers))
+primer_interactions=matrix(0, nrow=length(primers), ncol=length(primers))
 colnames(primer_interactions) <- primers
 rownames(primer_interactions) <- primers
-for (primer in primers){
-  for (primer2 in primers){
-    dimer_sub <- filtered_dimers[which(filtered_dimers$Primer1%in%c(primer,primer2) & filtered_dimers$Primer2%in%c(primer,primer2)),]
-    primer_interactions[primer, primer2] <- nrow(dimer_sub)
-    primer_interactions[primer2,primer] <- nrow(dimer_sub)
-  }#primer2
-}#primer
+for (i in 1:nrow(dimers)){
+  p1 <- dimers$Primer1[i]
+  p2 <- dimers$Primer2[i]
+  primer_interaction_sums[p1,p2] =+1
+  primer_interaction_sums[p2,p1] =+1
+}#for
 # export # interactions per primer
 write.table(primer_interactions, paste0(paste(OUTDIR, OUT, sep="/"), "_PrimerInteractions_wide.csv"), sep=",", row.names=TRUE)
 
 # aggregate interactions by primer pair
 # make DF with pair IDs
 pair_dimers <- filtered_dimers
-pair_dimers$Pair1 <- unlist(lapply(pair_dimers$Primer1, function(X) str_split(str_split(X, "_FW")[[1]][1], "_REV")[[1]][1] ))
-pair_dimers$Pair2 <- unlist(lapply(pair_dimers$Primer2, function(X) str_split(str_split(X, "_FW")[[1]][1], "_REV")[[1]][1] ))
+pair_dimers$Pair1 <- unlist(lapply(pair_dimers$Primer1, function(X) str_split(str_split(X, ".FWD")[[1]][1], ".REV")[[1]][1] ))
+pair_dimers$Pair2 <- unlist(lapply(pair_dimers$Primer2, function(X) str_split(str_split(X, ".FWD")[[1]][1], ".REV")[[1]][1] ))
 # set up n_pairs x n_pairs matrix to store wide format results
 pairs=sort(unique(c(pair_dimers$Pair1, pair_dimers$Pair2)))
-primer_pair_interactions <- matrix(NA, nrow=length(pairs), ncol=length(pairs))
+primer_pair_interactions <- matrix(0, nrow=length(pairs), ncol=length(pairs))
 colnames(primer_pair_interactions) <- pairs
 rownames(primer_pair_interactions) <- pairs
 # loop through each combination of primer pairs and tally the number of unique primer-primer interactions (possible 0-4)
-for (pair in pairs){
-  for (pair2 in pairs){
-    pair_sub <- pair_dimers[which(pair_dimers$Pair1%in%c(pair,pair2) & pair_dimers$Pair2%in%c(pair,pair2)),]
-    primer_pair_interactions[pair,pair2] <- nrow(pair_sub) 
-    primer_pair_interactions[pair2,pair] <- nrow(pair_sub)
-  }#for pair2
-}#for pair
+for (i in 1:nrow(pair_dimers)){
+  p1 <- pair_dimers$Pair1[i]
+  p2 <- pair_dimers$Pair2[i]
+  #if (p1 %in% rownames(primer_pair_interactions)){
+  #  if (p2 %in% colnames(primer_pair_interactions)){
+      primer_pair_interactions[p1, p2] <- primer_pair_interactions[p1, p2]+1
+      primer_pair_interactions[p2, p1] <- primer_pair_interactions[p1, p2]+1
+      #  }#if
+  #}#if
+}#for
+#for (pair in pairs){
+#  for (pair2 in pairs){
+#    pair_sub <- pair_dimers[which(pair_dimers$Pair1%in%c(pair,pair2) & pair_dimers$Pair2%in%c(pair,pair2)),]
+#    primer_pair_interactions[pair,pair2] <- nrow(pair_sub) 
+#    primer_pair_interactions[pair2,pair] <- nrow(pair_sub)
+#  }#for pair2
+#}#for pair
 
 # export wide format matrix
 write.table(primer_pair_interactions, paste0(paste(OUTDIR, OUT, sep="/"), "_PrimerPairInteractions_wide.csv"), sep=",", row.names=TRUE)

@@ -21,7 +21,7 @@ import math
 
 
 def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, SEED=None, 
-         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.98, T_INIT=0.1, T_FINAL=None, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
+         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.98, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences

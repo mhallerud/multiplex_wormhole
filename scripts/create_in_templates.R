@@ -3,8 +3,8 @@ library(openPrimeR)
 library(vcfR)
 
 # set input variables
-fasta <- "../NCSO_BC_microhaps_CENSORed.fasta"
-invcf <- "../NCSO_BC_microhaps.vcf"
+fasta <- "../singletons_CENSORed.fa"
+invcf <- "../NCSO_BC_singletons.vcf"
 type <- "refbased"
 #type <- "denovo"
 prefix <- "PEPE_" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
@@ -142,8 +142,7 @@ if (length(counts)>0){
 }#iff
 
 # double check that there's only one line per locus
-nrow(templates)
-length(unique(templates$Header))
+nrow(templates)==length(unique(templates$Header))
 
 
 ## 3. remove loci with high levels of correlation with other SNPs
@@ -192,7 +191,7 @@ microhaps[microhaps$CHROM==microhaps$CHROM[1],]
 templates[templates$ID==paste0(">",microhaps$CHROM[1]),]
 
 # remove any periods in template IDs- these will cause problems with multiplex wormhole
-templates$ID <- gsub("\\.1","",templates$ID)
+templates$ID <- gsub("\\.","",templates$ID)
 
 # export IDs, templates, and targets as CSV in primer3 format
 target_len <- templates$Allowed_Start_rev - templates$Allowed_End_fw + 1

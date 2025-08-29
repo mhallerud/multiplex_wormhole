@@ -59,7 +59,7 @@ os.chdir("/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Result
 TEMPLATES="Fisher_microhap_primer3Templates.csv"#CSV containing candidate sequences (path relative to project folder)
 KEEPLIST_FA="Fisher_Primers_33plex_sub.fa" #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
-N_LOCI = 24+30 # target panel size (# sequences amplified)
+N_LOCI = 24+40+36 # target panel size (# sequences amplified)
 
 
 
@@ -96,7 +96,7 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
               dG_END_LIMIT=-5000,
-              dG_MID_LIMIT=-10000)
+              dG_MID_LIMIT=-8000)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
 
@@ -188,26 +188,26 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
             # initial temperature to start from - higher=more risk accepted
             T_INIT=2, 
             # final temperature to stop at - 1=no risk, higher=more risk accepted
-            T_FINAL=0, 
+            T_FINAL=0, #DEFAULT: 0.1
             #proportion of max dimer load considered when setting temperature schedule
             #closer to 0 = accepts fewer errors
             DIMER_ADJ=0.1,
             # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
-            PROB_ADJ=1)
+            PROB_ADJ=1)#DEFAULT=2
 
 
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
 # To run once:
 optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run01_150Loci_MAF30"), 
-                  N_LOCI = N_LOCI, 
+                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+                  OUTPATH = os.path.join(OUTDIR4,"Run01_100Loci"), 
+                  N_LOCI = 100, 
                   KEEPLIST = KEEPLIST_FA,
                   VERBOSE=False,#set to true to print dimers at each change
                   SIMPLE=2000, # iterations for simple iterative improvement optimization (default=5000)
-                  ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
+                  ITERATIONS=8000, # iterations for simulated annealing optimization (default=10000) 
                   BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                   DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
                       # closer to 1 - least conservative, explores more cost space at higher risk

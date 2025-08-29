@@ -119,7 +119,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             raise InputError("DIMER_ADJ must be between 0 and 1.")
         if PROB_ADJ<0:
             raise InputError("PROB_ADJ must be positive.")
-        if (T_INIT is not None and T_FINAL is not None) and T_INIT>T_FINAL:
+        if (T_INIT is not None and T_FINAL is not None) and T_INIT<T_FINAL:
             raise InputError("T_INIT must be greater than T_FINAL.")
         if T_FINAL is not None and T_FINAL<0:
             raise InputError("T_FINAL must be a positive number.")
@@ -153,11 +153,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
     # read in keeplist info
     if KEEPLIST is not None:
-        keeplist_loci, keeplist_pairs = LoadPrimers(KEEPLIST, True)
-        n_keeplist = len(keeplist_pairs)
+        keeplist_loci, keeplist_seqs, keeplist_IDs, keeplist_pairs = LoadPrimers(KEEPLIST)
+        n_keeplist = len(set(keeplist_pairs))
     else:
         keeplist_pairs = []
         keeplist_loci = []
+        keeplist_seqs = []
         n_keeplist = 0
     
 
@@ -580,10 +581,17 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
     outpairs = [primer_IDs[x] for x in current_pairs_index]
     outseqs = [primer_seqs[x] for x in current_pairs_index]
+    # add keeplist loci
+    if KEEPLIST is not None:
+        outpairs = outpairs + keeplist_pairs
+        outseqs = outseqs + keeplist_seqs    
     with open(OUTPATH+'_primers.csv', 'w') as file:
         file.write("PrimerID,Sequence\n")
         for i in range(len(outpairs)):
-            file.write(outpairs[i]+","+outseqs[i]+"\n")
+            try:
+                file.write(outpairs[i]+","+outseqs[i]+"\n")
+            except Exception:
+                pass
     
     ## Plot cost trace across iterations
     iterations = [int(costs[i][0]) for i in range(1,len(costs))]

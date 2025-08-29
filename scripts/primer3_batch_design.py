@@ -28,7 +28,7 @@ import warnings
 
 
 
-def main(IN_CSV, OUTDIR, PRIMER3_PATH):
+def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=True):
     """
     IN_CSV : CSV containing template sequences in primer3 format with header
         field1=ID, field2=DNA sequence, field3=amplicon (start_bp,length)
@@ -38,6 +38,8 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     
     PRIMER3_PATH : primer3_core path
     	location of primer3_core software
+    ENABLE_BROAD : logical
+        design primers with broader settings if none designed with strict settings?
     ------
     Designs primers for all loci in IN_CSV; 
     Returns primer output files in OUTDIR/1_InitialPrimers
@@ -61,9 +63,10 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     if not os.path.exists(strict):
         raise InputPathError("Could not find primer3 settings <"+strict+">." + \
                              "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
-    if not os.path.exists(broad):
-        raise InputPathError("Could not find primer3 settings <"+broad+">." + \
-                             "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
+    if ENABLE_BROAD:
+        if not os.path.exists(broad):
+            raise InputPathError("Could not find primer3 settings <"+broad+">." + \
+                                 "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
 
     # read in input sequences
     print("Reading in sequences......")
@@ -93,7 +96,7 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH):
     
     	# rerun with broad settings if no primers were found
         primers = glob.glob(os.path.join(outprimers, id +'.out'))
-        if len(primers)==0:
+        if len(primers)==0 and ENABLE_BROAD:
             print("     No primers found for "+ids[row]+"! Retrying with broader settings.")
             os.system(primer3_sh +' '+ PRIMER3_PATH + ' '+ id +' '+ seqs[row] +' '+ snps[row] +' '+ broad +' '+ outprimers)
             

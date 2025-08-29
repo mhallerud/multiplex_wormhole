@@ -187,9 +187,16 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
 
 
 def ReadDimerTXT(infile):
+    primers = []
     dimers = []
     with open(infile, 'r') as file:
         lines=file.readlines()
+        # grab IDs for all input primers
+        #startprimers = list(filter(lambda x: "Primer ID" in lines[x], range(len(lines))))+3
+        #endprimers = list(filter(lambda x: "Dimer List" in lines[x], range(len(lines))))-4
+        #for i in range(startprimers, endprimers):
+        #    primers.append(lines[i].split(' ')[1])
+        # grab info for each dimer
         dimer_indx = list(filter(lambda x: 'Dimer' in lines[x], range(len(lines))))[2:] # skip first two (headers)
         for i in dimer_indx:
             # grab all lines associated with this interaction & parse
@@ -206,6 +213,13 @@ def ReadDimerTXT(infile):
             dimers.append([primer1, primer2, pair1, pair2, score, delta_g])
     # convert to numpy array
     df = pd.DataFrame(dimers, columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
+    # add any missing primers (i.e., these had NO dimers) into DF
+    #for p in primers:
+    #    if p not in df['Primer1'] and p not in df['Primer2']:
+    #        pair1 = p.replace('.FWD','').replace('.REV','')
+    #        p_df = pd.DataFrame([[p, "NA", pair1, "NA", "NA", "NA"]], 
+    #                            columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
+    #        df.append(p_df)
     return df
     gc.collect()#clean up
 
