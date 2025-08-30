@@ -20,7 +20,7 @@ from optimize_primers import main as optimizeMultiplex
 def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
                           KEEPLIST=None, TIMEOUT=10, VERBOSE=False, SEED=None,
                           SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
-                          T_INIT=0.1, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
+                          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'TotalDimers']]
     
@@ -29,25 +29,29 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
     while run <= N_RUNS:
         signal.alarm(TIMEOUT*60) # set timer- this helps to timeout runs with infinite loops in the optimization process
         try:
-            cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA,
-                                     DIMER_SUMS=DIMER_SUMS, 
-                                     DIMER_TABLE=DIMER_TABLE,
-                                     OUTPATH=OUTPATH+"_Run"+str(run).zfill(2),
-                                     N_LOCI=N_LOCI, 
-                                     KEEPLIST=KEEPLIST,
-                                     SEED=None,
-                                     VERBOSE=False,
-                                     SIMPLE=SIMPLE, 
-                                     ITERATIONS=ITERATIONS,
-                                     BURNIN=BURNIN,
-                                     DECAY_RATE=DECAY_RATE,
-                                     T_INIT=T_INIT,
-                                     T_FINAL=T_FINAL,
-                                     PARTITIONS=PARTITIONS,
-                                     DIMER_ADJ=DIMER_ADJ,
-                                     PROB_ADJ=PROB_ADJ,
-                                     MAKEPLOT=MAKEPLOT)
-            loads.append([str(run), str(cost)])
+            try:
+                cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA,
+                                         DIMER_SUMS=DIMER_SUMS, 
+                                         DIMER_TABLE=DIMER_TABLE,
+                                         OUTPATH=OUTPATH+"_Run"+str(run).zfill(2),
+                                         N_LOCI=N_LOCI, 
+                                         KEEPLIST=KEEPLIST,
+                                         SEED=None,
+                                         VERBOSE=False,
+                                         SIMPLE=SIMPLE, 
+                                         ITERATIONS=ITERATIONS,
+                                         BURNIN=BURNIN,
+                                         DECAY_RATE=DECAY_RATE,
+                                         T_INIT=T_INIT,
+                                         T_FINAL=T_FINAL,
+                                         PARTITIONS=PARTITIONS,
+                                         DIMER_ADJ=DIMER_ADJ,
+                                         PROB_ADJ=PROB_ADJ,
+                                         MAKEPLOT=MAKEPLOT)
+                loads.append([str(run), str(cost)])
+            except Exception:
+                run+=1
+                continue
         except TimeoutException:
             continue
         # reset alarm
@@ -86,6 +90,9 @@ def moveAllFiles(filegrep, dest):
         except Exception:
             pass
 
+
+class OptimizationWarning(Exception):
+    pass
         
 
 ### Set up timeout exception behavior
