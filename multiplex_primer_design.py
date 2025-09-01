@@ -206,14 +206,14 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                   N_LOCI = 100, 
                   KEEPLIST = KEEPLIST_FA,
                   VERBOSE=False,#set to true to print dimers at each change
-                  SIMPLE=2000, # iterations for simple iterative improvement optimization (default=5000)
-                  ITERATIONS=8000, # iterations for simulated annealing optimization (default=10000) 
+                  SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
+                  ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
                   BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                   DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
                       # closer to 1 - least conservative, explores more cost space at higher risk
                       # closer to 0 - most conservative, explores less cost space at lower risk
                       # recommendations: 0.90-0.98, higher with fewer iterations
-                  T_INIT=None, # starting temp for fixed SA schedule (default=0.1)
+                  T_INIT=2, # starting temp for fixed SA schedule (default=0.1)
                   T_FINAL=0.1, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                       # temperatures=0 is equivalent to simple iterative improvement, while 
                       # higher temperatures explore more of the cost space at higher risk of accepting dimers
@@ -234,22 +234,22 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
 ## Here's a helper function:
 from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 10, 
-                      PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_64loci"), 
-                      N_LOCI = N_LOCI, 
+                      PRIMER_FA = PRIMER_FASTA,#os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                      DIMER_SUMS = DIMER_SUMS, #os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_TABLE = DIMER_TABLE, #os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+                      OUTPATH = "4_OptimizedSets/AddingSingletonsTo64",#os.path.join(OUTDIR4,"Microhaps_64loci"), 
+                      N_LOCI = 100, 
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
                       VERBOSE=False,#set to true to print dimers at each change
-                      SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
-                      ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                      SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
+                      ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
                       BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                       DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
                           # closer to 1 - least conservative, explores more cost space at higher risk
                           # closer to 0 - most conservative, explores less cost space at lower risk
                           # recommendations: 0.90-0.98, higher with fewer iterations
-                      T_INIT=None, # starting temp for fixed SA schedule (default=0.1)
+                      T_INIT=2, # starting temp for fixed SA schedule (default=0.1)
                       T_FINAL=0.1, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                           # temperatures=0 is equivalent to simple iterative improvement, while 
                           # higher temperatures explore more of the cost space at higher risk of accepting dimers

@@ -54,7 +54,7 @@ from plot_SA_temps import main as plotSAtemps
 
 
 
-def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, SEED=None, VERBOSE=True,
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, SEED=None, VERBOSE=False,
          SIMPLE=1000, ITERATIONS=2000, BURNIN=100, DECAY_RATE=0.98, T_INIT=None, T_FINAL=None, PARTITIONS=1000, 
          DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=True):
     """
@@ -130,7 +130,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
     ## -----------------------STEP 0B: READ INPUT FILES -----------------------##
     # check for files first
-    print("Reading in inputs..........")
+    print("READING INPUTS..........")
     if not os.path.exists(PRIMER_FASTA):
         raise Exception("CHECK INPUTS! PRIMER_FASTA <"+PRIMER_FASTA+"> file not found.")
     if not os.path.exists(DIMER_SUMS):
@@ -166,7 +166,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     ## STEP 1: Choose initial primer set based on pseudo-Greedy algorithm
     # Choose initial set of loci based on loci with minimum dimer counts
     # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
-    print("Generating initial primer set........")
+    print("")
+    print("GENERATING INITIAL PRIMER SET........")
     # make list of unique loci
     # convert to list because new versions of random.sample won't be able to handle sets...
     uniq_loci = list(set(primer_loci))
@@ -176,8 +177,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     if SEED is None:
         # if there are fewer loci than desired, use all of them
         if nloci < (N_LOCI-n_keeplist):
-            print("WARNING: Fewer loci passed filtering than desired in panel")
-            print("# loci used: " + str(nloci))
+            print("     WARNING: Fewer loci passed filtering than desired in panel")
+            print("     # loci used: " + str(nloci))
             initial_pairs = best_primer_pairs
         else:
             # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
@@ -257,7 +258,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     curr_total = sum(curr_dimer_totals.values())#total
     print("     Initial dimer load: "+str(curr_total))
     if curr_total==0:
-        print("Initial primer set has 0 predicted dimers! Skipping optimization process.")
+        print("Initial primer set already has 0 predicted dimers! Skipping optimization process.")
         BURNIN=0
         ITERATIONS=0
         SIMPLE=0
@@ -272,43 +273,49 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
     ## -----------------------STEP 2: RUN SIMULATED ANNEALING OPTIMIZATION-----------------------##
     ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
-    change = []
-    if (T_INIT is None or T_FINAL is None) and BURNIN>0:
-        print("Sampling dimer load changes.......")
-        i = 0
-        while i < BURNIN:
-            # make a new set by randomly swapping a primer pair
-            # newset: 1) replaced ID, 2) new ID, 3) current pair list
-            swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
-                                                      dimer_table, dimer_pairID, primer_pairs, primer_loci, 
-                                                      OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
-                                                      random=True, keeplist=keeplist_pairs)
-    
-            # compare newSet to original set
-            comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
-    
-            # if newSet is worse, make note of change value
-            if comparison > 0:
-                change.append(comparison)
-                # repeat
-                i += 1
-    else:
-        print("BURNIN skipped because temperatures provided.")
-        
-    ## ------------------STEP 2B: SET AND PLOT TEMPERATURE SCHEDULE----------------##
-    print("Setting temperature schedule...")
     if ITERATIONS>0:
-        # ending temperature should reject most changes- 0 is no 'mistakes' allowed
-        if T_FINAL is None: 
-            T_final = 0.1 #float(min(change)) # default setting
+        change = []
+        if (T_INIT is None or T_FINAL is None) and BURNIN>0 and ITERATIONS>0:
+            print("")
+            print("SETTING TEMPERATURE SCHEDULE.....")
+            print("Running burnin to sample dimer cost space:")
+            i = 0
+            while i < BURNIN:
+                # make a new set by randomly swapping a primer pair
+                # newset: 1) replaced ID, 2) new ID, 3) current pair list
+                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                                                          dimer_table, dimer_pairID, primer_pairs, primer_loci, 
+                                                          OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
+                                                          random=True, keeplist=keeplist_pairs)
+        
+                # compare newSet to original set
+                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_pairID)
+        
+                # if newSet is worse, make note of change value
+                if comparison > 0:
+                    change.append(comparison)
+                    # repeat
+                    i += 1
+            print("     Max change observed: "+str(max(change)))    
+            # set temperatures based on burnin results
+            if T_FINAL is None:
+                T_final = 0.1 #float(min(change)) # default setting
+            if T_INIT is None:
+                T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
+        # use input temps, if provided
         else:
-            T_final = T_FINAL
-        # initial temp should accept most changes - even 'mistakes' - and will allow local minima to be overcome
-        if T_INIT is None:
-            T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
-        else:
-            T_init = T_INIT
-
+            if T_INIT is not None and T_FINAL is not None:
+                T_init = T_INIT
+                T_final = T_FINAL
+                print("Burnin skipped - using provided temperatures:")                
+            else:
+                print("Default temperatures used:")
+                T_init=2
+                T_final=0.1
+        print("     Initial temp: "+str(T_init))
+        print("     Final temp: "+str(T_final))
+        
+        ## ------------------STEP 2B: SET AND PLOT TEMPERATURE SCHEDULE----------------##
         # partition iteration space across temp range
         if ITERATIONS > PARTITIONS:
             Tspace = (T_init - T_final)/PARTITIONS
@@ -318,8 +325,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                   so the temperature schedule is set to change at each iteration.")
             Tspace = (T_init - T_final)/ITERATIONS
             T_iter = 1    
-        print(".....Initial temp: "+str(T_init))
-        print(".....Final temp: "+str(T_final))
         if len(change)==0:
             MIN_DIMER=1
             MAX_DIMER=10
@@ -327,7 +332,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             MIN_DIMER=min(change)
             MAX_DIMER=max(change)
         if MAKEPLOT:
-            print(".....Making plots of temperature schedule")
+            print("     Plotting temperature schedule...")
             plotSAtemps(OUTPATH=OUTPATH,
                         MIN_DIMER=MIN_DIMER,
                         MAX_DIMER=MAX_DIMER,
@@ -340,7 +345,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
         ## ------------------STEP 2C: RUN SIMULATED ANNEALING ITERATIONS----------------##
         # C) run simulated annealing optimization
-        print("Starting adaptive simulated annealing.....")
+        print("")
+        print("STARTING SIMULATED ANNEALING OPTIMIZATION.....")
         # initialize
         Temp = T_init
         n_iter = 0
@@ -443,7 +449,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     # i.e., swap loci only if dimer load is reduced
     # only attempt iterative improvement if no final solution found with simulated annealing
     if curr_total > 0:
-        print("Proceeding to simple iterative improvement....")
+        print("STARTING GREEDY OPTIMIZATION.....")
         print("Initial # dimers: " + str(curr_total))
         i = 0
         if len(keeplist_pairs) > 0:
@@ -456,7 +462,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 print("          finished "+str(i)+" iterations")
             # if current total dimers = 0, STOP because we're optimized already
             if curr_total == 0:
-                print("STOPPING: Primer set is fully optimized.")
+                print("Solution with 0 dimers found!")
                 break
     
             # create new set by replacing current worst pair with a random pair
@@ -506,7 +512,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
                                             blockedlist2, random=False, keeplist=keeplist_pairs)
                         if newSet is None:
-                            print("No new sets can be found for "+swap_id+"! Removing from swap options.")
+                            print("     No new sets can be found for "+swap_id+"! Removing from swap options.")
                             blockedlist.append(swap_id)
                             break
                         else:
@@ -524,7 +530,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 break
                         # add to blockedlist2 if stuck in an infinite loop
                         if new_best_id == prev_best and swap_id == prev_worst:
-                            print("Infinite loop caused by "+new_best_id+"! Removing from swap options.")
+                            print("     Infinite loop caused by "+new_best_id+"! Removing from swap options.")
                             blockedlist2.append(new_best_id)
                         # compare new set against current set
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_pairID)
@@ -560,20 +566,19 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             i+=1
             # progress tracking
             if VERBOSE:
-                print(".....Current # dimers: "+str(curr_total))
+                print("...Current # dimers: "+str(curr_total))
             if i==SIMPLE:
-                print("Iterative improvement algorithm stopped because max # of iterations reached.")
+                print("STOPPED - MAX ITERATIONS REACHED!")
     
         # report the blockedlisted loci
         print("The following loci could not be improved with available replacements. If primer loads are high, consider removing these from the input file and rerunning.")
         for b in range(len(blockedlist)):
             print("\t\t" + blockedlist[b])
     
-        if i==SIMPLE:
-            print("Ran out of iterations during simple iterative improvement! Try increasing the SIMPLE parameter for a better optimized set.")
-    
 
     ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
+    print("")
+    print("EXPORTING OPTIMIZED PRIMER SET....")
     ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
                primer_seqs, keeplist_IDs, keeplist_seqs, costs)
                     
@@ -787,7 +792,7 @@ def SubsetDimerTable(primer_pairs, dimer_table, dimer_ids, return_complement=Fal
     primer_idx = list(
         filter(lambda x: dimer_ids[x] in primer_pairs, range(1, len(dimer_ids))))
     # left-adjust by 1 due to empty first column in dimer_ids
-    primer_idx = [i-1 for i in primer_idx]
+    #primer_idx = [i-1 for i in primer_idx]
     for pair in primer_pairs:
         # grab all primer pair interactions between the specified pairs
         pair_dict = dimer_table[pair]
