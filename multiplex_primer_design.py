@@ -55,11 +55,11 @@ MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_S
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
 ## SET INPUTS:
-os.chdir("/Users/maggiehallerud/Desktop/Marten_Fisher_Population_Genomics_Results/Fisher/SNPpanel/NCSO_BC_Panel")#path to project folder
-TEMPLATES="Fisher_microhap_primer3Templates.csv"#CSV containing candidate sequences (path relative to project folder)
-KEEPLIST_FA="Fisher_Primers_33plex_sub.fa" #"MartenPanel1.fa" #FASTA containing previously designed primer set
+os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
+TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidate sequences (path relative to project folder)
+KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
-N_LOCI = 24+40+36 # target panel size (# sequences amplified)
+N_LOCI = 50 # target panel size (# sequences amplified)
 
 
 
@@ -95,7 +95,7 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
-              dG_END_LIMIT=-5000,
+              dG_END_LIMIT=-4000,
               dG_MID_LIMIT=-8000)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
@@ -202,9 +202,9 @@ plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
 optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                   DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
                   DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run01_100Loci"), 
-                  N_LOCI = 100, 
-                  KEEPLIST = KEEPLIST_FA,
+                  OUTPATH = os.path.join(OUTDIR4,"Run01_50Microhaps"), 
+                  N_LOCI = N_LOCI, 
+                  KEEPLIST = None, #KEEPLIST_FA,
                   VERBOSE=False,#set to true to print dimers at each change
                   SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
                   ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
@@ -213,8 +213,8 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                       # closer to 1 - least conservative, explores more cost space at higher risk
                       # closer to 0 - most conservative, explores less cost space at lower risk
                       # recommendations: 0.90-0.98, higher with fewer iterations
-                  T_INIT=2, # starting temp for fixed SA schedule (default=0.1)
-                  T_FINAL=0.1, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                  T_INIT=None, # starting temp for fixed SA schedule (default=0.1)
+                  T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                       # temperatures=0 is equivalent to simple iterative improvement, while 
                       # higher temperatures explore more of the cost space at higher risk of accepting dimers
                       # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
@@ -237,10 +237,10 @@ multipleOptimizations(N_RUNS = 10,
                       PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
                       DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_64loci"), 
+                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
                       N_LOCI = 100, 
                       KEEPLIST = KEEPLIST_FA, 
-                      TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
+                      TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
                       VERBOSE=False,#set to true to print dimers at each change
                       SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
                       ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 

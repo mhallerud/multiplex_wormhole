@@ -49,10 +49,12 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
                                          PROB_ADJ=PROB_ADJ,
                                          MAKEPLOT=MAKEPLOT)
                 loads.append([str(run), str(cost)])
-            except Exception:
+            except Exception as e:
+                print(e)
                 run+=1
                 continue
         except TimeoutException:
+            print("TimeoutException!")
             continue
         # reset alarm
         else:

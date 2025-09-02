@@ -24,8 +24,8 @@ infile=readLines(IN)
 
 # make table with primer1, primer2, deltaG
 dimers_txt=unique(infile[grep('kcal/mol', infile)])
-primer1=unlist(lapply(1:length(dimers_txt), function(X) str_replace_all(str_split(dimers_txt[X], " ")[[1]][8], " ", "")))
-primer2=unlist(lapply(1:length(dimers_txt), function(X) str_replace_all(str_replace(str_split(dimers_txt[X], " ")[[1]][10], ":", ""), " ","")))
+primer1=unlist(lapply(1:length(dimers_txt), function(X) gsub(" ","", gsub(":","", str_split(dimers_txt[X], " ")[[1]][8]))))
+primer2=unlist(lapply(1:length(dimers_txt), function(X) gsub(" ","", gsub(":","", str_split(dimers_txt[X], " ")[[1]][10]))))
 deltaG=as.numeric(unlist(lapply(1:length(dimers_txt), function(X) str_split(dimers_txt[X]," ")[[1]][11])))
 dimers <- data.frame(Primer1=primer1, Primer2=primer2, DeltaG=deltaG)
 #write.table(dimers, paste0(paste(OUTDIR, OUT, sep="/"), ".tsv"), sep="\t", row.names=FALSE)
@@ -55,11 +55,11 @@ primers=sort(unique(c(filtered_dimers$Primer1, filtered_dimers$Primer2)))
 primer_interactions=matrix(0, nrow=length(primers), ncol=length(primers))
 colnames(primer_interactions) <- primers
 rownames(primer_interactions) <- primers
-for (i in 1:nrow(dimers)){
-  p1 <- dimers$Primer1[i]
-  p2 <- dimers$Primer2[i]
-  primer_interaction_sums[p1,p2] =+1
-  primer_interaction_sums[p2,p1] =+1
+for (i in 1:nrow(filtered_dimers)){
+  p1 <- filtered_dimers$Primer1[i]
+  p2 <- filtered_dimers$Primer2[i]
+  primer_interactions[p1,p2] = primer_interactions[p1,p2]+1
+  primer_interactions[p2,p1] = primer_interaction_sums[p2,p1]+1
 }#for
 # export # interactions per primer
 write.table(primer_interactions, paste0(paste(OUTDIR, OUT, sep="/"), "_PrimerInteractions_wide.csv"), sep=",", row.names=TRUE)
@@ -81,7 +81,7 @@ for (i in 1:nrow(pair_dimers)){
   #if (p1 %in% rownames(primer_pair_interactions)){
   #  if (p2 %in% colnames(primer_pair_interactions)){
       primer_pair_interactions[p1, p2] <- primer_pair_interactions[p1, p2]+1
-      primer_pair_interactions[p2, p1] <- primer_pair_interactions[p1, p2]+1
+      primer_pair_interactions[p2, p1] <- primer_pair_interactions[p2, p1]+1
       #  }#if
   #}#if
 }#for

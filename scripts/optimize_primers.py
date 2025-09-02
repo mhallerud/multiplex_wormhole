@@ -161,6 +161,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         keeplist_pairs = []
         keeplist_loci = []
         keeplist_seqs = []
+        keeplist_IDs = []
         n_keeplist = 0
     
 
@@ -305,13 +306,17 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
         # use input temps, if provided
         else:
-            if T_INIT is not None and T_FINAL is not None:
+            if T_INIT is not None: 
+                print("Using provided T_INIT")                
                 T_init = T_INIT
-                T_final = T_FINAL
-                print("Burnin skipped - using provided temperatures:")                
             else:
-                print("Default temperatures used:")
-                T_init=2
+                print("Using default T_INIT")
+                T_init = 2.0
+            if T_FINAL is not None:
+                print("Using provided T_FINAL")                
+                T_final = T_FINAL
+            else:
+                print("Using default T_FINAL")
                 T_final=0.1
         print("     Initial temp: "+str(T_init))
         print("     Final temp: "+str(T_final))
@@ -661,14 +666,17 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
             #    pairDict = nonset_dimers_edit[pair]
             #    subPair = [pairDict[i] for i in allowed_indx]
             #    candidate_dimers.update({pair: subPair})
-            # grab column sums (total dimer load for nonset/candidate dimers)
-            candidate_totals = candidate_dimers.sum(axis=0)
-            #candidate_totals = list(map(sum, zip(*candidate_dimers.values()))) #get sums across same column of values
-            # grab the new pair ID (randomly choose if multiple options)
-            cand_min = min(candidate_totals)
-            new_best_options = candidate_totals[candidate_totals==cand_min]
-            #new_best_options = [candidate_ids[x] for x in range(len(candidate_ids)) if candidate_totals[x]==cand_min]
-            new_id = rand.choice(new_best_options)
+            if len(candidate_dimers)>0:
+                # grab column sums (total dimer load for nonset/candidate dimers)
+                candidate_totals = candidate_dimers.sum(axis=0)
+                #candidate_totals = list(map(sum, zip(*candidate_dimers.values()))) #get sums across same column of values
+                # grab the new pair ID (randomly choose if multiple options)
+                cand_min = min(candidate_totals)
+                new_best_options = candidate_totals[candidate_totals==cand_min]
+                #new_best_options = [candidate_ids[x] for x in range(len(candidate_ids)) if candidate_totals[x]==cand_min]
+                new_id = rand.choice(new_best_options)
+            else:
+                return None
     else:
         return None
     
