@@ -234,10 +234,10 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
 ## Here's a helper function:
 from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 10, 
-                      PRIMER_FA = PRIMER_FASTA,#os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-                      DIMER_SUMS = DIMER_SUMS, #os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                      DIMER_TABLE = DIMER_TABLE, #os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                      OUTPATH = "4_OptimizedSets/AddingSingletonsTo64",#os.path.join(OUTDIR4,"Microhaps_64loci"), 
+                      PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_64loci"), 
                       N_LOCI = 100, 
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
