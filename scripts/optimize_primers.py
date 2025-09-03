@@ -289,7 +289,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                                           primer_pairs, primer_loci, 
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
                                                           random=True, keeplist=keeplist_pairs)
-        
                 # compare newSet to original set
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table)
         
@@ -369,7 +368,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                           primer_pairs, primer_loci,
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
-                                                          random=True, keeplist=keeplist_pairs)
+                                                          random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                 # if e^(-change/temp) < random number (0,1), accept the change
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table)
                 SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
@@ -389,6 +388,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         min_nonset_dimers = nonset_dimers
                     # STOP if 0 dimers in set
                     if curr_total == 0:
+                        costs.append([n_iter, Temp, curr_total])
                         break
                 # in simulated annealing, no need to keep track of what's been tested
                 # repeat until # iterations at this temp finishes
@@ -406,6 +406,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             n_iter+=T_iter
             #print("....."+str(int(n_iter))+" iterations")
             if curr_total == 0:
+                costs.append([n_iter, Temp, curr_total])
                 print("Solution with 0 dimers found!")
                 break
         
@@ -428,33 +429,35 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         
         ## ------------------STEP 2D: SAVE SA OUTPUTS AS CHECKPOINT----------------##
         # export the current dimers and their totals as CSV
-        with open(OUTPATH+'_SAdimers.csv', 'w') as file:
-            file.write("PrimerPairID,DimerLoad\n")
-            for key in curr_dimer_totals.keys():
-                # line = curr_dimer_totals[]
-                #line_str = str(line)[1:-1].replace("'","")
-                file.write(key+","+str(curr_dimer_totals[key])+"\n")
+        ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
+                   primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
+        # with open(OUTPATH+'_SAdimers.csv', 'w') as file:
+        #     file.write("PrimerPairID,DimerLoad\n")
+        #     for key in curr_dimer_totals.keys():
+        #         # line = curr_dimer_totals[]
+        #         #line_str = str(line)[1:-1].replace("'","")
+        #         file.write(key+","+str(curr_dimer_totals[key])+"\n")
     
-        # export selected primers to CSV
-        current_pairs_index = list(
-            filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
-        outpairs = [primer_IDs[x] for x in current_pairs_index]
-        outseqs = [primer_seqs[x] for x in current_pairs_index]
-        with open(OUTPATH+'_SAprimers.csv', 'w') as file:
-            file.write("PrimerID,Sequence\n")
-            for i in range(len(outpairs)):
-                file.write(outpairs[i]+","+outseqs[i]+"\n")
+        # # export selected primers to CSV
+        # current_pairs_index = list(
+        #     filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
+        # outpairs = [primer_IDs[x] for x in current_pairs_index]
+        # outseqs = [primer_seqs[x] for x in current_pairs_index]
+        # with open(OUTPATH+'_SAprimers.csv', 'w') as file:
+        #     file.write("PrimerID,Sequence\n")
+        #     for i in range(len(outpairs)):
+        #         file.write(outpairs[i]+","+outseqs[i]+"\n")
         
-        # export cost changes
-        with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
-            for line in costs:
-                file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
+        # # export cost changes
+        # with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
+        #     for line in costs:
+        #         file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
     
 
     ## ------------------STEP 3: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
     # i.e., swap loci only if dimer load is reduced
     # only attempt iterative improvement if no final solution found with simulated annealing
-    if curr_total > 0:
+    if SIMPLE>0:
         print("STARTING GREEDY OPTIMIZATION.....")
         print("Initial # dimers: " + str(curr_total))
         i = 0
@@ -468,6 +471,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 print("          finished "+str(i)+" iterations")
             # if current total dimers = 0, STOP because we're optimized already
             if curr_total == 0:
+                costs.append([n_iter, Temp, curr_total])
                 print("Solution with 0 dimers found!")
                 break
     
@@ -475,7 +479,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blockedlist,
                                 primer_pairs, primer_loci, 
                                 OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                [], random=False, keeplist=keeplist_pairs)
+                                [], random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
             if newSet is None:
                 comparison = False
             else:
@@ -516,7 +520,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                             primer_pairs, primer_loci, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                            blockedlist2, random=False, keeplist=keeplist_pairs)
+                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                         if newSet is None:
                             print("     No new sets can be found for "+swap_id+"! Removing from swap options.")
                             blockedlist.append(swap_id)
@@ -565,6 +569,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
             # stop iterating if no new sets can be made in the previous while loop
             if newSet is None:
+                costs.append([n_iter, Temp, curr_total])
                 print("No new sets can be made with the available primers!")
                 break
     
@@ -574,6 +579,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             if VERBOSE:
                 print("...Current # dimers: "+str(curr_total))
             if i==SIMPLE:
+                costs.append([n_iter, Temp, curr_total])
                 print("STOPPED - MAX ITERATIONS REACHED!")
     
         # report the blockedlisted loci
@@ -582,11 +588,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             print("\t\t" + blockedlist[b])
     
 
-    ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
-    print("")
-    print("EXPORTING OPTIMIZED PRIMER SET....")
-    ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
-               primer_seqs, keeplist_IDs, keeplist_seqs, costs)
+        ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
+        print("")
+        print("EXPORTING OPTIMIZED PRIMER SET....")
+        ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
+                   primer_seqs, keeplist_IDs, keeplist_seqs, costs)
                     
     return curr_total
 
@@ -594,7 +600,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
 def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist, 
                primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-               blockedlist2=[], random=False, keeplist=[]):
+               blockedlist2=[], random=False, keeplist=[], n_iter=None, Temp=None, curr_total=None):
     # create copy of original list, otherwise links them and affects both lists when using update/remove
     update_pairIDs = pairIDs.copy()
     allowed_pairs_edit = allowed.copy()
@@ -607,6 +613,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
     worst_dimers = [x[1] for x in worst]
     worst_sum = sum(worst_dimers)
     if worst_sum==0:
+        costs.append([n_iter, Temp, curr_total])
         ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, pairIDs, primer_IDs, 
                    primer_seqs, keeplist_IDs, keeplist_seqs, costs)
         raise OptimizationWarning("STOPPED. Keeplist primer pairs are the only ones with dimer loads, therefore further optimization is impossible. (outputs saved).")
@@ -666,15 +673,15 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
             #    pairDict = nonset_dimers_edit[pair]
             #    subPair = [pairDict[i] for i in allowed_indx]
             #    candidate_dimers.update({pair: subPair})
-            if len(candidate_dimers)>0:
-                # grab column sums (total dimer load for nonset/candidate dimers)
-                candidate_totals = candidate_dimers.sum(axis=0)
+            # grab column sums (total dimer load for nonset/candidate dimers)
+            candidate_totals = candidate_dimers.sum(axis=0)
                 #candidate_totals = list(map(sum, zip(*candidate_dimers.values()))) #get sums across same column of values
+            if len(candidate_totals)>0:
                 # grab the new pair ID (randomly choose if multiple options)
                 cand_min = min(candidate_totals)
                 new_best_options = candidate_totals[candidate_totals==cand_min]
                 #new_best_options = [candidate_ids[x] for x in range(len(candidate_ids)) if candidate_totals[x]==cand_min]
-                new_id = rand.choice(new_best_options)
+                new_id = rand.choice(new_best_options.keys())
             else:
                 return None
     else:

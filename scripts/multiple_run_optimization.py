@@ -69,15 +69,16 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
     
     # move outputs into separate folders for clarity
     outdir=os.path.dirname(OUTPATH)
-    moveAllFiles(outdir+"/*_primers.csv", os.path.join(outdir, "Final_Primers"))
-    moveAllFiles(outdir+"/*_dimers.csv", os.path.join(outdir, "Final_Dimers"))
-    moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(outdir, "Checkpoint_Primers"))
-    moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(outdir, "Checkpoint_Primers"))
-    moveAllFiles(outdir+"/*_ASA_costs.csv", os.path.join(outdir, "Trace_Dimer_Load"))
-    moveAllFiles(outdir+"/*_DimerLoad.png", os.path.join(outdir, "Plots_Dimer_Load"))
-    moveAllFiles(outdir+"/*_TemperatureSchedule.png", os.path.join(outdir, "Plots_SA_params"))
-    moveAllFiles(outdir+"/*_DimerAcceptanceByIteration.png", os.path.join(outdir, "Plots_SA_params"))
-    moveAllFiles(outdir+"/*_DimerAcceptanceByTemp.png", os.path.join(outdir, "Plots_SA_params"))
+    newoutdir=os.path.join(outdir, os.path.basename(OUTPATH))
+    moveAllFiles(outdir+"/*_primers.csv", os.path.join(newoutdir, "Final_Primers"))
+    moveAllFiles(outdir+"/*_dimers.csv", os.path.join(newoutdir, "Final_Dimers"))
+    moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
+    moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
+    moveAllFiles(outdir+"/*_ASA_costs.csv", os.path.join(newoutdir, "Trace_Dimer_Load"))
+    moveAllFiles(outdir+"/*_DimerLoad.png", os.path.join(newoutdir, "Plots_Dimer_Load"))
+    moveAllFiles(outdir+"/*_TemperatureSchedule.png", os.path.join(newoutdir, "Plots_SA_params"))
+    moveAllFiles(outdir+"/*_DimerAcceptanceByIteration.png", os.path.join(newoutdir, "Plots_SA_params"))
+    moveAllFiles(outdir+"/*_DimerAcceptanceByTemp.png", os.path.join(newoutdir, "Plots_SA_params"))
 
 
 
