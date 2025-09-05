@@ -431,27 +431,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         # export the current dimers and their totals as CSV
         ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
                    primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
-        # with open(OUTPATH+'_SAdimers.csv', 'w') as file:
-        #     file.write("PrimerPairID,DimerLoad\n")
-        #     for key in curr_dimer_totals.keys():
-        #         # line = curr_dimer_totals[]
-        #         #line_str = str(line)[1:-1].replace("'","")
-        #         file.write(key+","+str(curr_dimer_totals[key])+"\n")
-    
-        # # export selected primers to CSV
-        # current_pairs_index = list(
-        #     filter(lambda x: primer_pairs[x] in current_pairIDs, range(len(primer_pairs))))
-        # outpairs = [primer_IDs[x] for x in current_pairs_index]
-        # outseqs = [primer_seqs[x] for x in current_pairs_index]
-        # with open(OUTPATH+'_SAprimers.csv', 'w') as file:
-        #     file.write("PrimerID,Sequence\n")
-        #     for i in range(len(outpairs)):
-        #         file.write(outpairs[i]+","+outseqs[i]+"\n")
-        
-        # # export cost changes
-        # with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
-        #     for line in costs:
-        #         file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
     
 
     ## ------------------STEP 3: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
