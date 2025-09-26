@@ -6,6 +6,7 @@ Created on Fri Mar 15 14:31:28 2024
 @author: maggiehallerud
 """
 
+import traceback
 import signal
 import os
 import sys
@@ -50,7 +51,10 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
                                          MAKEPLOT=MAKEPLOT)
                 loads.append([str(run), str(cost)])
             except Exception as e:
+                print("AN ERROR OCCURRED IN RUN "+str(run))
                 print(e)
+                traceback.print_exc()
+                print("---")
                 run+=1
                 continue
         except TimeoutException:

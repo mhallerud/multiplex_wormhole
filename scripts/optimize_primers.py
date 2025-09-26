@@ -5,7 +5,7 @@ Title: OPTIMIZE MULTIPLEX PRIMER SET
 Created on Mon Jul 24 07:59:12 2023
 @author: maggiehallerud
 
-Dependencies: sys, random (should come preinstalled with Python)
+Dependencies: sys, random, csv, math (should come preinstalled with Python), pandas, matplotlib
 
 Purpose: Iteratively optimizes a multiplex primer set of given size to minimize
         predicted dimer content. NOTE: This script relies on having a large ratio of 
@@ -19,7 +19,7 @@ Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair
 # objective function = sumcost + missingLoci*penalty
 # penalty = N_LOCI / 10 (i.e., a primer can only NOT be added if it forms dimers with >10% of the existing set)
 
-# STEP 1: Greedy algorithm (ish)
+# STEP 1: Greedy algorithm
 # select the units with lowest overall cost
 
 # STEP 2: Adaptive simulated annealing
