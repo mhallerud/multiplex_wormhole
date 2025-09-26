@@ -106,8 +106,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     if ITERATIONS>0:
         CheckInputNumber(BURNIN, "BURNIN", "100")
         CheckInputNumber(DECAY_RATE, "DECAY_RATE", "0.98")
-        CheckInputNumber(T_INIT, "T_INIT", "0.1")
-        CheckInputNumber(T_FINAL, "T_FINAL", "set adaptively, 2 recommended otherwise.")
+        CheckInputNumber(T_INIT, "T_INIT", "set adaptively, 2 recommended otherwise.")
+        CheckInputNumber(T_FINAL, "T_FINAL", "0.1")
         CheckInputNumber(PARTITIONS,"PARTITIONS", "1000")
         CheckInputNumber(DIMER_ADJ, "DIMER_ADJ", "0.1")
         CheckInputNumber(PROB_ADJ, "PROB_ADJ", "2")
@@ -309,13 +309,13 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 print("Using provided T_INIT")                
                 T_init = T_INIT
             else:
-                print("Using default T_INIT")
+                print("Using default T_INIT=2.0")
                 T_init = 2.0
             if T_FINAL is not None:
                 print("Using provided T_FINAL")                
                 T_final = T_FINAL
             else:
-                print("Using default T_FINAL")
+                print("Using default T_FINAL=0.1")
                 T_final=0.1
         print("     Initial temp: "+str(T_init))
         print("     Final temp: "+str(T_final))
