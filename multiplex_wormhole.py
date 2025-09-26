@@ -258,8 +258,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
                               # closer to 1 - least conservative, explores more cost space at higher risk
                               # closer to 0 - most conservative, explores less cost space at lower risk
                               # recommendations: 0.90-0.98, higher with fewer iterations
-                          T_INIT=0.1, # starting temp for fixed SA schedule (default=0.1)
-                          T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                          T_INIT=None, # starting temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                          T_FINAL=0.1, # ending temp for fixed SA schedule (default=0.1)
                               # temperatures=0 is equivalent to simple iterative improvement, while 
                               # higher temperatures explore more of the cost space at higher risk of accepting dimers
                               # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
