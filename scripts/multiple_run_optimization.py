@@ -74,6 +74,8 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
     # move outputs into separate folders for clarity
     outdir=os.path.dirname(OUTPATH)
     newoutdir=os.path.join(outdir, os.path.basename(OUTPATH))
+    if not os.path.exists(newoutdir):
+        os.mkdir(newoutdir)
     moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     moveAllFiles(outdir+"/*_primers.csv", os.path.join(newoutdir, "Final_Primers"))

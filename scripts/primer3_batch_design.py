@@ -123,6 +123,8 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=True):
         # progress tracking
         if row%100 == 0:
             print("      primers designed for "+str(row)+" sequences")
+        if row == len(ids):
+            print("      primers designed for "+str(row)+" sequences")
 
 
 
