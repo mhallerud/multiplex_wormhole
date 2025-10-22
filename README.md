@@ -18,6 +18,22 @@ General Python modules required (these come pre-installed with most Python insta
 multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in the Spyder IDE.
 
 
+# Inputs and Outputs
+## Inputs
+The only required input to multiplex wormhole is a table with DNA sequences including target and flanking regions (see step 1 under quick-start guide below for details). Optionally, users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel that is being added onto. *Note that multiplex wormhole designs primers based on standardized primer3 PCR conditions including a melting temperature between 58-62 degrees. If keeplist primers were designed using different PCR conditions and primer design settings, these should be adjusted in the files found in the primer3_settings directory.*
+
+I use the following steps to prepare input data:
+1. *SNP discovery* using data from reduced representation sequencing (e.g., RADseq) or whole genome sequencing (WGS) projects
+2. *Initial SNP filtering* following standard genomics guidelines to remove erroneous SNPs (e.g., removing SNPs with low quality scores, low depths or extremely high depths, and high missingness; O'Leary et al. 2018)
+3. *Target SNP filtering* where SNPs with high information content based on the objective(s) of the panel are selected. For example, SNPs with high minor allele frequencies are selected for individual identification, while SNPs with high Fst or delta values are selected for population assignment. Multiplex wormhole treats all candidates equally, it is therefore the responsibility of the user to select informative candidate DNA sequences based on their objectives. 
+4. *Extract flanking regions around SNPs* using --fasta-loci for RADseq data and bedtools getfasta for WGS data
+5. *Remove candidates in known repetitive regions* by checking alignments to known repetitive elements using (CENSOR](https://www.girinst.org/censor/index.php)
+
+## Outputs
+Multiplex wormhole is an **in silico** design tool and additional testing of primers is needed. For example, here is my process for further checking and optimizing multiplex wormhole output:
+1. *Specificity check against prey species* using [PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/)- this is especially important when genotyping scat samples
+2. *Initial lab testing in equimolar multiplex* to assess amplification success in target samples, test specificity against prey and closely related co-occurring species, and estimate genotyping error rates based on PCR replicates and/or comparison of high-quality and low-quality samples from the same known individuals
+
 # Quick-Start Guide
 ## 1. Set up input data
 Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: *startBP*,*length*. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
@@ -114,11 +130,6 @@ Specificity of primers are checked against all templates. Any primer pairs that 
 6. [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md): A set of primers for "N" loci is selected that minimizes the number of secondary interactions (i.e., dimer load) between primer pairs. An initial primer set is selected using a pseudo-greedy algorithm where the primer pairs with the cumulative lowest dimer load (across all loci provided) are selected, then adaptive simulated annealing is used to explore the optimization space around this initial primer set by randomly swapping out primer pairs and keeping improvements while allowing for 'mistakes' that may improve the primer set in the long run, and finally the best primer set found during adaptive simulated annealing is entered into a simple iterative improvement algorithm where the worst loci are swapped for better alternatives. Because these algorithms have an element of randomness, try running this optimization step multiple times and choosing the best outcome.
 
    *The multiple_run_optimization script automates multiple runs of the optimization process. The **multiple_run_optimization** script automates this process and is included in the multiplex_primer_design script.*
-
-# A Note on Inputs and Outputs
-Multiplex wormhole treats all candidate loci equally, it is therefore the responsibility of the user to select initial candidate loci based on their objectives. For example, in the case of SNP panels for individual identification, SNPs should be filtered for basic quality, missingness, and information content (e.g., high minor allele frequencies). Similarly, multiplex wormhole does not perform any objective-specific post-filtering of selected primers. Users are encouraged to perform additional **in silico** checks of multiplex wormhole primer outputs, e.g. using PRIMER-BLAST. Finally, multiplex wormhole is designed for **in silico** multiplex PCR design- additional lab testing and optimization is HIGHLY ENCOURAGED prior to panel application.
-
-If sufficient interest is expressed, additional capabilities for pre-processing and post-processing can be built into the pipeline. 
 
 # A Note on the Optimization Process
 Optimization works best when there are >4 times as many candidates relative to the number of target loci. Problems with few candidates relative to targets (e.g., 50 inputs loci for a 40-locus target) are likely to underperform because relatively few combinations are possible. The number of candidate loci needed to build dimer-free primer sets increases substantially with the number of target loci because finding primers that do not interact becomes more difficult. For example, we have had success designing 50-plexes from 200 input sequences, but designing a 150-plex with minimal primer interactions required >2000 candidate sequences.
