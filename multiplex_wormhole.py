@@ -282,13 +282,13 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     run = runs['Run']
     run = [str(run[x]).zfill(2) for x in range(len(run))]
     dimers = runs['TotalDimers']
-    print("The BEST multiplex had "+str(min(dimers))+ "total predicted dimers.")
-    for i in range(len(dimers)):
+    print("The BEST multiplex had "+str(min(dimers))+ " total predicted dimers.")
+    for i in range(len(runs)):
         print("Run "+str(run[i])+" had "+str(dimers[i])+" dimers.")
         if dimers[i]==min(dimers):
             print(".....Converting to FASTA for additional screening")
-            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,PREFIX+"_Run"+str(run)+"_primers.csv"), 
-                       OUT_FA = os.path.join(OUTDIR4,"Run"+str(run)+"_"+PREFIX+"_primers.fasta"))
+            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
+                       OUT_FA = os.path.join(OUTDIR4,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
 
 
 
