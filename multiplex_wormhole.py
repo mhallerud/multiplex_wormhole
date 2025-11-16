@@ -287,8 +287,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
         print("Run "+str(run[i])+" had "+str(dimers[i])+" dimers.")
         if dimers[i]==min(dimers):
             print(".....Converting to FASTA for additional screening")
-            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,PREFIX+"_Run"+run+"_primers.csv"), 
-                       OUT_FA = os.path.join(OUTDIR4,"Run"+run+"_"+PREFIX+"_primers.fasta"))
+            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,PREFIX+"_Run"+str(run)+"_primers.csv"), 
+                       OUT_FA = os.path.join(OUTDIR4,"Run"+str(run)+"_"+PREFIX+"_primers.fasta"))
 
 
 
