@@ -28,7 +28,7 @@ import warnings
 
 
 
-def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=True):
+def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=False):
     """
     IN_CSV : CSV containing template sequences in primer3 format with header
         field1=ID, field2=DNA sequence, field3=amplicon (start_bp,length)
