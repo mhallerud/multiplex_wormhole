@@ -284,7 +284,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     dimers = runs['TotalDimers']
     print("The BEST multiplex had "+str(min(dimers))+ "total predicted dimers.")
     for i in range(len(dimers)):
-        print("Run "+run[i]+" had "+str(dimers[i])+" dimers.")
+        print("Run "+str(run[i])+" had "+str(dimers[i])+" dimers.")
         if dimers[i]==min(dimers):
             print(".....Converting to FASTA for additional screening")
             CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,PREFIX+"_Run"+run+"_primers.csv"), 
