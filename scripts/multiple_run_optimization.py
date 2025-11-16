@@ -97,6 +97,7 @@ def moveAllFiles(filegrep, dest):
         try:
             shutil.move(f, dest)
         except Exception:
+            print("Failed to move "+f)
             pass
 
 

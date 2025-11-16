@@ -282,7 +282,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     run = runs['Run']
     run = [str(run[x]).zfill(2) for x in range(len(run))]
     dimers = runs['TotalDimers']
-    print("The BEST multiplex had "+str(min(dimers)+ "total predicted dimers."))
+    print("The BEST multiplex had "+str(min(dimers))+ "total predicted dimers.")
     for i in range(len(dimers)):
         print("Run "+run[i]+" had "+str(dimers[i])+" dimers.")
         if dimers[i]==min(dimers):

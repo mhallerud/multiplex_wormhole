@@ -259,6 +259,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     # totals for current primers
     curr_total = sum(curr_dimer_totals.values())#total
     print("     Initial dimer load: "+str(curr_total))
+    costs = [["Iterations","SA_Temp", "TotalDimers"]]
+
     if curr_total==0:
         print("Initial primer set already has 0 predicted dimers! Skipping optimization process.")
         BURNIN=0
@@ -358,7 +360,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         step = 0
         min_dimers = curr_total
         # start tracking costs
-        costs = [["Iterations","SA_Temp", "TotalDimers"]]
         costs.append([n_iter, Temp, curr_total]) #log for cost values
         # start iterating
         while n_iter < ITERATIONS:
@@ -567,11 +568,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             print("\t\t" + blockedlist[b])
     
 
-        ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
-        print("")
-        print("EXPORTING OPTIMIZED PRIMER SET....")
-        ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
-                   primer_seqs, keeplist_IDs, keeplist_seqs, costs)
+    ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
+    print("")
+    print("EXPORTING OPTIMIZED PRIMER SET....")
+    ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
+               primer_seqs, keeplist_IDs, keeplist_seqs, costs)
                     
     return curr_total
 

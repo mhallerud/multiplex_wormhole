@@ -30,7 +30,7 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     """
     # set output filepath if not provided
     if OUTPATH==None:
-    	OUTPATH= MAIN_FA.split('.')[0] + '_plusKeeplist.fa'
+    	OUTPATH= MAIN_FA.split('.fa')[0] + '_plusKeeplist.fa'
 
     # read in fastas
     main_seqs, main_ids = readFasta(MAIN_FA)
