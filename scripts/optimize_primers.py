@@ -279,7 +279,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
     if ITERATIONS>0:
         change = []
-        if (T_INIT is None or T_FINAL is None) and BURNIN>0 and ITERATIONS>0:
+        if (T_INIT is None) and BURNIN>0 and ITERATIONS>0:
             print("")
             print("SETTING TEMPERATURE SCHEDULE.....")
             print("Running burnin to sample dimer cost space:")
@@ -301,8 +301,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     i += 1
             print("     Max change observed: "+str(max(change)))    
             # set temperatures based on burnin results
-            if T_FINAL is None:
-                T_final = 0.1 #float(min(change)) # default setting
             if T_INIT is None:
                 T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
         # use input temps, if provided
@@ -313,12 +311,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             else:
                 print("Using default T_INIT=2.0")
                 T_init = 2.0
-            if T_FINAL is not None:
-                print("Using provided T_FINAL")                
-                T_final = T_FINAL
-            else:
-                print("Using default T_FINAL=0.1")
-                T_final=0.1
+        if T_FINAL is not None:
+            print("Using provided T_FINAL")                
+            T_final = T_FINAL
+        else:
+            print("Using default T_FINAL=0.1")
+            T_final=0.1
         print("     Initial temp: "+str(T_init))
         print("     Final temp: "+str(T_final))
         
