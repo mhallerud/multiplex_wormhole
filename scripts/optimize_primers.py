@@ -572,7 +572,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     print("EXPORTING OPTIMIZED PRIMER SET....")
     ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
                primer_seqs, keeplist_IDs, keeplist_seqs, costs)
-                    
+
+    print("EXPORTING PAIRWISE MAX DELTAG VALUES.....")
+    final_dimers = SubsetDimerTable(current_pairIDs, dimer_table, return_complement=False)
+    # export the current dimers and their totals as CSV
+    final_dimers.to_csv(OUTPATH+'_dimers_deltaG.csv')
+
     return curr_total
 
 
