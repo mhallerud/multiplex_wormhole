@@ -11,12 +11,16 @@ Created on Sun Mar 17 13:21:40 2024
 
 
 # load dependencies
+import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import random as rand
 import csv
 import sys
 import math
+
+sys.path.append(os.path.dirname(__file__))
+from optimize_primers import *
 
 
 
@@ -187,7 +191,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     
     ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 ITERATIONS
     # Define range of dimer loads to use in calculations
-    dimers = list(range(MIN_DIMER, MAX_DIMER+1))
+    dimers = list(range(round(MIN_DIMER), round(MAX_DIMER)+1))
     temps = [T_INIT]
     i=0
     while i < 100:
@@ -246,264 +250,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     plt.xlabel("% of Iterations")
     plt.ylabel("Probability of acceptance")
     plt.legend(loc="upper right")
-    plt.savefig(OUTPATH+"_DimerAcceptanceByIteration.png")
-    
-
-
-
-def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist, dimer_primerIDs, dimer_table,
-               dimer_pairID, primer_pairs, primer_loci, blockedlist2=[], random=False, keeplist=None):
-    # create copy of original list, otherwise links them and affects both lists when using update/remove
-    update_pairIDs = pairIDs.copy()
-    allowed_pairs_edit = allowed.copy()
-
-    # if swapping randomly, choose a random pairID (not including keeplist) to replace
-    if random:
-        options =  pairIDs.copy()
-        for p in pairIDs:
-            if p in keeplist:
-                options.remove(p)
-        swap = rand.choice(options)
-    
-    # otherwise, replace the current worst (most dimers) pair in the set
-    else:
-        worst = sorted(curr_dimer_totals.items(), key=lambda x: x[1])[-1]
-        #curr_max = worst[1]
-        swap = worst[0]
-
-        # if the chosen ID is in the blockedlist of loci that can't be fixed, then choose the next max value
-        if swap in blockedlist:
-            j = -2
-            n = len(curr_dimer_totals)
-            while n >= abs(j):
-                next_worst = sorted(curr_dimer_totals.items(), key=lambda x: x[1])[
-                    j:(j+1)]  # get next worst
-                #curr_max = next_worst[0][1]
-                swap = next_worst[0][0]
-                if swap not in blockedlist:
-                    break
-                else:
-                    j = j-1
-            if n < abs(j):
-                return None
-
-    # add other primers for the swap locus back to the allowed list
-    AddSwapLocusToAllowed(swap, allowed_pairs_edit, primer_loci, primer_pairs)
-
-    # subset nonset dimer table to include only allowed primer pairs (i.e., primer pairs for loci not in the set)
-    # gets all pair IDs that aren't in current pairs
-    #nonset_pairIDs = list(set(dimer_primerIDs) - set(new_pairIDs))
-    # gets indices for allowed pair IDs (i.e., not current loci) in nonset list
-    #nonset_allowed_idx = list(filter(lambda x: dimer_primerIDs[x] in allowed_pairs_edit, range(len(dimer_primerIDs))))
-    #nonset_pairs_allowed = [nonset_pairIDs[i] for i in nonset_allowed_idx]
-    #nonset_dimers_sub = dict()
-    # for pair in list(nonset_dimers.keys()):
-    #    pairDict=nonset_dimers[pair]
-    #    subPair=[pairDict[i] for i in nonset_allowed_idx]
-    #    nonset_dimers_sub.update({pair: subPair})
-    # ID primer pair outside of set that would have the smallest dimer load in the context of the current set
-    # The main purpose of this is to speed up the optimization (as opposed to just choosing a random pair, many)
-    # of which may not be very good in any context). This method also doesn't allow any flexibility if the min option doesn't work.
-    # TODO: Fix this. Next set of lines gets stuck in an infinite loop without doing much optimization
-    # nonset_dimers_sub.pop(curr_worst) #exclude pair being replaced from calculations
-    # nonset_totals=list(map(sum, zip(*nonset_dimers_sub.values()))) #get sums across same column of values
-    # nonset_min=min(nonset_totals)
-    # grab the new pair ID
-    #new_best_idx = list(filter(lambda x: nonset_totals[x]==nonset_min, range(len(nonset_totals))))
-    # new_best_idx = random.choice(new_best_idx) #if more than 1 match, randomly choose 1...
-    #new_best_id = nonset_pairs_allowed[new_best_idx]
-
-    # Remove any primer pairs that cause infinite loops
-    for pair in blockedlist2:
-        try:
-            allowed_pairs_edit.remove(pair)
-        except:
-            pass
-    # Choose random primer pair as replacement
-    if len(allowed_pairs_edit) > 0:
-        new_id = rand.choice(allowed_pairs_edit)
-    else:
-        return None
-    # double check that chosen pair isn't already in set... if it is, remove and try again
-    while new_id in update_pairIDs:
-        allowed_pairs_edit.remove(new_id)
-        if len(allowed_pairs_edit) > 0:
-            new_id = rand.choice(allowed_pairs_edit)
-        else:
-            return None
-    # update the primer set
-    update_pairIDs.append(new_id)
-    update_pairIDs.remove(swap)
-    return swap, new_id, update_pairIDs
-
-
-def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_pairID):
-    # calculate # dimers in this new set
-    new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, dimer_table, dimer_pairID, True)
-    new_dimer_totals = CalcTotalDimers(new_primerset_dimers)
-    new_total = sum(new_dimer_totals.values())
-    comparison = new_total - curr_total  # difference between new set and old
-    return comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total
-
-
-
-def GetLocusID(pairID):
-    pairIDsplit = pairID.split(".")
-    LocusID = pairIDsplit[0]
-    return LocusID
-
-
-
-def AddSwapLocusToAllowed(swap_pair, inlist, primer_loci, primer_pairs):
-    swap_locus = swap_pair.split(".")[0]
-    swap_idx = list(
-        filter(lambda x: primer_loci[x] == swap_locus, range(len(primer_loci))))
-    swap_pairs = [primer_pairs[i] for i in swap_idx]
-    swap_pairs = (set(swap_pairs))  # extract unique values only
-    # make sure current worse isn't in here...
-    try:
-        swap_pairs.remove(swap_pair)
-    except Exception:
-        pass
-    for p in swap_pairs:
-        inlist.append(p)
-    return inlist
-
-
-
-def BestPrimers(loci, dimer_loci, dimer_tallies, dimer_primerIDs, keeplist):
-    """loci: """
-    """dimer_tally_dict: """
-    # replace "best" with keeplist pair if in keeplist
-    keeplist_loci = [keeplist[x].split('.')[0] for x in range(len(keeplist))]
-    best_primer_pairs = dict()
-    for locus in loci:
-        if locus in keeplist_loci:
-            # assign keeplist pairs as best
-            keeplist_indx = list(
-                filter(lambda x: keeplist_loci[x] == locus, range(len(keeplist_loci))))
-            bestPair = [keeplist[x] for x in keeplist_indx][0]
-            # extract dimer tally for this pair
-            dimer_idx = list(
-                filter(lambda x: dimer_primerIDs[x] == bestPair, range(len(dimer_primerIDs))))
-            if len(dimer_idx) == 0:
-                min_dimers = float('nan')  # in case pair is missing from DB
-            else:
-                min_dimers = [dimer_tallies[x] for x in dimer_idx][0]
-        else:
-            # extract dimer data for this locus
-            locus_idx = list(
-                filter(lambda x: dimer_loci[x] == locus, range(len(dimer_loci))))
-            ids = [dimer_primerIDs[i] for i in locus_idx]
-            tallies = [dimer_tallies[i] for i in locus_idx]
-            # extract primer pair with min dimer value
-            min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
-            # if there's more than one 'best' option, randomly choose one...
-            if len(min_idx) > 1:
-                min_idx = [rand.choice(min_idx)]
-            # extract the ID for the selected pair
-            bestPair = [ids[i] for i in min_idx][0]
-            min_dimers = min(tallies)
-        # set up dictionary with locus: (primer pair id, min # dimers)
-        best_primer_pairs.update({bestPair: min_dimers})
-    return best_primer_pairs
-
-
-
-def SubsetDimerTable(primer_pairs, dimer_table, dimer_ids, return_complement=False):
-    """primer_pairs"""
-    """dimer_tally_dict"""
-    sub_dimer_table = dict()  # blank dictionary to store output
-    not_dimer_table = dict()
-    # grab dictionary indices for the input primer pairs (skip first ID because that's the name column)
-    primer_idx = list(
-        filter(lambda x: dimer_ids[x] in primer_pairs, range(1, len(dimer_ids))))
-    # left-adjust by 1 due to empty first column in dimer_ids
-    primer_idx = [i-1 for i in primer_idx]
-    for pair in primer_pairs:
-        # grab all primer pair interactions between the specified pairs
-        pair_dict = dimer_table[pair]
-        sub_pair_dict = [int(pair_dict[i]) for i in primer_idx]
-        sub_dimer_table.update({pair: sub_pair_dict})
-        # grab all primer pair interactions between the pair and any pairs not specified
-        not_pair_dict = [int(pair_dict[i])
-                         for i in range(len(pair_dict)) if i not in primer_idx]
-        not_dimer_table.update({pair: not_pair_dict})
-    # return subset table (and table with non-subset values)
-    if not return_complement:
-        return sub_dimer_table
-    else:
-        return sub_dimer_table, not_dimer_table
-
-
-def CalcTotalDimers(dimerDict):
-    outDict = dict()
-    for pair in dimerDict.keys():
-        Ndimers = sum(dimerDict[pair])
-        outDict.update({pair: Ndimers})
-    return outDict
-
-
-def LoadPrimers(PRIMER_FASTA, keeplist=False):
-    # read in files as lists
-    primer_loci = []
-    primer_IDs = []
-    primer_seqs = []
-    primer_pairs = []
-    # parse sequences from headers
-    with open(PRIMER_FASTA, "r") as file:
-        lines = file.readlines()
-        for line in lines:
-            if ">" in line:
-                line = line.rstrip()
-                line = line.replace('>', '')
-                locus = line.split(".")[0]
-                pair = line.replace(".FWD", "").replace(
-                    ".FW", "").replace(".REV", "")
-                primer_loci.append(locus)
-                primer_IDs.append(line)
-                primer_pairs.append(pair)
-            else:
-                line = line.rstrip()
-                primer_seqs.append(line)
-    if keeplist:
-        primer_pairs = list(set(primer_pairs))
-        primer_loci = []
-        for i in primer_pairs:
-            locus = i.split(".")[0]
-            primer_loci.append(locus)
-        return primer_loci, primer_pairs
-    else:
-        return primer_loci, primer_seqs, primer_IDs, primer_pairs
-
-
-def LoadDimers(DIMER_SUMS, DIMER_TABLE):
-    dimer_primerIDs = []
-    dimer_loci = []
-    dimer_tallies = []
-    with open(DIMER_SUMS, 'r') as file:
-        lines = file.readlines()
-        for line in lines[1:]:  # skip first line because R puts unnecessary header
-            # read in line and reformat
-            line = line.rstrip()
-            linesplit = line.split(",")
-            # remove extra quotes from string
-            linesplit[0] = linesplit[0].replace('"', '')
-            linesplitid = linesplit[0].split(".")
-            # extract info
-            dimer_primerIDs.append(linesplit[0])
-            dimer_loci.append(linesplitid[0])
-            dimer_tallies.append(int(linesplit[1]))
-    # we'll store this in a dictionary so that it's really easy to subset based on the primer pair ID
-    dimer_table = dict()
-    dimer_pairID = []
-    with open(DIMER_TABLE, 'r', newline="\n") as file:
-        reader = csv.reader(file, delimiter=',')
-        next(reader)  # first line is header so we're skipping it
-        for row in reader:
-            dimer_table.update({row[0]: row[1:]})
-            dimer_pairID.append(row[0])
-    return dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID
+    plt.savefig(OUTPATH+"_DimerAcceptanceByIteration.png")    
 
 
 
