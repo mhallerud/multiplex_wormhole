@@ -95,8 +95,8 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
-              dG_END_LIMIT=-4000,
-              dG_MID_LIMIT=-8000)
+              dG_END_LIMIT=-3000,#-4000
+              dG_MID_LIMIT=-7000)#-8000
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
 
@@ -148,9 +148,10 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
-
+#os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+#os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -7 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
 
 
 ## Step 5: Convert MFEprimer dimer report to table formats

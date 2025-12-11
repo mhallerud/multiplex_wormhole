@@ -371,7 +371,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                                           random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                 # if e^(-change/temp) < random number (0,1), accept the change
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table)
-                SAvalue = math.exp(-PROB_ADJ*(-comparison*len(dimer_sums))/Temp)
+                SAvalue = np.exp(-PROB_ADJ*(-comparison*len(dimer_sums))/Temp)
                 if SAvalue > rand.uniform(0,1):
                     update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                     current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components

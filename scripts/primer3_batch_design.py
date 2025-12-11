@@ -58,8 +58,8 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=False):
     # define paths to primer3 settings
     primer3_sh = os.path.join(SCRIPTPATH, 'primer3.sh')
     basedir = os.path.dirname(SCRIPTPATH)
-    strict = os.path.join(basedir, 'primer3_settings/primer3_Base_NoSecondaryFilters.txt')
-    broad = os.path.join(basedir, 'primer3_settings/primer3_Broad_NoSecondaryFilters.txt')
+    strict = '/Users/maggiehallerud/Desktop/Wolf_Panel/inputfiles/primer3_Base_NoSecondaryFilters.txt'#os.path.join(basedir, 'primer3_settings/primer3_Base_NoSecondaryFilters.txt')
+    broad = '/Users/maggiehallerud/Desktop/Wolf_Panel/inputfiles/primer3_Broad_NoSecondaryFilters.txt'#os.path.join(basedir, 'primer3_settings/primer3_Broad_NoSecondaryFilters.txt')
     if not os.path.exists(strict):
         raise InputPathError("Could not find primer3 settings <"+strict+">." + \
                              "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
