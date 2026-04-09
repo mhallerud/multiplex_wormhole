@@ -72,6 +72,7 @@ def main(PRIMERS):
                    "False")#specify if you want interactions per primer
     
     # count dimers
+    print("")
     countDimers(PREFIX+"PrimerPairInteractions_wide.csv")
 
 
@@ -79,6 +80,7 @@ def main(PRIMERS):
 def countDimers(DIMERS_WIDE): 
     # read in pairwise dimer load CSV
     df = pandas.read_csv(DIMERS_WIDE)
+    print("Number of primer pairs assessed: "+str(len(df)))
     # take sum across upper triangle, including diagonal
     s = numpy.triu(df,1).sum()
     print("Number of pairwise dimers: "+str(s))
