@@ -12,12 +12,14 @@ import csv
 
 
 
-def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence"):
+def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence", 
+         ENCODING=sys.getfilesystemencoding()):
     """
     IN_CSV : CSV containing primer IDs and sequences [filepath]
     OUT_FA : FASTA file to be output [filepath]
     ID_FIELD : field name containing sequence IDs [string] default: PrimerID
     SEQ_FIELD : field name containing sequences [string] default: Sequence
+    ENCODING : encoding of input CSV [string] default: python default
     -------
     Converts input sequences in CSV to FASTA format
     """
@@ -32,7 +34,7 @@ def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence"):
     ids = []
 
     # read in csv
-    with open(IN_CSV, 'r') as file:
+    with open(IN_CSV, 'r', encoding=ENCODING) as file:
         reader = csv.reader(file)
         # grab column index for each field
         header = next(reader)

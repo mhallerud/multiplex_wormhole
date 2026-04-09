@@ -54,13 +54,25 @@ from scripts.plot_SA_temps import main as plotSAtemps
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
+
+
+#### ALTERNATIVE WORKFLOW: PANEL ASSESSMENT ####
+from panel_assessment import main as assessPanel
+# INPUT: FASTA or CSV (PrimerID, Sequence) file with primers, PrimerIDs following rules
+# described above (e.g., "MACA1.FWD" & "MACA1.REV")
+assessPanel("Primers.fasta")
+# OUTPUTS: # primer pairs, total # pairwise dimers, # primer pairs forming dimers
+# also dimer files from MFEprimer and dimer tables from tabulateDimers
+
+    
+    
+#### PRIMARY WORKFLOW: PANEL DESIGN FOR MULTIPLEX PCR PRIMERS ####
 ## SET INPUTS:
 os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
 TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidate sequences (path relative to project folder)
 KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
 N_LOCI = 50 # target panel size (# sequences amplified)
-
 
 
 ## Step 0: Set up output directory structure & copy inputs to it
@@ -148,8 +160,10 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
+          "--mono 50 --dntp 0.25 --oligo 50")
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 "+
+          "--mono 50 --dntp 0.25 --oligo 50 -p")
 
 
 
@@ -162,7 +176,6 @@ tabulateDimers(ALL_DIMERS,
                os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
                "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
-
 
 
 ## Step 6A: Explore temperature space for simulated annealing

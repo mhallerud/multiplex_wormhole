@@ -41,16 +41,18 @@ from scripts.extras.CSVtoFasta import main as csv2fasta
 def main(PRIMERS):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
+    -------------
+    Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """
     # convert CSV primers to FASTA, if needed
     if(PRIMERS.endswith(".csv")):
         # check for requisite fields first...
-        CSV = pandas.read_csv()
-        if ['PrimerID' not in list(CSV.columns)] or ['Sequence' not in list(CSV.columns)]:
+        CSV = pandas.read_csv(PRIMERS)
+        if 'PrimerID' not in list(CSV.columns) or 'Sequence' not in list(CSV.columns):
             raise InputError("CSV is missing PrimerID or Sequence field- fix and try again.")
         # convert CSV to FASTA
         FASTA = PRIMERS.replace(".csv", ".fasta")
-        csv2fasta(PRIMER_CSV=PRIMERS, OUT_FA=FASTA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence")
+        csv2fasta(PRIMERS, OUT_FA=FASTA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence")
         # set input filepath for next step
         INPUT = FASTA
     else:
