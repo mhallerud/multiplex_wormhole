@@ -70,7 +70,7 @@ def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
               " -s 3 -m 50 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50")
     os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_G)+
-              " -3 -s 3 -m 70 --diva 3.8 "+
+              " -s 3 -m 70 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50 -p")
     
     # tabulate dimers into pairwise dimer table
@@ -81,7 +81,7 @@ def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
     
     # count dimers
     print("")
-    countDimers(PREFIX+"PrimerPairsDeltaG_wide.csv", BAD_DIMERS_G)
+    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", BAD_DIMERS_G)
 
 
 
