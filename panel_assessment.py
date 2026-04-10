@@ -77,7 +77,7 @@ def main(PRIMERS, DELTA_G=-5):
     
     # count dimers
     print("")
-    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", DELTA_G)
+    countDimers(PREFIX+"PrimerPairsDeltaG_wide.csv", DELTA_G)
 
 
 
