@@ -38,10 +38,12 @@ from scripts.extras.CSVtoFasta import main as csv2fasta
 
 
 
-def main(PRIMERS, DELTA_G=-5):
+def main(PRIMERS, DELTA_G=-5, DIMERS=-5, ENDS=-3):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
     DELTA_G : DeltaG threshold used to count "bad" dimers
+    DIMERS : DeltaG threshold used for dimer prediction (all dimers)
+    ENDS : DeltaG threshold used for dimer prediction (end dimers)
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """
