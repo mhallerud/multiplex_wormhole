@@ -54,13 +54,21 @@ from scripts.plot_SA_temps import main as plotSAtemps
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
+
+
+#### ALTERNATIVE WORKFLOW: PANEL ASSESSMENT ####
+from panel_assessment import main as assessPanel
+assessPanel("Primers.fasta", DELTA_G=-5)
+
+
+
+#### PRIMARY WORKFLOW: PANEL DESIGN ####
 ## SET INPUTS:
 os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
 TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidate sequences (path relative to project folder)
 KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
 N_LOCI = 50 # target panel size (# sequences amplified)
-
 
 
 ## Step 0: Set up output directory structure & copy inputs to it

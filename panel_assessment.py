@@ -38,9 +38,10 @@ from scripts.extras.CSVtoFasta import main as csv2fasta
 
 
 
-def main(PRIMERS):
+def main(PRIMERS, DELTA_G=-5):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
+    DELTA_G : DeltaG threshold used to count "bad" dimers
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """
@@ -62,9 +63,10 @@ def main(PRIMERS):
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
+    # lower these deltaG thresholds since we want to include "minor" dimers here too
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -3 -s 3 -m 50 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 "+
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -2 -s 3 -m 70 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50 -p")
     
     # tabulate dimers into pairwise dimer table
@@ -75,22 +77,38 @@ def main(PRIMERS):
     
     # count dimers
     print("")
-    countDimers(PREFIX+"PrimerPairInteractions_wide.csv")
+    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", DELTA_G)
 
 
 
-def countDimers(DIMERS_WIDE): 
+def countDimers(DIMERS_WIDE, DELTA_G): 
+    """
+    Parameters
+    ----------
+    DIMERS_WIDE : CSV filepath of max deltaG for pairwise primer interactions
+    DELTA_G : Upper DeltaG threshold for counting dimers (default: -5)
+    -------
+    Returns mean deltaG and predicted dimer load across panel.
+    """
     # read in pairwise dimer load CSV
     df = pandas.read_csv(DIMERS_WIDE)
     print("Number of primer pairs assessed: "+str(len(df)))
-    # take sum across upper triangle, including diagonal
-    s = numpy.triu(df,1).sum()
-    print("Number of pairwise dimers: "+str(s))
+    # take mean across upper triangle, including diagonal
+    s = numpy.triu(df,1).mean()
+    print("Mean deltaG: "+str(s))
+    # convert to binary for primer pairs with dimers below a given deltaG threshold
+    df.drop(df.columns[0], axis=1, inplace=True)
+    df = df<DELTA_G
+    df = df.replace({True: 1, False: 0})
+    # take count of pairwise interactions with dimers below threshold
+    b = numpy.triu(df,1).sum()
+    print("Number of pairwise interactions with 'bad' dimers: "+str(b))
+    print("    (based on a deltaG threshold "+str(DELTA_G)+")")
     # take sum across rows (i.e., # interactions per primer pair)
     df = df.sum()[1:]#take sum across rows
-    # sum of sums>0
+    # sum of sums<0
     p = (df>0).sum()
-    print("Number of primer pairs involved in dimer interactions: "+str(p))
+    print("Number of primer pairs involved in 'bad' dimer interactions: "+str(p))
 
 
 
