@@ -38,12 +38,12 @@ from scripts.extras.CSVtoFasta import main as csv2fasta
 
 
 
-def main(PRIMERS, DELTA_G=-5, DIMERS=-5, ENDS=-3):
+def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
-    DELTA_G : DeltaG threshold used to count "bad" dimers
-    DIMERS : DeltaG threshold used for dimer prediction (all dimers)
-    ENDS : DeltaG threshold used for dimer prediction (end dimers)
+    ALL_DIMERS_G : DeltaG threshold used for dimer prediction (all dimers)
+    END_DIMERS_G : DeltaG threshold used for dimer prediction (end dimers)
+    BAD_DIMERS_G : DeltaG threshold used to count "bad" dimers
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """
@@ -66,9 +66,11 @@ def main(PRIMERS, DELTA_G=-5, DIMERS=-5, ENDS=-3):
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
     # lower these deltaG thresholds since we want to include "minor" dimers here too
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -5 -s 3 -m 50 --diva 3.8 "+
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_G)+
+              " -s 3 -m 50 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 "+
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_G)+
+              " -3 -s 3 -m 70 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50 -p")
     
     # tabulate dimers into pairwise dimer table
@@ -79,7 +81,7 @@ def main(PRIMERS, DELTA_G=-5, DIMERS=-5, ENDS=-3):
     
     # count dimers
     print("")
-    countDimers(PREFIX+"PrimerPairsDeltaG_wide.csv", DELTA_G)
+    countDimers(PREFIX+"PrimerPairsDeltaG_wide.csv", BAD_DIMERS_G)
 
 
 
