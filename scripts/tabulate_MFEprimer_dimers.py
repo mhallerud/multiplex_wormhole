@@ -73,9 +73,9 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
     #counts_pairs = dimers_subset.value_counts()
     #pair_dimers = pd.DataFrame(list(counts_pairs.keys()), columns=['Primer1','Primer2', 'Pair1','Pair2'])
 
-    # extract sum deltaG per primer x primer interaction
+    # extract minimum (i.e., worst) deltaG per primer x primer interaction
     dimers['DeltaG'] = pd.to_numeric(dimers['DeltaG'])
-    pair_dimers = dimers.groupby(['Primer1', 'Primer2', 'Pair1', 'Pair2'], as_index=False)['DeltaG'].max()
+    pair_dimers = dimers.groupby(['Primer1', 'Primer2', 'Pair1', 'Pair2'], as_index=False)['DeltaG'].min()
     
     print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
@@ -180,10 +180,10 @@ def CalcPairwiseDimers(pair_dimers, primerIDs, pairs=True):
     if pairs:
         # cross-tabulate pair1 vs pair2 counts
         pair_interactions = pd.crosstab(index=dimers_flipped['Pair1'], columns=dimers_flipped['Pair2'],
-                                        dropna=False, values=dimers_flipped['DeltaG'], aggfunc="max")
+                                        dropna=False, values=dimers_flipped['DeltaG'], aggfunc="min")
     else:
         pair_interactions = pd.crosstab(index=dimers_flipped['Primer1'], columns=dimers_flipped['Primer2'],
-                                        dropna=False, values=dimers_flipped.DeltaG, aggfunc="max")
+                                        dropna=False, values=dimers_flipped.DeltaG, aggfunc="min")
     # replace NAs with 0s
     pair_interactions = pair_interactions.fillna(0)
     # convert to integer

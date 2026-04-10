@@ -64,9 +64,9 @@ def main(PRIMERS, DELTA_G=-5):
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
     # lower these deltaG thresholds since we want to include "minor" dimers here too
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -3 -s 3 -m 50 --diva 3.8 "+
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -5 -s 3 -m 50 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -2 -s 3 -m 70 --diva 3.8 "+
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 "+
               "--mono 50 --dntp 0.25 --oligo 50 -p")
     
     # tabulate dimers into pairwise dimer table
