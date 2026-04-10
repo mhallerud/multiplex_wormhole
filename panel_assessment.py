@@ -62,6 +62,7 @@ def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
         INPUT = PRIMERS
 
     # predict dimers with MFEprimer dimer function
+    print("Predicting dimers.....")
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
@@ -74,6 +75,7 @@ def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
               "--mono 50 --dntp 0.25 --oligo 50 -p")
     
     # tabulate dimers into pairwise dimer table
+    print("Tabulating dimers.......")
     tabulateDimers(ALL_DIMERS, 
                    END_DIMERS, 
                    PREFIX+"PrimerPairInteractions", 
@@ -81,6 +83,7 @@ def main(PRIMERS, ALL_DIMERS_G=-5, END_DIMERS_G=-3, BAD_DIMERS_G=-5):
     
     # count dimers
     print("")
+    print("----------PANEL ASSESSMENT---------")
     countDimers(PREFIX+"PrimerPairInteractions_wide.csv", BAD_DIMERS_G)
 
 
