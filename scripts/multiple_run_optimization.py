@@ -21,7 +21,7 @@ from optimize_primers import main as optimizeMultiplex
 def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
                           KEEPLIST=None, TIMEOUT=10, VERBOSE=False, SEED=None,
                           SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
-                          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
+                          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'TotalDimers']]
     
@@ -48,7 +48,7 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
                                          PARTITIONS=PARTITIONS,
                                          DIMER_ADJ=DIMER_ADJ,
                                          PROB_ADJ=PROB_ADJ,
-                                         MAKEPLOT=MAKEPLOT)
+                                         MAKEPLOT=False)
                 loads.append([str(run), str(cost)])
             except Exception as e:
                 print("AN ERROR OCCURRED IN RUN "+str(run))
@@ -76,15 +76,12 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
     newoutdir=os.path.join(outdir, os.path.basename(OUTPATH))
     if not os.path.exists(newoutdir):
         os.mkdir(newoutdir)
-    moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
-    moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
+    #moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
+    #moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     moveAllFiles(outdir+"/*_primers.csv", os.path.join(newoutdir, "Final_Primers"))
     moveAllFiles(outdir+"/*_dimers.csv", os.path.join(newoutdir, "Final_Dimers"))
     moveAllFiles(outdir+"/*_ASA_costs.csv", os.path.join(newoutdir, "Trace_Dimer_Load"))
     moveAllFiles(outdir+"/*_DimerLoad.png", os.path.join(newoutdir, "Plots_Dimer_Load"))
-    moveAllFiles(outdir+"/*_TemperatureSchedule.png", os.path.join(newoutdir, "Plots_SA_params"))
-    moveAllFiles(outdir+"/*_DimerAcceptanceByIteration.png", os.path.join(newoutdir, "Plots_SA_params"))
-    moveAllFiles(outdir+"/*_DimerAcceptanceByTemp.png", os.path.join(newoutdir, "Plots_SA_params"))
 
 
 

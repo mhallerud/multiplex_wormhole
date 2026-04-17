@@ -45,19 +45,20 @@ Outputs: CSV of selected primer pairs and CSV with expected dimer loads per pair
 import os
 import sys
 import csv
+import importlib
 import pandas as pd
 import random as rand
 import math
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(__file__))
-from plot_SA_temps import main as plotSAtemps
+# import plot simulated annealing temps module
+plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, SEED=None, VERBOSE=False,
          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, 
-         DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=True):
+         DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
     DIMER_SUMS : Sum of interactions per primer pair (binary interactions recommended) [CSV]
@@ -144,14 +145,16 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         raise Exception("CHECK INPUTS! SEED <"+SEED+"> file not found.")
 
     # read in IDs and primers
-    primer_loci, primer_seqs, primer_IDs, primer_pairs = LoadPrimers(
-        PRIMER_FASTA)
+    primer_loci, primer_seqs, primer_IDs, primer_pairs = LoadPrimers(PRIMER_FASTA)
 
     # read in dimer info
     #print("Reading in primer dimer counts........")
     #dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)
     dimer_table = pd.read_csv(DIMER_TABLE)
     dimer_sums = pd.read_csv(DIMER_SUMS)
+    # convert primer names to string (in case names can be confused for float)
+    dimer_table['Pair1'] = [str(x) for x in dimer_table['Pair1']]
+    dimer_sums['Pair1'] = [str(x) for x in dimer_sums['Pair1']]
     
     # read in keeplist info
     if KEEPLIST is not None:
@@ -245,6 +248,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
     # grab locus IDs for primer pairs
     current_pairIDs = list(initial_pairs.keys())
+    current_pairIDs = [str(x) for x in current_pairIDs]
     current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
     # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
     allowed_loci = [uniq_loci[i] for i in range(
@@ -338,15 +342,15 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             MAX_DIMER=max(change)
         if MAKEPLOT:
             print("     Plotting temperature schedule...")
-            plotSAtemps(OUTPATH=OUTPATH,
-                        MIN_DIMER=MIN_DIMER,
-                        MAX_DIMER=MAX_DIMER,
-                        DECAY_RATE=DECAY_RATE,
-                        T_INIT=T_init, 
-                        T_FINAL=T_final, 
-                        DIMER_ADJ=DIMER_ADJ,
-                        PROB_ADJ=PROB_ADJ,
-                        BURNIN=0)
+            plotASAtemps.main(OUTPATH=OUTPATH,
+                              MIN_DIMER=MIN_DIMER,
+                              MAX_DIMER=MAX_DIMER,
+                              DECAY_RATE=DECAY_RATE,
+                              T_INIT=T_init, 
+                              T_FINAL=T_final, 
+                              DIMER_ADJ=DIMER_ADJ,
+                              PROB_ADJ=PROB_ADJ,
+                              BURNIN=0)
     
         ## ------------------STEP 2C: RUN SIMULATED ANNEALING ITERATIONS----------------##
         # C) run simulated annealing optimization
@@ -428,8 +432,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         
         ## ------------------STEP 2D: SAVE SA OUTPUTS AS CHECKPOINT----------------##
         # export the current dimers and their totals as CSV
-        ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
-                   primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
+        #ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
+        #           primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
     
 
     ## ------------------STEP 3: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
@@ -706,6 +710,7 @@ def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dim
 
 def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = None):
     # add alternative primer pairs for swap locus back to list
+    swap_pair = str(swap_pair)
     swap_locus = swap_pair.split(".")[0]
     swap_idx = list(
         filter(lambda x: primer_loci[x] == swap_locus, range(len(primer_loci))))
@@ -720,6 +725,7 @@ def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = 
         inlist.append(p)
     # remove primer pairs for new pair ID
     if new_pair is not None:
+        new_pair = str(new_pair)
         new_locus = new_pair.split(".")[0]
         new_idx = list(filter(lambda x: primer_loci[x] == new_locus, range(len(primer_loci))))
         new_pairs = [primer_pairs[i] for i in new_idx]
@@ -750,7 +756,7 @@ def BestPrimers(loci, dimer_sums, keeplist):
     # grab dimer data
     dimer_tallies = dimer_sums['0']
     dimer_primerIDs = dimer_sums['Pair1']
-    dimer_loci = [x.split(".")[0] for x in dimer_primerIDs]
+    dimer_loci = [str(x).split(".")[0] for x in dimer_primerIDs]
     # replace "best" with keeplist pair if in keeplist
     keeplist_loci = [keeplist[x].split('.')[0] for x in range(len(keeplist))]
     best_primer_pairs = dict()
@@ -845,7 +851,7 @@ def LoadPrimers(PRIMER_FASTA, keeplist=False):
             if ">" in line:
                 line = line.rstrip()
                 line = line.replace('>', '')
-                locus = line.split(".")[0]
+                locus = str(line.split(".")[0])
                 pair = line.replace(".FWD", "").replace(
                     ".FW", "").replace(".REV", "")
                 primer_loci.append(locus)
@@ -858,7 +864,7 @@ def LoadPrimers(PRIMER_FASTA, keeplist=False):
         primer_pairs = list(set(primer_pairs))
         primer_loci = []
         for i in primer_pairs:
-            locus = i.split(".")[0]
+            locus = str(i.split(".")[0])
             primer_loci.append(locus)
         return primer_loci, primer_pairs
     else:
@@ -879,7 +885,7 @@ def LoadDimers(DIMER_SUMS, DIMER_TABLE):
             linesplit[0] = linesplit[0].replace('"', '')
             linesplitid = linesplit[0].split(".")
             # extract info
-            dimer_primerIDs.append(linesplit[0])
+            dimer_primerIDs.append(str(linesplit[0]))
             dimer_loci.append(linesplitid[0])
             dimer_tallies.append(int(linesplit[1]))
     # we'll store this in a dictionary so that it's really easy to subset based on the primer pair ID

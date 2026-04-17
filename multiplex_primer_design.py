@@ -36,19 +36,19 @@ Input preparation:
 """
 
 
-# load dependencies and modules
+# load dependencies
 import os
 import sys
+import importlib
 
 # load multiplex wormhole functions
 sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
-from scripts.check_primer_specificity import main as specificityCheck
-from scripts.add_keeplist_to_fasta import main as addKeeplistFasta
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
-from scripts.plot_SA_temps import main as plotSAtemps
+plotASAtemps = importlib.import_module("plot_ASA_temps")
+
 
 ## SET PATHS TO DEPENDENCIES:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
@@ -111,28 +111,12 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               dG_HAIRPINS=-2000, 
               dG_END_LIMIT=-5000,
               dG_MID_LIMIT=-8000,
-              KEEPLIST=os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA)))
+              KEEPLIST=KEEPLIST_FA)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
 
 
-## Step 3: Checking primer specificity 
-#specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
-#specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
-#                 TARGET = TEMPLATES, 
-#                 OUTPATH = specificity_output)
-# Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
-
-#INPUT=specificity_output+"_passed.fa" #this is input for step 4
-# add keeplist to this FA
-#from scripts.add_keeplist_to_fasta import main as AddKeeplist2FASTA
-#if KEEPLIST_FA is not None:
-#   AddKeeplist2FASTA(specificity_output+"_passed.fa", KEEPLIST_FA)
-#   INPUT = specificity_output+"_passed_plusKeeplist.fa")
-
-
-
-## Step 4: Predict primer dimers using MFEprimer
+## Step 3: Predict primer dimers using MFEprimer
 # Set input based on whether keeplist is provided or not
 if KEEPLIST_FA is None:
     INPUT = os.path.join(OUTDIR2, "FilteredPrimers.fa")
@@ -163,7 +147,7 @@ os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70
 
 
 
-## Step 5: Convert MFEprimer dimer report to table formats
+## Step 4: Convert MFEprimer dimer report to table formats
 ## NOTE: This is the most computationally intensive step. 
 ## It will run substantially faster if you leave the 4th argument blank 
 ## (which means pairwise interactions between individual primers won't be calculated)
@@ -174,35 +158,35 @@ tabulateDimers(ALL_DIMERS,
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
 
-## Step 6A: Explore temperature space for simulated annealing
+## Step 5A: Explore temperature space for simulated annealing
 ## There are two ways to run this script: one calculates temperatures and dimer loads based on the problem at hand, 
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microhaps'),
-            PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
-            DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-            DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-            N_LOCI=N_LOCI, #number of target loci in panel
-            KEEPLIST=KEEPLIST_FA, 
-            SEED=None, #this would be an output from optimizeMultiplex
-            BURNIN=100)#number iterations with dimer loads used to sample cost space
+plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microhaps'),
+                  PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                  DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+                  N_LOCI=N_LOCI, #number of target loci in panel
+                  KEEPLIST=KEEPLIST_FA, 
+                  SEED=None, #this would be an output from optimizeMultiplex
+                  BURNIN=100)#number iterations with dimer loads used to sample cost space
 # decay rate closer to 1: 
-plotSAtemps(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
-            # dimer counts to plot and calculate temps from (if not set)
-            MIN_DIMER=1,
-            MAX_DIMER=5, #update this value based on the max observed in the default plot!
-            # parameter determining temperature decay in negative exponential
-            DECAY_RATE=0.95, #default is 0.98
-            # initial temperature to start from - higher=more risk accepted
-            T_INIT=2, 
-            # final temperature to stop at - 1=no risk, higher=more risk accepted
-            T_FINAL=0, #DEFAULT: 0.1
-            #proportion of max dimer load considered when setting temperature schedule
-            #closer to 0 = accepts fewer errors
-            DIMER_ADJ=0.1,
-            # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
-            PROB_ADJ=1)#DEFAULT=2
+plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
+                  # dimer counts to plot and calculate temps from (if not set)
+                  MIN_DIMER=1,
+                  MAX_DIMER=5, #update this value based on the max observed in the default plot!
+                  # parameter determining temperature decay in negative exponential
+                  DECAY_RATE=0.95, #default is 0.98
+                  # initial temperature to start from - higher=more risk accepted
+                  T_INIT=2, 
+                  # final temperature to stop at - 1=no risk, higher=more risk accepted
+                  T_FINAL=0, #DEFAULT: 0.1
+                  #proportion of max dimer load considered when setting temperature schedule
+                  #closer to 0 = accepts fewer errors
+                  DIMER_ADJ=0.1,
+                  # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
+                  PROB_ADJ=1)#DEFAULT=2
 
 
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
@@ -270,9 +254,7 @@ multipleOptimizations(N_RUNS = 10,
                       PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
-                      SEED=None,#primer set from previous optimization run to start with, in CSV format
-                      MAKEPLOT=False)#whether to run plotSAtemps within
-
+                      SEED=None)#primer set from previous optimization run to start with, in CSV format
 #OUTPUT: MAF30_150loci_RunSummary.csv
 
 
