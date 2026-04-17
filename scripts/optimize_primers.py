@@ -288,7 +288,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             print("SETTING TEMPERATURE SCHEDULE.....")
             print("Running burnin to sample dimer cost space:")
             i = 0
-            while i < BURNIN:
+            while len(change) < BURNIN:
                 # make a new set by randomly swapping a primer pair
                 # newset: 1) replaced ID, 2) new ID, 3) current pair list
                 swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
@@ -302,7 +302,17 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 if comparison > 0:
                     change.append(comparison)
                     # repeat
-                    i += 1
+                
+                # stop if 2000 swaps made
+                i += 1
+                if i>2000:
+                    print("....Sampling stopped after 2000 swaps with -"+str(len(change))+"- costs>0")
+                    if len(change)==0:
+                        print(".....Defaults used since cost changes never increase")
+                        T_INIT = 2
+                        T_FINAL = 0.1
+                    break
+
             print("     Max change observed: "+str(max(change)))    
             # set temperatures based on burnin results
             if T_INIT is None:
@@ -504,7 +514,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
                                             blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                         if newSet is None:
-                            print("     No new sets can be found for "+swap_id+"! Removing from swap options.")
+                            if VERBOSE:
+                                print("     No new sets can be found for "+swap_id+"! Removing from swap options.")
                             blockedlist.append(swap_id)
                             break
                         else:
@@ -522,7 +533,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 break
                         # add to blockedlist2 if stuck in an infinite loop
                         if new_best_id == prev_best and swap_id == prev_worst:
-                            print("     Infinite loop caused by "+new_best_id+"! Removing from swap options.")
+                            if VERBOSE:
+                                print("     Infinite loop caused by "+new_best_id+"! Removing from swap options.")
                             blockedlist2.append(new_best_id)
                         # compare new set against current set
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table)

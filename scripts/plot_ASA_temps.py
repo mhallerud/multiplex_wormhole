@@ -175,7 +175,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     # A) sample x iterations
                     change = []
                     i = 0
-                    while i < BURNIN:
+                    while len(change) < BURNIN:
                         # make a new set by randomly swapping a primer pair
                         # newset: 1) replaced ID, 2) new ID, 3) current pair list
                         swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
@@ -190,12 +190,23 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                         # if newSet is worse, make note of change value
                         if comparison > 0:
                             change.append(comparison)
-                            # repeat
-                            i += 1
-                    MIN_DIMER = min(change)
-                    MAX_DIMER = max(change)
-                    print(".....Maximum dimer load observed "+ str(MAX_DIMER))
-                    print(".....Minimum dimer load observed "+ str(MIN_DIMER))
+                            
+                        # stop if 2000 swaps made
+                        i += 1
+                        if i>2000:
+                            print("....Sampling stopped after 2000 swaps with "+str(len(change))+" costs>0")
+                            if len(change)==0:
+                                print(".....Defaults used since cost changes never increase")
+                                T_INIT = 2
+                                T_FINAL = 0
+                                MIN_DIMER=1
+                                MAX_DIMER=5
+                            break
+                    if len(change)>0:
+                        MIN_DIMER = min(change)
+                        MAX_DIMER = max(change)
+                        print(".....Maximum dimer load observed "+ str(MAX_DIMER))
+                        print(".....Minimum dimer load observed "+ str(MIN_DIMER))
 
 
         ## STEP 2: Set adaptive temperature schedule based on cost calcs

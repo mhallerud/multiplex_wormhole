@@ -33,7 +33,7 @@ MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_S
 # load multiplex wormhole scripts
 sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.extras.CSVtoFasta import main as csv2fasta
+from scripts.CSVtoFasta import main as csv2fasta
 
 
 
