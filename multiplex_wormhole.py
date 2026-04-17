@@ -54,7 +54,7 @@ from scripts.extras.CSVtoFasta import main as CSVtoFASTA
 
 
 
-def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=5000, SIMPLE=2000):
+def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000):
     """
     NOTE: DEPENDENCY PATHS MUST BE SET IN THIS SCRIPT FOR IT TO RUN
     Parameters
@@ -135,12 +135,12 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     
     
     ## Step 3: Checking primer specificity 
-    print("")
-    print("-----CHECKING PRIMER SPECIFICITY AGAINST OTHER TEMPLATES-----")
-    specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
-    specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
-                     TARGET = TEMPLATES, 
-                     OUTPATH = specificity_output)
+    #print("")
+    #print("-----CHECKING PRIMER SPECIFICITY AGAINST OTHER TEMPLATES-----")
+    #specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
+    #specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
+    #                 TARGET = TEMPLATES, 
+    #                 OUTPATH = specificity_output)
     # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
     
     INPUT=specificity_output+"_passed.fa" #this is input for step 4
@@ -186,7 +186,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     # --dntp = concentration of dNTPs (mM)
     # --oligo = concentration of annealing oligos (nM) 
     os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
     
     
     
@@ -254,7 +254,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations for simulated annealing optimization (default=10000) 
                           BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
-                          DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
+                          DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.95)
                               # closer to 1 - least conservative, explores more cost space at higher risk
                               # closer to 0 - most conservative, explores less cost space at lower risk
                               # recommendations: 0.90-0.98, higher with fewer iterations

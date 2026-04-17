@@ -21,7 +21,7 @@ import math
 
 
 def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, SEED=None, 
-         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.98, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
+         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
     PRIMER_FASTA : Fasta path
         Contains primer IDs and sequences
@@ -220,7 +220,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         #update color scale value
         n+=cspace
         c = reds(n)
-        costs.append([math.exp(-d/x) for x in temps])
+        costs.append([math.exp(-PROB_ADJ*d/x) for x in temps])
         plt.plot(temps, costs[i], color=c, label=str(d)+' dimers')
         i+=1
     # rescale axes and add labels
