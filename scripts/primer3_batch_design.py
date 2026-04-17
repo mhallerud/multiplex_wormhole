@@ -89,7 +89,7 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=False):
     # design FW and REV primers for each sequence
     print("Designing initial primers......")
     for row in range(len(ids)):        
-        id = ids[row]
+        id = str(ids[row])
         # run primer3 based on strict settings
         #print(" - Designing primers for "  + ids)
         os.system(primer3_sh +' '+ PRIMER3_PATH +' '+ id +' '+ seqs[row] +' '+ snps[row] +' '+ strict +' '+ outprimers)
@@ -145,7 +145,7 @@ def readCheckInputCSV(IN_CSV):
         
         # Check that sequence IDs don't have "."
         ids = df["SEQUENCE_ID"]
-        if any(['.' in ids[i] for i in range(len(ids))]):
+        if any(['.' in str(ids[i]) for i in range(len(ids))]):
             raise InputParseError("Some SEQUENCE_ID values contain a period '.' - remove any periods from SEQUENCE_ID and try again.")
         # Check that sequence IDs are unique
         if len(set(ids))<len(ids):
