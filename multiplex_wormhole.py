@@ -43,18 +43,18 @@ import pandas as pd
 sys.path.append(os.path.dirname(__file__))
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
-from scripts.check_primer_specificity import main as specificityCheck
-from scripts.add_keeplist_to_fasta import main as addKeeplistFasta
+#from scripts.check_primer_specificity import main as specificityCheck
+#from scripts.add_keeplist_to_fasta import main as addKeeplistFasta
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 #from scripts.optimize_primers import main as optimizeMultiplex
 #from scripts.plot_SA_temps import main as plotSAtemps
 from scripts.multiple_run_optimization import multipleOptimizations
-from scripts.extras.CSVtoFasta import main as CSVtoFASTA
+from scripts.CSVtoFasta import main as CSVtoFASTA
 
 
 
 
-def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000):
+def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000, VERBOSE=False):
     """
     NOTE: DEPENDENCY PATHS MUST BE SET IN THIS SCRIPT FOR IT TO RUN
     Parameters
@@ -75,6 +75,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
         Iterations to run simulated annealing optimization
     SIMPLE : integer (default: 2000)
         Iterations to run simple iterative improvement optimization
+    VERBOSE : print updates as function runs? (Default: False)
     Returns
     -------
     1. Designs primers for each candidate sequences in TEMPLATES
@@ -122,6 +123,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     
     
     ## Step 2: filter out primers with dimers
+    ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
+    ## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FWD" and ".REV", and may not contain any other periods.
     print("")
     print("-----REMOVING PRIMERS WITH INTRA-PAIR DIMERS-----")
     filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
@@ -129,7 +132,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
                   Tm_LIMIT=45, 
                   dG_HAIRPINS=-2000, 
                   dG_END_LIMIT=-5000,
-                  dG_MID_LIMIT=-10000)
+                  dG_MID_LIMIT=-8000, 
+                  KEEPLIST=os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA)))
     # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
     
     
@@ -143,29 +147,26 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     #                 OUTPATH = specificity_output)
     # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
     
-    INPUT=specificity_output+"_passed.fa" #this is input for step 4
+    #INPUT=specificity_output+"_passed.fa" #this is input for step 4
     
-    
-    ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-    ## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
-    
-    ## Here's a helper script to automate combining these files:
-    if KEEPLIST_FA is not None:
-        print("")
-        print("-----ADDING KEEPLIST TO INPUT FASTA-----")
-        KEEPLIST_FA = os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA))
-        if os.path.exists(KEEPLIST_FA):
-            addKeeplistFasta(specificity_output+'_passed.fa', KEEPLIST_FA)
-            # adjust input for step 4 to include keeplist
-            INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusKeeplist.fa')
-    
-    ## Here is another helper script to convert CSV format primers to FA format:
-    #from scripts.extras.CSVtoFasta import main as CSVtoFASTA
-    #csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
-    
+    ## Add Keeplist FA into soecificity check
+    #if KEEPLIST_FA is not None:
+    #    print("")
+    #    print("-----ADDING KEEPLIST TO INPUT FASTA-----")
+    #    KEEPLIST_FA = os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA))
+    #    if os.path.exists(KEEPLIST_FA):
+    #        addKeeplistFasta(specificity_output+'_passed.fa', KEEPLIST_FA)
+    #        # adjust input for step 4 to include keeplist
+    #        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusKeeplist.fa')
     
     
     ## Step 4: Predict primer dimers using MFEprimer
+    # set input based on whether KEEPLIST is provided or not:
+    if KEEPLIST_FA is None:
+        INPUT = os.path.join(OUTDIR2, "FilteredPrimers.fa")
+    else:
+        INPUT = os.path.join(OUTDIR2, "FilteredPrimers_plusKeeplist.fa")
+
     print("")
     print("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
    # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
@@ -243,14 +244,14 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     print("")
     print("-----STARTING OPTIMIZATION FOR MULTIPLEX PRIMER SET-----")
     multipleOptimizations(N_RUNS = N_RUNS, 
-                          PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                          PRIMER_FA = os.path.join(OUTDIR2, "FilteredPrimers.fa"),
                           DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                           DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
                           OUTPATH = os.path.join(OUTDIR4, PREFIX), 
                           N_LOCI = N_LOCI, 
                           KEEPLIST = KEEPLIST_FA, 
                           TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
-                          VERBOSE=False,#set to true to print dimers at each change
+                          VERBOSE=VERBOSE,#set to true to print dimers at each change
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations for simulated annealing optimization (default=10000) 
                           BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)

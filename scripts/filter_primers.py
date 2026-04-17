@@ -20,9 +20,14 @@ import glob
 import csv
 import re
 
+# import CSVtoFASTA module
+sys.path.append(os.path.dirname(__file__))
+from CSVtoFasta import main as CSV2FASTA
+from add_keeplist_to_fasta import main as AddKeeplist2FASTA
 
 
-def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000, dG_MID_LIMIT=-10000):
+
+def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000, dG_MID_LIMIT=-8000, KEEPLIST=None):
     """
     PRIMER_DIR : path to primer directory
         primer directory
@@ -36,6 +41,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
         maximium delta G allowed for dimers at ends of primers (default -5000)
     dG_MID_LIMIT : cal/mol
         maximum delta G allowed for dimers not at primer ends (default -10000)
+    KEEPLIST : FASTA file of keeplist primers
     -------
     Removes primer pairs with predicted secondary structures;
     Outputs filtered primer pair details to a CSV
@@ -193,6 +199,19 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     with open(OUTIDS, 'w', newline="\n") as file:
         for row in ids:
             file.write(row+'\n')
+    
+    # also save to FASTA file
+    CSV2FASTA(OUTCSV, OUTPATH+".fa")
+    
+    # if keeplist provided, add 
+    if KEEPLIST is not None:
+        if os.path.exists(KEEPLIST):
+            try: 
+                AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST_FA)
+            except Exception:
+                print("KEEPLIST could not be added to filtered primers FASTA")                
+        else:
+            print("KEEPLIST path not found: Not added to FASTA")
     
     # Print number loci in filtered output
     print("# Input loci: "+str(len(locus_files)))

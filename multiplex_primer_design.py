@@ -103,46 +103,42 @@ primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
 
 
 ## Step 2: filter out primers with dimers
+## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
+## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
 filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
               OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
-              dG_END_LIMIT=-4000,
-              dG_MID_LIMIT=-8000)
+              dG_END_LIMIT=-5000,
+              dG_MID_LIMIT=-8000,
+              KEEPLIST=os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA)))
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
 
 
 ## Step 3: Checking primer specificity 
-specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
-specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
-                 TARGET = TEMPLATES, 
-                 OUTPATH = specificity_output)
+#specificity_output = os.path.join(OUTDIR2,'SpecificityCheckTemplates')
+#specificityCheck(PRIMERS = os.path.join(OUTDIR2,'FilteredPrimers.csv'),
+#                 TARGET = TEMPLATES, 
+#                 OUTPATH = specificity_output)
 # Outputs are found under 2_FilteredPrimers/SpecficityCheckTemplates*
 
-INPUT=specificity_output+"_passed.fa" #this is input for step 4
-
-
-
-## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
-
-## Here's a helper script to automate combining these files:
-if KEEPLIST_FA is not None:
-    KEEPLIST_FA = os.path.join(INPUTDIR, os.path.basename(KEEPLIST_FA))
-    if os.path.exists(KEEPLIST_FA):
-        addKeeplistFasta(specificity_output+'_passed.fa', KEEPLIST_FA)
-        # adjust input for step 4 to include keeplist
-        INPUT = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed_plusKeeplist.fa')
-
-## Here is another helper script to convert CSV format primers to FA format:
-#from scripts.extras.CSVtoFasta import main as CSVtoFASTA
-#csvToFasta(IN_CSV, ID_FIELD, SEQ_FIELD, OUT_FA)
-
+#INPUT=specificity_output+"_passed.fa" #this is input for step 4
+# add keeplist to this FA
+#from scripts.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+#if KEEPLIST_FA is not None:
+#   AddKeeplist2FASTA(specificity_output+"_passed.fa", KEEPLIST_FA)
+#   INPUT = specificity_output+"_passed_plusKeeplist.fa")
 
 
 
 ## Step 4: Predict primer dimers using MFEprimer
+# Set input based on whether keeplist is provided or not
+if KEEPLIST_FA is None:
+    INPUT = os.path.join(OUTDIR2, "FilteredPrimers.fa")
+else:
+    INPUT = os.path.join(OUTDIR2, "FilteredPrimers_plusKeeplist.fa")
+
 # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
 # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
 # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
