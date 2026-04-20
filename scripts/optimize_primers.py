@@ -183,9 +183,13 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     if SEED is None:
         # if there are fewer loci than desired, use all of them
         if nloci < (N_LOCI-n_keeplist):
-            print("     WARNING: Fewer loci passed filtering than desired in panel")
+            print("     WARNING: Fewer templates passed filtering than desired in panel.")
+            print("              Returning primer pairs with min dimer load for each template.")
             print("     # loci used: " + str(nloci))
             initial_pairs = best_primer_pairs
+            # set iterations to zero- no optimization possible
+            ITERATIONS = 0
+            SIMPLE = 0
         else:
             # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
             if len(keeplist_pairs) > 0:
@@ -277,8 +281,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     min_dimer_totals = curr_dimer_totals
     min_primerset_dimers = primerset_dimers
     min_nonset_dimers = nonset_dimers
-
     
+        
     ## -----------------------STEP 2: RUN SIMULATED ANNEALING OPTIMIZATION-----------------------##
     ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
     if ITERATIONS>0:
@@ -450,7 +454,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     # i.e., swap loci only if dimer load is reduced
     # only attempt iterative improvement if no final solution found with simulated annealing
     if SIMPLE>0:
-        print("STARTING GREEDY OPTIMIZATION.....")
+        print("STARTING SIMPLE OPTIMIZATION.....")
         print("Initial # dimers: " + str(curr_total))
         i = 0
         if len(keeplist_pairs) > 0:
@@ -458,9 +462,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         else:
             blockedlist = []
         while i < SIMPLE:
-            # progress tracking
-            if (i)%1000==0:
-                print("          finished "+str(i)+" iterations")
             # if current total dimers = 0, STOP because we're optimized already
             if curr_total == 0:
                 costs.append([n_iter, Temp, curr_total])
@@ -472,13 +473,15 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 primer_pairs, primer_loci, 
                                 OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
                                 [], random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
+            i+=1
             if newSet is None:
                 comparison = False
             else:
                 swap_id, new_best_id, new_pairIDs = newSet
                 # test if new set is better than current set (if fewer overall dimers)
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table)
-    
+                #print(swap_id)
+                
             # if there are fewer dimers in new set than previous, then update the set
             if comparison < 0:
                 update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
@@ -504,7 +507,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 x = len(allowed_pairs_rmv)
                 blockedlist2 = []
                 while x > 0:
+                    #print("a")
                     if x > 0:
+                        #print("b")
                         # set these to avoid infinite loops
                         prev_worst = swap_id
                         prev_best = new_best_id
@@ -514,15 +519,21 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
                                             blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                         if newSet is None:
+                            #print("ca")
                             if VERBOSE:
                                 print("     No new sets can be found for "+swap_id+"! Removing from swap options.")
                             blockedlist.append(swap_id)
                             break
                         else:
+                            #print("cb")
                             swap_id, new_best_id, new_pairIDs = newSet
+                            break
                         # skip back to top of while if new best is same as original curr_worst
                         if new_best_id == orig_swap or new_best_id == orig_best:
+                            #print("d")
+                            #print(new_best_id)
                             if x > 1:
+                                #print("e")
                                 try:
                                     allowed_pairs_rmv.remove(new_best_id)
                                 except:
@@ -530,6 +541,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 x = len(allowed_pairs_rmv)
                                 continue  # go back to while
                             else:
+                                #print("f")
                                 break
                         # add to blockedlist2 if stuck in an infinite loop
                         if new_best_id == prev_best and swap_id == prev_worst:
@@ -540,11 +552,13 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table)
                         # keep new set if it has fewer dimers
                         if comparison < 0:
+                            #print("g")
                             update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
                             current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
                             allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
                             break  # exit this loop if a replacement was found
                         else:
+                            #print("h")
                             try:
                                 allowed_pairs_rmv.remove(new_best_id)
                             except:
@@ -558,8 +572,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     x = len(allowed_pairs_rmv)  # update
                     # when options run out for replacing this pair, add it to blockedlist to avoid trying to replace
                     if x <= 1:
+                        #print("i")
                         #print("Adding "+curr_worst+" to blockedlist")
                         blockedlist.append(swap_id)
+                        continue
     
             # stop iterating if no new sets can be made in the previous while loop
             if newSet is None:
@@ -567,6 +583,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 print("No new sets can be made with the available primers!")
                 break
     
+            # progress tracking
+            if (i)%1000==0:
+                print("          finished "+str(n_iter+i)+" iterations -- dimer load: "+str(curr_total))
             # update iteration #
             i+=1
             # progress tracking

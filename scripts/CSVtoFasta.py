@@ -13,7 +13,7 @@ import csv
 
 
 def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence", 
-         ENCODING=sys.getfilesystemencoding()):
+         ENCODING=sys.getfilesystemencoding()):#TRY 'utf-8-sig' if fails
     """
     IN_CSV : CSV containing primer IDs and sequences [filepath]
     OUT_FA : FASTA file to be output [filepath]

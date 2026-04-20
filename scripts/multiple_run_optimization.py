@@ -19,7 +19,7 @@ from optimize_primers import main as optimizeMultiplex
 
 
 def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
-                          KEEPLIST=None, TIMEOUT=10, VERBOSE=False, SEED=None,
+                          KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
                           SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
                           T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
     # set up empty array to hold overall dimer load 
@@ -83,6 +83,8 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
 
 
 def moveAllFiles(filegrep, dest):
+    if os.path.exists(dest):
+        shutil.rmtree(dest)
     if not os.path.exists(dest):
         os.mkdir(dest)
     filelist = glob.glob(filegrep)
