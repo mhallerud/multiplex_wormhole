@@ -1,46 +1,29 @@
 # multiplex_wormhole
-*In silico* optimization for multiplex PCR assays by minimizing predicted primer dimer loads. The target audience is GT-seq panel developers, however the process is transferable to any application where many amplicons are targeted in multiplex PCR.
+*In silico* optimization for multiplex PCR assays that minimized predicted primer dimer loads. The pipeline was developed for genotyping by amplicon sequencing (i.e., reduced SNP panel) applications, however, the process is transferable to any multiplex PCR targeted sequencing approach. The impetus for multiplex_wormhole was genotyping noninvasive wildlife genetic samples. Default primer design settings are therefore conservative and tailored towards amplifying low concentration and degraded DNA such as that found in fecal and hair samples. 
 
-multiplex_wormhole was created for the purpose of optimizing large multiplex PCR panels that are applied to noninvasive wildlife genetic samples for the purposes of SNP-based individual identification and relatedness analysis.  Default settings are therefore tailored towards amplifying degraded DNA from low quality samples. 
-
-**Important: This pipeline is still in development. Use at your own risk!**
 **Please report any problems or potential enhancements in the GitHub Issues page.**
 
 
 # Dependencies
-- Primer3 is used for primer design and can be downloaded [here](https://github.com/primer3-org/primer3/releases). Keep track of where this downloads- the path to primer3_core will need to be updated at line 55 in multiplex_primer_design.py and line 89 in multiplex_wormhole.py.
-- MFEprimer is used for dimer calculations and can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py and line 88 in multiplex_wormhole.py. MFEprimer Version 3.2.7 on Darwin was used during development. 
+- Primer3 is used for primer design and can be downloaded [here for Windows](https://github.com/primer3-org/primer3/releases), or [here for Mac/Linux users](https://github.com/primer3-org/primer3). Keep track of where this downloads! The path to primer3_core will need to be updated at line 55 in multiplex_primer_design.py and line 88 in multiplex_wormhole.py.
+- MFEprimer is used for dimer calculations and can be downloaded [here](https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version). The path to MFEprimer-*-awd will need to be updated on line 54 of multiplex_primer_design.py and line 87 in multiplex_wormhole.py. MFEprimer Version 3.2.7 was used during development. 
 
-The following (normally pre-installed) Python dependencies are required:
-- pandas: install by running "pip install pandas" in the command line. Developed with pandas version 1.4.4
-General Python modules required (these come pre-installed with most Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, mathplotlib, datetime
+The following Python packages are required and can normally be installed by running, e.g., "pip install pandas" on the command line or terminal:
+- pandas (v1.4.4 used in development)
+- numpy (v1.24.4 used in development)
+- matplotlib (v3.5.2 used in development)
+General Python modules required (these come pre-installed with most Python installations): os, sys, csv, random, math, signal, gc, itertools, shutil, glob, datetime
 
-multiplex_wormhole was built and tested on MacOS with Python 3.9.13 in the Spyder IDE.
+multiplex_wormhole was built and tested on MacOS with Python v3.9.13 in the Spyder IDE managed under Anaconda-Navigator. For those new to Python, [Anaconda](https://www.anaconda.com/products/navigator) is the recommended virtual environment manager. 
 
-
-# Inputs and Outputs
-## Inputs
-The only required input to multiplex wormhole is a table with DNA sequences including target and flanking regions (see step 1 under quick-start guide below for details). Optionally, users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel that is being added onto. *Note that multiplex wormhole designs primers based on standardized primer3 PCR conditions including a melting temperature between 58-62 degrees. If keeplist primers were designed using different PCR conditions and primer design settings, these should be adjusted in the files found in the primer3_settings directory.*
-
-I use the following steps to prepare input data:
-1. *SNP discovery* using data from reduced representation sequencing (e.g., RADseq) or whole genome sequencing (WGS) projects
-2. *Initial SNP filtering* following standard genomics guidelines to remove erroneous SNPs (e.g., removing SNPs with low quality scores, low depths or extremely high depths, and high missingness; O'Leary et al. 2018)
-3. *Target SNP filtering* where SNPs with high information content based on the objective(s) of the panel are selected. For example, SNPs with high minor allele frequencies are selected for individual identification, while SNPs with high Fst or delta values are selected for population assignment. Multiplex wormhole treats all candidates equally, it is therefore the responsibility of the user to select informative candidate DNA sequences based on their objectives. 
-4. *Extract flanking regions around SNPs* using --fasta-loci for RADseq data and bedtools getfasta for WGS data
-5. *Remove candidates in known repetitive regions* by checking alignments to known repetitive elements using (CENSOR](https://www.girinst.org/censor/index.php)
-
-## Outputs
-Multiplex wormhole is an **in silico** design tool and additional testing of primers is needed. For example, here is my process for further checking and optimizing multiplex wormhole output:
-1. *Specificity check against prey species* using [PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/)- this is especially important when genotyping scat samples
-2. *Initial lab testing in equimolar multiplex* to assess amplification success in target samples, test specificity against prey and closely related co-occurring species, and estimate genotyping error rates based on PCR replicates and/or comparison of high-quality and low-quality samples from the same known individuals
 
 # Quick-Start Guide
 ## 1. Set up input data
-Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names, SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: *startBP*,*length*. See example inputs in the [examples folder](https://github.com/mhallerud/multiplex_wormhole/examples). 
+Create a CSV file with a row for each candidate and columns named SEQUENCE_ID containing sequence names (limit punctuation marks to underscores), SEQUENCE_TEMPLATE containing the template DNA sequence in 5'-->3' direction, and SEQUENCE_TARGET containing the base pairs targeted for PCR amplification following primer3 format: *startBP*,*length*. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in the SEQUENCE_TARGET field. If there are 2 SNPs, for example at the 50th and 90th base pairs in the sequence, 50,40 would be the target. [Example input CSV](examples/Input_Templates.csv). 
 
-Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should each include one "target" region). 
+Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should be non-overlapping and unique).
 
-The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using a VCF and FASTA as inputs. The R script handles two input types:
+The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using VCF and FASTA as inputs. The R script handles two input types:
 
 * *de novo*: Matches formatting output of *de novo* Stacks pipeline with FASTA created by `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a set prefix such as "CLocus_".
 
@@ -66,8 +49,15 @@ bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.F
 ```
 
 ## 2. Run the multiplex_wormhole pipeline
-### Running the full pipeline
-Edit filepaths to primer3 and MFEprimer dependencies on lines 88-89 of multiplex_wormhole.py (this only needs to be done once), then the script can be run in python:
+### Running the pipeline step-by-step (recommended starting point)
+The [multiplex_primer_design.py script](multiplex_primer_design.py) is set up for running multiplex wormhole one step at a time within a Python environment. Here's how to get set up:
+* Line 44: Set this to the multiplex_wormhole directory filepath on your computer.
+* Line 54: Set this to the filepath for MFEprimer on your computer.
+* Line 55: Set this to the filepath for primer3_src on your computer.
+* Lines 71-76: Set primary input parameters (details on inputs below). Default parameters are provided throughout this script but can be updated.
+
+### Running the full module
+First, update the filepaths to primer3_src and MFEprimer dependencies on lines 87-88 of multiplex_wormhole.py (this only needs to be done once), adjust settings as desired (defaults provided), then the module can be run within python:
 ```
 # add multiplex wormhole folder to your PATH file
 import sys
@@ -75,42 +65,67 @@ sys.path.append("~/multiplex_wormhole")
 # load the module
 from multiplex_wormhole import main as multiplex_wormhole
 # run multiplex wormhole with defaults
-multiplex_wormhole(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=5000, SIMPLE=2000)
+multiplex_wormhole(TEMPLATES="In_Templates.csv",
+                   N_LOCI=50,
+                   OUTDIR="MW_out",
+                   PREFIX="MWout_N50",
+                   KEEPLIST_FA="Keeplist.fa",
+                   N_RUNS=10,
+                   ITERATIONS=5000,
+                   SIMPLE=2000,
+                   deltaG=False,
+                   VERBOSE=False)
 ```
-or from the linux command line:
+or by calling Python from the command line:
 ```
-# run multiplex wormhole with all options
-python3 multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR PREFIX KEEPLIST_FA N_RUNS ITERATIONS SIMPLE
-# run multiplex wormhole with defaults
-python3 multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR 'None' 'None' 10 5000 2000
+# usage
+python3 multiplex_wormhole.py -t <TEMPLATES> -n <N_LOCI> -o <OUTDIR> [-p <PREFIX> -k <KEEPLIST_FA> -r <N_RUNS> -i <ITERATIONS> -s <SIMPLE> -d <deltaG> -v <VERBOSE>]
+# example for 100 loci using all defaults otherwise
+python3 multiplex_wormhole.py -i InTemplates.csv -n 100 -o MWout_N100
 ```
 
-### Running piecewise steps of the pipeline
-The multiplex_primer_design.py script is set up for running multiplex_wormhole one step at a time within a Python environment. Update the paths to your multiplex_wormhole scripts on line 44, dependencies on lines 54-55, then inputs can be specified on lines 58-62. Default parameters are provided for all steps but can be adjusted within the script. 
 ### Parameters
-* **TEMPLATES**: Input CSV containing candidate DNA template IDs, sequences, and targets.
-* **N_LOCI**: Number of target sequences in final multiplex primer set.
-* **OUTDIR**: Directory where outputs and intermediates will be stored.
-* **PREFIX**: Prefix for output optimization files.
-* **KEEPLIST_FA**: FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences. Primer names must be in the format `LOCUS_ID`.`Pair`.`FWD/REV` to avoid designing multiple primer pairs for the same LOCUS_ID.
-* **N_RUNS**: Number of times to run the full optimization process.
-* **ITERATIONS**: Number of iterations to run adaptive simulated annealing algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
-* **SIMPLE**: Number of iterations to run simple iterative improvement algorithm (see [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details).
-Note that optimization will stop before the full number of iterations is run if a primer set with 0 dimers is found.
-Multiplex_wormhole uses many additional parameters including filtering thresholds for including primers or dimers, simulated annealing algorithm parameters, and output names. Defaults for these are set in the multiplex_wormhole.py script but can be adjusted as desired, or you can run the pipeline one step at a time to further explore these parameters.
+* **TEMPLATES** (--templates; -t): Input CSV containing candidate 3 fields: DNA template IDs, sequences, and targets.
+* **N_LOCI** (--nloci; -n): Number of targets or primer pairs in final multiplex.
+* **OUTDIR** (--outdir; -o): Directory where outputs and intermediates will be stored.
+* **PREFIX** (--prefix; -p): Prefix for output filenames.
+* **KEEPLIST_FA** (--keeplist; -k): FASTA containing primers that are required to be included in the final multiplex. These should be in the 5'-->3' direction and should include adapters, if primers are ordered with adapter sequences. Primer names must be in the format `LOCUS_ID`.`Pair`.`FWD/REV` to avoid designing multiple primer pairs for the same LOCUS_ID. (Default: None)
+* **N_RUNS** (--runs; -r): Number of times to run the full optimization process. (Default: 10)
+* **ITERATIONS** (--iter; -i): Number of iterations for adaptive simulated annealing algorithm. See [Optimize Multiplex Primer Set](docs/6_OptimizeMultiplexPrimerSet.md) for details. (Default: 10000)
+* **SIMPLE** (--simple; -s): Number of iterations for simple iterative improvement algorithm. (Default: 5000)
+* **deltaG** (--deltaG; -d):  False to optimize for minimum dimer tally (Default), True to optimize for maximum mean deltaG.
+* **VERBOSE** (--verbose; -v): False to run quietly (Default), True to print out details while running.
+
+Multiplex_wormhole uses many additional parameters including filtering thresholds for including primers or dimers, simulated annealing algorithm parameters, and output names. Defaults for these are set in the multiplex_wormhole.py script but can be adjusted as desired.
+
+
+# Inputs and Outputs
+## Input Preparation
+The only required input to multiplex wormhole is a table with DNA sequences including target and flanking regions (see step 1 under quick-start guide below for details). Optionally, users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel that is being added onto. *Note that multiplex wormhole designs primers based on standardized primer3 PCR conditions including a melting temperature between 58-62 degrees. If keeplist primers were designed using different PCR conditions and primer design settings, these should be adjusted in the files found in the primer3_settings directory.*
+
+I use the following steps to prepare input data:
+1. *SNP discovery* using data from reduced representation sequencing (e.g., RADseq) or whole genome sequencing (WGS) projects
+2. *Initial SNP filtering* following standard genomics guidelines to remove erroneous SNPs (e.g., removing SNPs with low quality scores, low depths or extremely high depths, and high missingness; O'Leary et al. 2018). 
+3. *Target SNP filtering* where SNPs with high information content based on the objective(s) of the panel are selected. For example, SNPs with high minor allele frequencies are selected for individual identification, while SNPs with high Fst or delta values are selected for population assignment. Multiplex wormhole treats all candidates equally, it is therefore the responsibility of the user to select informative candidate DNA sequences based on their objectives. 
+4. *Extract flanking regions around SNPs* using --fasta-loci for RADseq data and bedtools getfasta for WGS data. For reference-aligned data, masking repetitive regions is recommended prior to this step.
+5. *Remove candidates in known repetitive regions* by checking alignments to known repetitive elements using (CENSOR](https://www.girinst.org/censor/index.php)
+
+## Outputs
+Multiplex wormhole is an **in silico** design tool and additional testing of primers is needed. For example, here is my process for further checking and optimizing multiplex wormhole output:
+1. *Specificity check against prey species* using [PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/)- this is especially important when genotyping scat samples
+2. *Initial lab testing in equimolar multiplex* to assess amplification success in target samples, test specificity against prey and closely related co-occurring species, and estimate genotyping error rates based on PCR replicates and/or comparison of high-quality and low-quality samples from the same known individuals
 
 
 # Workflows for Various Applications
-A) Designing a new panel --> Start at Step 1
+A) Designing a new panel or expanding a current panel with new primers --> Start at Step 1
 
-B) Test dimer load of a pre-existing panel --> Steps 4-5
+B) Combining pre-existing panels or primer sets --> Start at Step 3
 
-C) Combining pre-existing panels or primer sets --> Start at Step 3
+C) Assessing an existing panel --> Use panel_assessment.py
 
-D) Expand a current panel with newly designed primers --> Start at Step 1
 
 # Steps in the Pipeline
-See [multiplex_primer_design](multiplex_primer_design.py) to run the full pipeline.
+See [multiplex_primer_design](multiplex_primer_design.py) to run the full pipeline step by step.
 
 0. Set up a folder structure for storing inputs and outputs
 1. [Batch Primer Design](docs/1_BatchPrimerDesign.md)
