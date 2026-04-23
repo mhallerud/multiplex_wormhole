@@ -73,7 +73,7 @@ TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidat
 KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
 N_LOCI = 50 # target panel size (# sequences amplified)
-deltaG = False #set to True if you want to use deltaG optimization algorithm
+DELTAG = False #set to True if you want to use deltaG optimization algorithm
 
 
 ## Step 0: Set up output directory structure & copy inputs to it
@@ -173,7 +173,7 @@ plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microh
                   KEEPLIST=KEEPLIST_FA, 
                   SEED=None, #this would be an output from optimizeMultiplex
                   BURNIN=100,#number iterations with dimer loads used to sample cost space
-                  deltaG=deltaG)
+                  deltaG=DELTAG)
 # decay rate closer to 1: 
 plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
                   # dimer counts to plot and calculate temps from (if not set)
@@ -259,7 +259,7 @@ multipleOptimizations(N_RUNS = 10,
                       PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
-                      deltaG=deltaG,#False for standard optimization, True for deltaG optimization
+                      deltaG=DELTAG,#False for standard optimization, True for deltaG optimization
                       SEED=None)#primer set from previous optimization run to start with, in CSV format
 #OUTPUT: MAF30_150loci_RunSummary.csv
 
