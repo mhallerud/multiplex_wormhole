@@ -50,12 +50,13 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=False):
     if not os.path.exists(PRIMER3_PATH):
         raise InputPathError("Could not find PRIMER3_PATH <"+PRIMER3_PATH+">")
     if not os.path.exists(OUTDIR):
-        raise InputPathError("Could not find OUTDIR <"+OUTDIR+">")
+        os.mkdir(OUTDIR)
+        #raise InputPathError("Could not find OUTDIR <"+OUTDIR+">")
     
     # find script directory 
     SCRIPTPATH=os.path.dirname(__file__)
 
-    # define paths to primer3 settings
+    # define paths to primer3 settings & copy into output directory
     primer3_sh = os.path.join(SCRIPTPATH, 'primer3.sh')
     basedir = os.path.dirname(SCRIPTPATH)
     strict = os.path.join(basedir, 'primer3_settings/primer3_Base_NoSecondaryFilters.txt')
@@ -63,16 +64,24 @@ def main(IN_CSV, OUTDIR, PRIMER3_PATH, ENABLE_BROAD=False):
     if not os.path.exists(strict):
         raise InputPathError("Could not find primer3 settings <"+strict+">." + \
                              "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
+    else:
+        cpstrict = os.path.join(OUTDIR, os.path.basename(strict))
+        shutil.copy2(strict, cpstrict)
+        strict = cpstrict
     if ENABLE_BROAD:
         if not os.path.exists(broad):
             raise InputPathError("Could not find primer3 settings <"+broad+">." + \
                                  "Did you move scripts or primer3_settings out of your multiplex_wormhole directory?")
-
+        else:
+            cpbroad = os.path.join(OUTDIR, os.path.basename(broad))
+            shutil.copy2(broad, cpbroad)
+            broad = cpbroad
+    
     # read in input sequences
     print("Reading in sequences......")
     # check that input sequences follow the proper formatting
     ids, seqs, snps = readCheckInputCSV(IN_CSV)
-
+    
     # set up output folder structure
     if not os.path.exists(OUTDIR):
         os.mkdir(OUTDIR)
