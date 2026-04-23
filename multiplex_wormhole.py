@@ -37,6 +37,7 @@ Input preparation:
 import os
 import sys
 import datetime
+import getopt
 import importlib
 import pandas as pd
 
@@ -51,7 +52,8 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
-def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
+def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
+         ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
     """
     NOTE: DEPENDENCY PATHS MUST BE SET IN THIS SCRIPT FOR IT TO RUN
     Parameters
@@ -278,15 +280,60 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
 
 
 
+def usage():
+    #print("\nWelcome to multiplex wormhole! Here's how to use the function:\n")
+    print("Usage: '+sys.argv[0]+' -t <templatesCSV> -n <#loci> -o <outdir> [-p <prefix> -k <keeplistFA> "+\
+          "-r <nruns> -i <iterations> -s <simple> -d <deltaG> -v <verbose> -h <help>]")
+    print("\nAdditional documentation can be found at https://github.com/mhallerud/multiplex_wormhole")
+
+
+
+
 if __name__=="__main__":
-    if len(sys.argv) != 3:
-        print("Multiplex wormhole takes 6 arguments:")
-        print("   multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR KEEPLIST_FA N_RUNS ITERATIONS=5000 SIMPLE=2000")
-        print("defaults:    multiplex_wormhole.py TEMPLATES N_LOCI OUTDIR 'None' 10 5000 2000")
-    else:
-        main(sys.argv[1],
-             sys.argv[2],
-             sys.arv[3],
-             sys.argv[4],
-             sys.argv[5],
-             sys.argv[6])
+    # grab command-line arguments
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 
+                                   "t:n:o:pkrisdvh", 
+                                   ["templates=", "nloci=","outdir=",
+                                    "prefix","keeplist","runs","iter",
+                                    "simple","deltaG","verbose","help"]) 
+    except getopt.GetoptError as err: 
+        print(err) 
+        sys.exit(1)
+    # set defaults
+    PREFIX="None"
+    KEEPLIST_FA="None"
+    N_RUNS=10
+    ITERATIONS=10000
+    SIMPLE=5000
+    deltaG=False
+    VERBOSE=False
+    # parse input arguments
+    for opt, arg in opts: 
+        if opt in ("-t", "--templates"): 
+            TEMPLATES=str(arg)
+        elif opt in ("-n", "--nloci"): 
+            N_LOCI=int(arg)
+        elif opt in ("-o","--outdir"):
+            OUTDIR=str(arg)
+        elif opt in ("-p","--prefix"):
+            PREFIX=str(arg)
+        elif opt in ("-k","--keeplist"):
+            KEEPLIST_FA=str(arg)
+        elif opt in ("-r","--runs"):
+            N_RUNS=int(arg)
+        elif opt in ("-i","--iter"):
+            ITERATIONS=int(arg)
+        elif opt in ("-s","--simple"):
+            SIMPLE=int(arg)
+        elif opt in ("-d","--deltaG"):
+            deltaG=str(arg)
+        elif opt in ("-v","--verbose"):
+            VERBOSE=str(arg)
+        elif opt in ("-h","--help"):
+            usage()
+        else:
+            assert False, "unhandled option"
+    # run main
+    main(TEMPLATES, N_LOCI, OUTDIR, PREFIX, KEEPLIST_FA, N_RUNS, ITERATIONS,
+         SIMPLE, deltaG, VERBOSE)
