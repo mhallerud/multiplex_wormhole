@@ -37,7 +37,7 @@ import itertools #paralellized filtering, etc.
 
 
 
-def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
+def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     """
     ALL_DIMERS : Filepath
         Output from MFEprimer dimer
@@ -47,6 +47,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
         Filepath prefix for all primer pair outputs
     OUTPRIMERPATH : Filepath [DEFAULT: None]
         Filepath prefix for all primer outputs
+    deltaG : Tabulate minimum deltaG (True) or dimer counts False (default: False)
     -------
     Converts MFEprimer dimer outputs into CSV tables
     """
@@ -70,8 +71,13 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
     # grab unique sets of interacting primer pairs
     dimers_subset = pd.DataFrame(list(zip(dimers['Primer1'], dimers['Primer2'], dimers['Pair1'], dimers['Pair2'])),
                                  columns=['Primer1','Primer2', 'Pair1','Pair2'])
-    counts_pairs = dimers_subset.value_counts()
-    pair_dimers = pd.DataFrame(list(counts_pairs.keys()), columns=['Primer1','Primer2', 'Pair1','Pair2'])
+    if deltaG:
+        # extract minimum (i.e., worst/strongest) deltaG per primerxprimer interaction
+        dimers['DeltaG'] = pd.to_numeric(dimers['DeltaG'])
+        pair_dimers = dimers.groupby(['Primer1', 'Primer2', 'Pair1', 'Pair2'], as_index=False)['DeltaG'].min()
+    else:
+        counts_pairs = dimers_subset.value_counts()
+        pair_dimers = pd.DataFrame(list(counts_pairs.keys()), columns=['Primer1','Primer2', 'Pair1','Pair2'])
     
     print("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
@@ -86,34 +92,43 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
     gc.collect() # clean up
     
     print("Calculating pairwise primer pair interactions........")
-    pair_interactions = CalcPairwiseDimers(pair_dimers, primerIDs, pairs=True)
+    pair_interactions = CalcPairwiseDimers(pair_dimers, primerIDs, pairs=True, deltaG=deltaG)
     
-    # convert to binary format    
-    pair_interactions_bin = pair_interactions.copy()
-    pair_interactions_bin[pair_interactions_bin>=1] = 1
+    # convert to binary format (for counting dimers)
+    if deltaG is False:    
+        pair_interactions_bin = pair_interactions.copy()
+        pair_interactions_bin[pair_interactions_bin>=1] = 1
     
-    print("Calculating total interactions per primer pair...........")
-    # calculate sum of interactions for each primer pair
-    pair_sums = pair_interactions.sum(axis=1)
-    pair_sums_bin = pair_interactions_bin.sum(axis=1) # total pairs interacted with
+    if deltaG:
+        print("Calculating mean deltaG of interactions per primer pair...........")
+        pair_sums = pair_interactions.mean(axis=1)
+    else:
+        print("Calculating total interactions per primer pair...........")
+        # calculate sum of interactions for each primer pair
+        pair_sums = pair_interactions.sum(axis=1)
+        pair_sums_bin = pair_interactions_bin.sum(axis=1) # total pairs interacted with
     
     print("Saving primer pair output files!")
     ## Export all files
+    if deltaG:
+        # set output name to aggregate file
+        pairlong = OUTPATH + '_mean.csv'
+    else:
+        pairlong = OUTPATH + '_sum.csv'
+        # export binary pairwise interactions per primer pair (wide)
+        pairwidebin = OUTPATH + '_binary_wide.csv'
+        pair_interactions_bin.to_csv(pairwidebin)
+        # export total # pairwise interactions per primer pair long (long)
+        pairlongbin = OUTPATH + '_binary_sum.csv'
+        pair_sums_bin.to_csv(pairlongbin)
+        # set output name for aggregate file
+        
+    # export total interactions per primer pair (long)
+    pair_sums.to_csv(pairlong)
     # export total pairwise interactions per primer pair (wide)
     pairwide = OUTPATH + '_wide.csv'
     pair_interactions.to_csv(pairwide)
-    
-    # export binary pairwise interactions per primer pair (wide)
-    pairwidebin = OUTPATH + '_binary_wide.csv'
-    pair_interactions_bin.to_csv(pairwidebin)
-    
-    # export total interactions per primer pair (long)
-    pairlong = OUTPATH + '_sum.csv'
-    pair_sums.to_csv(pairlong)
 
-    # export total # pairwise interactions per primer pair long (long)
-    pairlongbin = OUTPATH + '_binary_sum.csv'
-    pair_sums_bin.to_csv(pairlongbin)
     
     # calculate interactions per primer
     if OUTPRIMERPATH!="False":
@@ -135,30 +150,42 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False"):
         primer_sums_bin = primer_interactions.sum(axis=1) # total primers interacted with
         
         print("Saving primer output files!")
-        # export total interactions per primer (long)
-        primerlong = OUTPRIMERPATH + '_sum.csv'
-        primer_sums.to_csv(primerlong)
         # export pairwise interactions per primer (wide)
         primerwide = OUTPRIMERPATH + '_wide.csv'
         primer_interactions.to_csv(primerwide)
-        # export # primers each primer interacts with (long)
-        primerlong = OUTPRIMERPATH + '_binary_sum.csv'
-        primer_sums_bin.to_csv(primerlong)
-        # export pairwise interactions per primer (wide)
-        primerwide = OUTPRIMERPATH + '_binary_wide.csv'
-        primer_interactions_bin.to_csv(primerwide)
+        # export total interactions per primer (long)
+        if deltaG:
+            primerlong = OUTPRIMERPATH + '_mean.csv'
+        else:
+            primerlong = OUTPRIMERPATH + '_sum.csv'
+        primer_sums.to_csv(primerlong)
+        # export binary interactions
+        if deltaG is False:
+            # export # primers each primer interacts with (long)
+            primerlong = OUTPRIMERPATH + '_binary_sum.csv'
+            primer_sums_bin.to_csv(primerlong)
+            # export pairwise interactions per primer (wide)
+            primerwide = OUTPRIMERPATH + '_binary_wide.csv'
+            primer_interactions_bin.to_csv(primerwide)
 
 
 
-def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
+def CalcPairwiseDimers(dimers, primerIDs, pairs=True, deltaG=False):
     # duplicate dimers with pair1/primer1 and pair2/primer2 flipped (dimers will be counted by pair1 column, so 
     # this ensures that they'll be counted from both directions)
-    flipped = pd.DataFrame(list(zip(dimers['Primer2'], dimers['Primer1'], dimers['Pair2'], dimers['Pair1'])),
-                           columns=['Primer1','Primer2','Pair1','Pair2'])
+    if deltaG:
+        flipped = pd.DataFrame(list(zip(dimers['Primer2'], dimers['Primer1'],
+                                        dimers['Pair2'], dimers['Pair1'], dimers['DeltaG'])),
+                               columns=['Primer1','Primer2','Pair1','Pair2','DeltaG'])
+    else:
+        flipped = pd.DataFrame(list(zip(dimers['Primer2'], dimers['Primer1'], dimers['Pair2'], dimers['Pair1'])),
+                               columns=['Primer1','Primer2','Pair1','Pair2'])
     # combine raw and flipped dimers
     dimers_flipped = pd.concat([dimers, flipped])
+
     # add column for dimer count
-    dimers_flipped['Count']=1
+    if deltaG is False:
+        dimers_flipped['Count']=1
     # identify missing primers (i.e., primers with 0 dimers in files)
     primersRow = pd.unique(dimers_flipped['Primer1'])
     primersCol = pd.unique(dimers_flipped['Primer2'])
@@ -172,22 +199,33 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True):
         pair = primer.replace('.REV', '').replace('.FWD', '')
         dimers_flipped.loc[len(dimers_flipped)] = [primer, primer, pair, pair, 0]
     if pairs:
-        # cross-tabulate pair1 vs pair2 counts
-        pair_interactions = pd.crosstab(index=dimers_flipped['Pair1'], columns=dimers_flipped['Pair2'],
-                                        dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
+        f1='Pair1'
+        f2='Pair2'
     else:
-        pair_interactions = pd.crosstab(index=dimers_flipped['Primer1'], columns=dimers_flipped['Primer2'],
+        f1='Primer1'
+        f2='Primer2'
+    if deltaG:
+        # cross-tabulate pair1 vs pair2 min
+        pair_interactions = pd.crosstab(index=dimers_flipped[f1], columns=dimers_flipped[f2],
+                                        dropna=False, values=dimers_flipped['DeltaG'], aggfunc="min")
+    else:
+        # cross-tabulate pair1 vs pair2 counts
+        pair_interactions = pd.crosstab(index=dimers_flipped[f1], columns=dimers_flipped[f2],
                                         dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
+
     # replace NAs with 0s
     pair_interactions = pair_interactions.fillna(0)
-    # convert to integer
-    pair_interactions = pair_interactions.astype(int)
+    if deltaG:
+        pair_interactions = pair_interactions.astype(float)
+    else:
+        # convert to integer
+        pair_interactions = pair_interactions.astype(int)
+    
     return pair_interactions
 
 
 
 def ReadDimerTXT(infile):
-    primers = []
     dimers = []
     with open(infile, 'r') as file:
         lines=file.readlines()
@@ -213,6 +251,7 @@ def ReadDimerTXT(infile):
             dimers.append([primer1, primer2, pair1, pair2, score, delta_g])
     # convert to numpy array
     df = pd.DataFrame(dimers, columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
+    df['DeltaG'] = pd.to_numeric(df['DeltaG'])
     # add any missing primers (i.e., these had NO dimers) into DF
     #for p in primers:
     #    if p not in df['Primer1'] and p not in df['Primer2']:

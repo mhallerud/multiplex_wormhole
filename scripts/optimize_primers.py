@@ -47,6 +47,7 @@ import sys
 import csv
 import importlib
 import pandas as pd
+import numpy as np
 import random as rand
 import math
 import matplotlib.pyplot as plt
@@ -56,7 +57,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
-def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, SEED=None, VERBOSE=False,
+def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, 
          DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
     """
@@ -66,6 +67,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     OUTPATH : Output path and prefix [filepath]
     N_LOCI : Number of primer pairs in desired multipled [integer]
     KEEPLIST : Contains primers that MUST be included in the final solution [FASTA; default=None]
+    deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [False = defalt]
     SEED : Initial primer set to start with from previous multiplex_wormhole run (CSV)
     -------SIMULATED ANNEALING PARAMETERS-----
     SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
@@ -179,7 +181,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     uniq_loci = list(set(primer_loci))
     nloci = len(uniq_loci)
     # grab best primer pairs for each locus
-    best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs)
+    best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
     if SEED is None:
         # if there are fewer loci than desired, use all of them
         if nloci < (N_LOCI-n_keeplist):
@@ -197,8 +199,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 for k in list(best_primer_pairs.keys()):
                     if k in set(keeplist_pairs):
                         best_primer_pairs.pop(k)
-                # grab N primer pairs with min dimer count (accounting for space filled by keeplist pairs)
-                initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_keeplist])
+                if deltaG:
+                    # grab primer pairs with maximum (i.e., least negative) mean dimer load
+                    initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1], reverse=True)[:N_LOCI-n_keeplist])
+                else:
+                    # grab N primer pairs with min dimer count (accounting for space filled by keeplist pairs)
+                    initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_keeplist])
                 # grab random subset of pairs
                 #initial_keys = rand.sample(best_primer_pairs.items(), N_LOCI-n_keeplist)
                 # append all keeplist pairs to initial pairs
@@ -206,7 +212,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 initial_pairs.update(keeplist_dimers)
             # otherwise, with no keeplist, just select the N_LOCI "best" primer pairs to start with
             else:
-                initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
+                if deltaG:
+                    initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1], reverse=True)[:N_LOCI])
+                else:
+                    initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
     
     ## If a SEED file is provided, use this as the initial primer set....
     else:
@@ -243,7 +252,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             print("     Removing "+str(n_seed-N_LOCI)+" worst primer pairs from SEED to meet target N_LOCI")
             # calculate dimer load per primer pair in current set
             seed_primerset_dimers, seed_nonset_dimers = SubsetDimerTable(seed_pairIDs, dimer_table, True)
-            seed_dimer_totals = CalcTotalDimers(seed_primerset_dimers) 
+            seed_dimer_totals = CalcTotalDimers(seed_primerset_dimers, deltaG) 
             # keep top N_LOCI pairs with lowest dimer load
             initial_pairs = dict(sorted(seed_dimer_totals.items(), key=lambda x: x[1])[:N_LOCI])
         else:
@@ -263,10 +272,16 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     allowed_pairs = list(set(allowed_pairs))
     # calculate # primer dimers per pair for current set of primers
     primerset_dimers, nonset_dimers = SubsetDimerTable(current_pairIDs, dimer_table, True)
-    curr_dimer_totals = CalcTotalDimers(primerset_dimers)  
+    curr_dimer_totals = CalcTotalDimers(primerset_dimers, deltaG)  
     # totals for current primers
-    curr_total = sum(curr_dimer_totals.values())#total
-    print("     Initial dimer load: "+str(curr_total))
+    if deltaG:
+        #mean deltaG of dimers in set (negative s.t. increase = worse dimers, then minimize for min value)
+        curr_total = -np.array(list(curr_dimer_totals.values())).mean()
+        print("     Initial mean deltaG: "+str(-curr_total))
+    else:
+        #sum of dimers in count
+        curr_total = sum(curr_dimer_totals.values())#total
+        print("     Initial dimer load: "+str(curr_total))
     costs = [["Iterations","SA_Temp", "TotalDimers"]]
 
     if curr_total==0:
@@ -300,7 +315,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
                                                           random=True, keeplist=keeplist_pairs)
                 # compare newSet to original set
-                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table)
+                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                    compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
         
                 # if newSet is worse, make note of change value
                 if comparison > 0:
@@ -317,7 +333,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         T_FINAL = 0.1
                     break
 
-            print("     Max change observed: "+str(max(change)))    
+            print("     Max change observed: "+str(round(max(change),2)))    
             # set temperatures based on burnin results
             if T_INIT is None:
                 T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
@@ -335,8 +351,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         else:
             print("Using default T_FINAL=0.1")
             T_final=0.1
-        print("     Initial temp: "+str(T_init))
-        print("     Final temp: "+str(T_final))
+        print("     Initial temp: "+str(round(T_init,2)))
+        print("     Final temp: "+str(round(T_final,2)))
         
         ## ------------------STEP 2B: SET AND PLOT TEMPERATURE SCHEDULE----------------##
         # partition iteration space across temp range
@@ -344,8 +360,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             Tspace = (T_init - T_final)/PARTITIONS
             T_iter = round(Tspace*ITERATIONS)
         else:
-            print("    NOTE: Fewer partitions provided than iterations, +\
-                  so the temperature schedule is set to change at each iteration.")
+            print("    NOTE: Fewer partitions provided than iterations, " +\
+                  "so the temperature schedule is set to change at each iteration.")
             Tspace = (T_init - T_final)/ITERATIONS
             T_iter = 1    
         if len(change)==0:
@@ -387,7 +403,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
                                                           random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
                 # if e^(-change/temp) < random number (0,1), accept the change
-                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table)
+                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                    compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
                 SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
                 if SAvalue > rand.uniform(0,1):
                     update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total, verbose=False)
@@ -455,7 +472,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     # only attempt iterative improvement if no final solution found with simulated annealing
     if SIMPLE>0:
         print("STARTING SIMPLE OPTIMIZATION.....")
-        print("Initial # dimers: " + str(curr_total))
+        if deltaG:
+            print("Initial mean deltaG: "+str(-curr_total))
+        else:
+            print("Initial # dimers: " + str(curr_total))
         i = 0
         if len(keeplist_pairs) > 0:
             blockedlist = keeplist_pairs
@@ -479,7 +499,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             else:
                 swap_id, new_best_id, new_pairIDs = newSet
                 # test if new set is better than current set (if fewer overall dimers)
-                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table)
+                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                    compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_sums, deltaG=deltaG)
                 #print(swap_id)
                 
             # if there are fewer dimers in new set than previous, then update the set
@@ -549,7 +570,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 print("     Infinite loop caused by "+new_best_id+"! Removing from swap options.")
                             blockedlist2.append(new_best_id)
                         # compare new set against current set
-                        comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table)
+                        comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                            compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_sums, deltaG=deltaG)
                         # keep new set if it has fewer dimers
                         if comparison < 0:
                             #print("g")
@@ -606,7 +628,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     print("EXPORTING OPTIMIZED PRIMER SET....")
     ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer_IDs, 
                primer_seqs, keeplist_IDs, keeplist_seqs, costs)
-                    
+    
+    print("EXPORTING DIMER TABLES FOR PRIMER PAIRS....")
+    final_dimers = SubsetDimerTable(current_pairIDs, dimer_table, return_complement=False)
+    # export the current dimers and their totals as CSV
+    final_dimers.to_csv(OUTPATH+'_dimers.csv')
+    
     return curr_total
 
 
@@ -715,12 +742,21 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
     return swap, new_id, update_pairIDs
 
 
-def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table):
+def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_sums, deltaG):
     # calculate # dimers in this new set
     new_primerset_dimers, new_nonset_dimers = SubsetDimerTable(new_pairIDs, dimer_table, True)
-    new_dimer_totals = CalcTotalDimers(new_primerset_dimers)
-    new_total = sum(new_dimer_totals.values())
+    new_dimer_totals = CalcTotalDimers(new_primerset_dimers, deltaG)
+    if deltaG:
+        new_total = -np.array(list(new_dimer_totals.values())).mean()
+    else:
+        new_total = sum(new_dimer_totals.values())
     comparison = new_total - curr_total  # difference between new set and old
+    # if deltaG comparison, take negative since lower=worst & higher=better
+    if deltaG:
+        # adjust mean deltaG across input size
+        # (really coarse way to adjust temps based on deltaG)
+        comparison = comparison*len(dimer_sums)
+
     return comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total
 
 
@@ -781,7 +817,7 @@ def GetLocusID(pairID):
     return LocusID
 
 
-def BestPrimers(loci, dimer_sums, keeplist):
+def BestPrimers(loci, dimer_sums, keeplist, deltaG):
     """loci: """
     """dimer_tally_dict: """
     # grab dimer data
@@ -810,8 +846,12 @@ def BestPrimers(loci, dimer_sums, keeplist):
                 filter(lambda x: dimer_loci[x] == locus, range(len(dimer_loci))))
             ids = [dimer_primerIDs[i] for i in locus_idx]
             tallies = [dimer_tallies[i] for i in locus_idx]
-            # extract primer pair with min dimer value
-            min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
+            if deltaG:
+                # extract primer pair with maximum deltaG (i.e., least bad dimer)
+                min_idx = list(filter(lambda x: tallies[x] == max(tallies), range(len(tallies))))
+            else:
+                # extract primer pair with min dimer value
+                min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
             # if there's more than one 'best' option, randomly choose one...
             if len(min_idx) > 1:
                 min_idx = [rand.choice(min_idx)]
@@ -858,13 +898,16 @@ def SubsetDimerTable(pairs, dimer_table, return_complement=False):
         return sub_dimer_table, not_dimer_table
 
 
-def CalcTotalDimers(dimerDF):
+def CalcTotalDimers(dimerDF, deltaG):
     pairs = list(dimerDF.columns)
     if 'Pair1' in pairs:
         pairs.remove('Pair1')
     outDict = dict()
     for pair in pairs: 
-        Ndimers = sum(dimerDF[pair])
+        if deltaG:
+            Ndimers = dimerDF[pair].mean()
+        else:
+            Ndimers = sum(dimerDF[pair])
         outDict.update({pair: Ndimers})
     return outDict
 
