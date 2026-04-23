@@ -380,7 +380,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                               T_FINAL=T_final, 
                               DIMER_ADJ=DIMER_ADJ,
                               PROB_ADJ=PROB_ADJ,
-                              BURNIN=0)
+                              BURNIN=0, 
+                              deltaG=deltaG)
     
         ## ------------------STEP 2C: RUN SIMULATED ANNEALING ITERATIONS----------------##
         # C) run simulated annealing optimization

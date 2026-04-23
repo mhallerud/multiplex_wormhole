@@ -18,7 +18,7 @@ from optimize_primers import main as optimizeMultiplex
 
 
 
-def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
+def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, deltaG=False,
                           KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
                           SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
                           T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
@@ -37,6 +37,7 @@ def multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N
                                          OUTPATH=OUTPATH+"_Run"+str(run).zfill(2),
                                          N_LOCI=N_LOCI, 
                                          KEEPLIST=KEEPLIST,
+                                         deltaG=deltaG,
                                          SEED=None,
                                          VERBOSE=False,
                                          SIMPLE=SIMPLE, 

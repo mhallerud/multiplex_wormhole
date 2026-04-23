@@ -51,7 +51,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
-def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000, VERBOSE=False):
+def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
     """
     NOTE: DEPENDENCY PATHS MUST BE SET IN THIS SCRIPT FOR IT TO RUN
     Parameters
@@ -72,9 +72,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
         Iterations to run simulated annealing optimization
     SIMPLE : integer (default: 2000)
         Iterations to run simple iterative improvement optimization
+    deltaG : True (deltaG optimization) / False (standard optimization)
     VERBOSE : print updates as function runs? (Default: False)
-    Returns
     -------
+    Returns
     1. Designs primers for each candidate sequences in TEMPLATES
     2. Filtered primer sets in CSV format
     3. Pairwise dimers predicted between all filtered primer pairs
@@ -174,7 +175,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     tabulateDimers(ALL_DIMERS, 
                    END_DIMERS, 
                    os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
-                   "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
+                   "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
+                   deltaG)
     # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
     
     
@@ -196,7 +198,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
                       BURNIN=100,#number iterations with dimer loads used to sample cost space
                       DECAY_RATE=0.95, #temp decay rate
                       DIMER_ADJ=0.1, #adjustment of maximum dimer costs
-                      PROB_ADJ=2) #decay rate of acceptance probability
+                      PROB_ADJ=2,#decay rate of acceptance probability
+                      deltaG=deltaG)
     # Alternative implementation where dimers and T_INIT/T_FINAL are specified:
     # plotSAtemps(OUTPATH=os.path.join(OUTDIR4, "TestingASAparams"),
     #             # dimer counts to plot and calculate temps from (if not set)
@@ -224,8 +227,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
                           PRIMER_FA = os.path.join(OUTDIR2, "FilteredPrimers.fa"),
                           DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
                           DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                          OUTPATH = os.path.join(OUTDIR4, PREFIX), 
+                          OUTPATH = os.path.join(OUTDIR4, PREFIX),
                           N_LOCI = N_LOCI, 
+                          deltaG = deltaG, #True: deltaG optimization, False=standard optimization
                           KEEPLIST = KEEPLIST_FA, 
                           TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
                           VERBOSE=VERBOSE,#set to true to print dimers at each change

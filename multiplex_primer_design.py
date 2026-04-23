@@ -73,6 +73,7 @@ TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidat
 KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
 OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
 N_LOCI = 50 # target panel size (# sequences amplified)
+deltaG = False #set to True if you want to use deltaG optimization algorithm
 
 
 ## Step 0: Set up output directory structure & copy inputs to it
@@ -154,7 +155,8 @@ os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70
 tabulateDimers(ALL_DIMERS, 
                END_DIMERS, 
                os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
-               "False")#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
+               "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
+               deltaG)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
 
@@ -170,7 +172,8 @@ plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microh
                   N_LOCI=N_LOCI, #number of target loci in panel
                   KEEPLIST=KEEPLIST_FA, 
                   SEED=None, #this would be an output from optimizeMultiplex
-                  BURNIN=100)#number iterations with dimer loads used to sample cost space
+                  BURNIN=100,#number iterations with dimer loads used to sample cost space
+                  deltaG=deltaG)
 # decay rate closer to 1: 
 plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
                   # dimer counts to plot and calculate temps from (if not set)
@@ -198,6 +201,7 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                   OUTPATH = os.path.join(OUTDIR4,"Run01_50Microhaps"), 
                   N_LOCI = N_LOCI, 
                   KEEPLIST = None, #KEEPLIST_FA,
+                  deltaG = deltaG, #True for deltaG optimization, False for standard optimization
                   VERBOSE=False,#set to true to print dimers at each change
                   SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
                   ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
@@ -232,6 +236,7 @@ multipleOptimizations(N_RUNS = 10,
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
                       OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
                       N_LOCI = 100, 
+                      deltaG = deltaG,
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
                       VERBOSE=False,#set to true to print dimers at each change
@@ -254,6 +259,7 @@ multipleOptimizations(N_RUNS = 10,
                       PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
+                      deltaG=deltaG,#False for standard optimization, True for deltaG optimization
                       SEED=None)#primer set from previous optimization run to start with, in CSV format
 #OUTPUT: MAF30_150loci_RunSummary.csv
 

@@ -26,7 +26,7 @@ import random as rand
 op = importlib.import_module("optimize_primers")
 
 
-def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, SEED=None, 
+def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, deltaG=False, SEED=None, 
          MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
     PRIMER_FASTA : Fasta path
@@ -41,6 +41,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         Number of loci in final set
     KEEPLIST : Fasta path
         Contains primers that must be included in panel (Default: None)
+    deltaG : True / False
     SEED : CSV path
         Initial primer set to start with from previous multiplex_wormhole run
     MIN_DIMER : Numeric
@@ -111,7 +112,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     uniq_loci = list(set(primer_loci))
                     nloci = len(uniq_loci)
                     # grab best primer pairs for each locus
-                    best_primer_pairs = op.BestPrimers(uniq_loci, dimer_sums, keeplist_pairs)
+                    best_primer_pairs = op.BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
                     # if there are fewer loci than desired, use all of them
                     if nloci < N_LOCI:
                         print("WARNING: Fewer loci passed filtering than desired in panel")
@@ -157,7 +158,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 allowed_pairs = list(set(allowed_pairs))
                 # calculate # primer dimers per pair for current set of primers
                 primerset_dimers, nonset_dimers = op.SubsetDimerTable(current_pairIDs, dimer_table, True)
-                curr_dimer_totals = op.CalcTotalDimers(primerset_dimers)  
+                curr_dimer_totals = op.CalcTotalDimers(primerset_dimers, deltaG)  
                 curr_total = sum(curr_dimer_totals.values())
                 
                 
@@ -185,7 +186,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                         # compare newSet to original set
                         comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, \
                             new_total = op.compareSets(new_pairIDs, curr_total, swap_id, 
-                                                    new_id, dimer_table)
+                                                    new_id, dimer_table, dimer_sums, deltaG)
                 
                         # if newSet is worse, make note of change value
                         if comparison > 0:
