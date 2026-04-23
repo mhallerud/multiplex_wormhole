@@ -86,7 +86,12 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, IT
     ## SET PATHS TO DEPENDENCIES
     MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
     PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
-
+    
+    # set input types
+    N_LOCI = int(N_LOCI)
+    N_RUNS = int(N_RUNS)
+    ITERATIONS = int(ITERATIONS)
+    SIMPLE = int(SIMPLE)
     
     ## Step 0: Set up output directory structure & copy inputs to it
     print("-----SETTING UP OUTPUT DIRECTORY STRUCTURE------")
