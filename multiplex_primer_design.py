@@ -143,7 +143,7 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --oligo = concentration of annealing oligos (nM) 
 os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
           "--mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -5 -s 3 -m 70 --diva 3.8 "+
+os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 "+
           "--mono 50 --dntp 0.25 --oligo 50 -p")
 
 
@@ -165,8 +165,8 @@ tabulateDimers(ALL_DIMERS,
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults_35plex+30microhaps'),
-                  PRIMER_FASTA=os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults'),
+                  PRIMER_FASTA=os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
                   DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
                   DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
                   N_LOCI=N_LOCI, #number of target loci in panel
@@ -195,7 +195,7 @@ plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRat
 ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
 # To run once:
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
                   DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
                   DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
                   OUTPATH = os.path.join(OUTDIR4,"Run01_50Microhaps"), 
@@ -231,7 +231,7 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
 ## Here's a helper function:
 from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 10, 
-                      PRIMER_FA = os.path.join(OUTDIR2, 'SpecificityCheckTemplates_passed.fa'), 
+                      PRIMER_FA = os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
                       DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
                       OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
