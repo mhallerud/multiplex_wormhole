@@ -156,7 +156,7 @@ tabulateDimers(ALL_DIMERS,
                END_DIMERS, 
                os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
                "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
-               deltaG)
+               DELTAG)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
 
@@ -201,7 +201,7 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'SpecificityCheckTemplate
                   OUTPATH = os.path.join(OUTDIR4,"Run01_50Microhaps"), 
                   N_LOCI = N_LOCI, 
                   KEEPLIST = None, #KEEPLIST_FA,
-                  deltaG = deltaG, #True for deltaG optimization, False for standard optimization
+                  deltaG = DELTAG, #True for deltaG optimization, False for standard optimization
                   VERBOSE=False,#set to true to print dimers at each change
                   SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
                   ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
@@ -236,7 +236,7 @@ multipleOptimizations(N_RUNS = 10,
                       DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
                       OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
                       N_LOCI = 100, 
-                      deltaG = deltaG,
+                      deltaG = DELTAG,#False for standard optimization, True for deltaG optimization
                       KEEPLIST = KEEPLIST_FA, 
                       TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
                       VERBOSE=False,#set to true to print dimers at each change
@@ -259,7 +259,6 @@ multipleOptimizations(N_RUNS = 10,
                       PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
-                      deltaG=DELTAG,#False for standard optimization, True for deltaG optimization
                       SEED=None)#primer set from previous optimization run to start with, in CSV format
 #OUTPUT: MAF30_150loci_RunSummary.csv
 
