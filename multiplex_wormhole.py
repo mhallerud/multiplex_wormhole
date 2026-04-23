@@ -302,7 +302,7 @@ if __name__=="__main__":
         sys.exit(1)
     # set defaults
     PREFIX="None"
-    KEEPLIST_FA="None"
+    KEEPLIST_FA=None
     N_RUNS=10
     ITERATIONS=10000
     SIMPLE=5000
