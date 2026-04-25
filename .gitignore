@@ -4,3 +4,5 @@ scripts/.DS_Store
 scripts/__pycache__/
 scripts/extras/.DS_Store
 scripts/extras/__pycache__/
+examples/.DS_Store
+primer3_settings/.DS_Store
