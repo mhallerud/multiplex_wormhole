@@ -53,6 +53,7 @@ import math
 import matplotlib.pyplot as plt
 
 # import plot simulated annealing temps module
+sys.path.append(os.path.dirname(__file__))
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 

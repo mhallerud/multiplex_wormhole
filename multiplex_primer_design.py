@@ -110,7 +110,7 @@ filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'),
               OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
               Tm_LIMIT=45, 
               dG_HAIRPINS=-2000, 
-              dG_END_LIMIT=-5000,
+              dG_END_LIMIT=-4000,
               dG_MID_LIMIT=-8000,
               KEEPLIST=KEEPLIST_FA)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*

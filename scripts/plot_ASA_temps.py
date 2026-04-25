@@ -23,6 +23,7 @@ import random as rand
 
 
 # load functions from optimize_primers module
+sys.path.append(os.path.dirname(__file__))
 op = importlib.import_module("optimize_primers")
 
 
