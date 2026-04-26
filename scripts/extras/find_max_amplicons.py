@@ -12,11 +12,11 @@ import os
 import pandas as pd
 import math
 import random as rand
-
+import importlib
 # load other multiplex wormhole modules
 sys.path.append(os.path.dirname(__file__))
 import optimize_primers as op
-from plot_SA_temps import main as plotSAtemps
+plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
