@@ -61,7 +61,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, 
-         DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False):
+         DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
     DIMER_SUMS : Sum of interactions per primer pair (binary interactions recommended) [CSV]
@@ -96,12 +96,15 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         -values closer to 0 will reject dimers but fail to overcome local optima
     PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 1)
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
+    RNG : Seed for random numbers.
     -------
     Iteratively optimizes a multiplex primer set of given size to minimize
             predicted dimer content. NOTE: This script relies on having a large ratio of 
             loci to choose from relative to the number of loci needed.
     Outputs : CSVs of selected primer pairs + dimer loads
     """
+    # set up random number generator for reproducibility
+    rng = np.random.default_rng(RNG)
     
     ## -----------------------STEP 0A: CHECK INPUT PARAMETERS -----------------------##
     CheckInputNumber(N_LOCI, "N_LOCI","--")
@@ -643,7 +646,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
 def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist, 
                primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-               blockedlist2=[], random=False, keeplist=[], n_iter=None, Temp=None, curr_total=None):
+               blockedlist2=[], random=False, keeplist=[], n_iter=None, Temp=None, curr_total=None, RNG=12345):
     # create copy of original list, otherwise links them and affects both lists when using update/remove
     update_pairIDs = pairIDs.copy()
     allowed_pairs_edit = allowed.copy()
@@ -667,6 +670,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
         # remove keeplist and blocklist loci from options
         options = [x for x in pairIDs if x not in keeplist]
         options = [x for x in options if x not in blockedlist]
+        rand.seed(RNG)
         swap = rand.choice(options)  
     # otherwise, replace the current worst (most dimers) pair in the set
     else:
@@ -698,6 +702,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
     ## CHOOSE REPLACEMENT PRIMER PAIR
     if len(allowed_pairs_edit) > 0:
         if random:
+            rand.seed(RNG)
             new_id = rand.choice(allowed_pairs_edit)
         else:
             ## ID primer pair outside of set that would have the smallest dimer load in the context of the current set
@@ -724,6 +729,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
                 cand_min = min(candidate_totals)
                 new_best_options = candidate_totals[candidate_totals==cand_min]
                 #new_best_options = [candidate_ids[x] for x in range(len(candidate_ids)) if candidate_totals[x]==cand_min]
+                rand.seed(RNG)
                 new_id = rand.choice(new_best_options.keys())
             else:
                 return None
@@ -735,6 +741,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
         if new_id in allowed_pairs_edit:
             allowed_pairs_edit.remove(new_id)
         if len(allowed_pairs_edit) > 0:
+            rand.seed(RNG)
             new_id = rand.choice(allowed_pairs_edit)
         else:
             return None
@@ -820,7 +827,7 @@ def GetLocusID(pairID):
     return LocusID
 
 
-def BestPrimers(loci, dimer_sums, keeplist, deltaG):
+def BestPrimers(loci, dimer_sums, keeplist, deltaG, RNG=12345):
     """loci: """
     """dimer_tally_dict: """
     # grab dimer data
@@ -857,6 +864,7 @@ def BestPrimers(loci, dimer_sums, keeplist, deltaG):
                 min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
             # if there's more than one 'best' option, randomly choose one...
             if len(min_idx) > 1:
+                rand.seed(RNG)
                 min_idx = [rand.choice(min_idx)]
             # extract the ID for the selected pair
             bestPair = [ids[i] for i in min_idx][0]

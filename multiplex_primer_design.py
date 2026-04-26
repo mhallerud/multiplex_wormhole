@@ -54,6 +54,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 ## SET PATHS TO DEPENDENCIES:
+## SPACES IN FILEPATHS WILL BREAK THE FUNCTION CALL!
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 
 
