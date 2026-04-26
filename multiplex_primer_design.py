@@ -40,19 +40,21 @@ Input preparation:
 import os
 import sys
 import importlib
+import shutil
+import subprocess
 
 # load multiplex wormhole functions
 sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 from scripts.primer3_batch_design import main as primer3BatchDesign
-from scripts.filter_primers import main as filterPrimers
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
+from scripts.multiple_run_optimization import main as multipleOptimizations
+from scripts.CSVtoFasta import main as CSVtoFASTA
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 ## SET PATHS TO DEPENDENCIES:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
-PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
 
 
 
@@ -77,59 +79,52 @@ DELTAG = False #set to True if you want to use deltaG optimization algorithm
 
 
 ## Step 0: Set up output directory structure & copy inputs to it
-if not os.path.exists(OUTDIR):
-    os.mkdir(OUTDIR)
+# set up folder structure
+os.makedirs(OUTDIR, exist_ok=True)
 INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
-if not os.path.exists(INPUTDIR):
-    os.mkdir(INPUTDIR)
-os.system("cp "+TEMPLATES+" "+INPUTDIR)
+os.makedirs(INPUTDIR, exist_ok=True)
+OUTDIR1 = os.path.join(OUTDIR, "1_PrimerDesign")
+os.makedirs(OUTDIR1, exist_ok=True)
+OUTDIR2 = os.path.join(OUTDIR, "2_PredictedDimers")
+os.makedirs(OUTDIR2, exist_ok=True)
+OUTDIR3 = os.path.join(OUTDIR, "3_OptimizedMultiplexes")
+os.makedirs(OUTDIR3, exist_ok=True)
+# copy inputs here
+shutil.copy2(TEMPLATES, INPUTDIR)
 if KEEPLIST_FA is not None:
-    os.system("cp "+KEEPLIST_FA+" "+INPUTDIR)
-OUTDIR2 = os.path.join(OUTDIR, "2_FilteredPrimers")
-if not os.path.exists(OUTDIR2):
-    os.mkdir(OUTDIR2)
-OUTDIR3 = os.path.join(OUTDIR, "3_PredictedDimers")
-if not os.path.exists(OUTDIR3):
-    os.mkdir(OUTDIR3)
-OUTDIR4 = os.path.join(OUTDIR, "4_OptimizedSets")
-if not os.path.exists(OUTDIR4):
-    os.mkdir(OUTDIR4)
-    
+    shutil.copy2(KEEPLIST_FA, INPUTDIR)
 
     
 ## Step 1: batch design of primers
-primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
-# Outputs are found in the 1_InitialPrimers folder. there is a *.out and *.err file per locus
+# NOTE: This script includes all of the primer design settings!
+# These can be adjusted directly in the primer3_batch_design.py script
+# or by providing a dictionary to SETTINGS.
+# details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags 
+primer3BatchDesign(TEMPLATES, 
+                   os.path.join(OUTDIR1, "FilteredPrimers"), 
+                   Tm_LIMIT = 45,
+                   dG_HAIRPINS = -2,
+                   dG_END_LIMIT = -4, # lower 
+                   dG_MID_LIMIT = -8, # lower limit for deltaG of all other dimers
+                   KEEPLIST = KEEPLIST_FA, #FASTA for keeplist
+                   ENABLE_BROAD = False, #use broader settings if no primers for template?
+                   SETTINGS = None) #primer3 settings in dictionary {} format 
+# Outputs are 1_PrimedDesign folder and include a FASTA & CSV with primer details.
 
 
-
-## Step 2: filter out primers with dimers
-## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
-filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
-              OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
-              Tm_LIMIT = 45, 
-              dG_HAIRPINS = -2.0, 
-              dG_END_LIMIT = -4.0,
-              dG_MID_LIMIT = -8.0,
-              KEEPLIST=KEEPLIST_FA)
-# Outputs are found under 2_FilteredPrimers/FilteredPrimers*
-
-
-
-## Step 3: Predict primer dimers using MFEprimer
+## Step 2: Predict primer dimers using MFEprimer
 # Set input based on whether keeplist is provided or not
 if KEEPLIST_FA is None:
-    INPUT = os.path.join(OUTDIR2, "FilteredPrimers.fa")
+    INPUT = os.path.join(OUTDIR1, "FilteredPrimers.fa")
 else:
-    INPUT = os.path.join(OUTDIR2, "FilteredPrimers_plusKeeplist.fa")
+    INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
 
 # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
 # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
 # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
 # set output paths
-ALL_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers.txt')
-END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
+ALL_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers.txt')
+END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
 # MFEprimer parameters:
 # -i = input FASTA of primer sequences 
 # -o = output file
@@ -141,46 +136,46 @@ END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
-          "--mono 50 --dntp 0.25 --oligo 50")
-os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 "+
-          "--mono 50 --dntp 0.25 --oligo 50 -p")
+subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
+          "--mono 50 --dntp 0.25 --oligo 50", shell=True)
+subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 "+
+          "--mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
 
 
 
-## Step 4: Convert MFEprimer dimer report to table formats
+## Step 3: Convert MFEprimer dimer report to table formats
 ## NOTE: This is the most computationally intensive step. 
 ## It will run substantially faster if you leave the 4th argument blank 
 ## (which means pairwise interactions between individual primers won't be calculated)
 tabulateDimers(ALL_DIMERS, 
                END_DIMERS, 
-               os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
+               os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
                "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
                DELTAG)
 # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
 
 
-## Step 5A: Explore temperature space for simulated annealing
+## Step 4: Explore temperature space for simulated annealing
 ## There are two ways to run this script: one calculates temperatures and dimer loads based on the problem at hand, 
 ## the other uses pre-specified temperatures and dimer loads.
 ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
 ## parameters around the defaults.
-plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingDefaults'),
-                  PRIMER_FASTA=os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                  DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
+                  PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                  DIMER_SUMS=os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                   N_LOCI=N_LOCI, #number of target loci in panel
                   KEEPLIST=KEEPLIST_FA, 
                   SEED=None, #this would be an output from optimizeMultiplex
                   BURNIN=100,#number iterations with dimer loads used to sample cost space
                   deltaG=DELTAG)
 # decay rate closer to 1: 
-plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRate95'),
+plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
                   # dimer counts to plot and calculate temps from (if not set)
                   MIN_DIMER=1,
                   MAX_DIMER=5, #update this value based on the max observed in the default plot!
                   # parameter determining temperature decay in negative exponential
-                  DECAY_RATE=0.95, #default is 0.98
+                  DECAY_RATE=0.98, #default is 0.95
                   # initial temperature to start from - higher=more risk accepted
                   T_INIT=2, 
                   # final temperature to stop at - 1=no risk, higher=more risk accepted
@@ -192,13 +187,13 @@ plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'TestingSAparams_75loci_decayRat
                   PROB_ADJ=1)#DEFAULT=2
 
 
-## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
+## Step 5: Design a set of multiplex primers by minimizing predicted dimer formation
 # N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
 # To run once:
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                  DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR4,"Run01_50Microhaps"), 
+optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                  DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                  OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
                   N_LOCI = N_LOCI, 
                   KEEPLIST = None, #KEEPLIST_FA,
                   deltaG = DELTAG, #True for deltaG optimization, False for standard optimization
@@ -229,12 +224,11 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR2, 'FilteredPrimers.fa'),
 ## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
 ## random process and each run may be slightly different.
 ## Here's a helper function:
-from scripts.multiple_run_optimization import multipleOptimizations
 multipleOptimizations(N_RUNS = 10, 
-                      PRIMER_FA = os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
-                      DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                      DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR4,"Microhaps_50loci"), 
+                      PRIMER_FA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                      DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                      OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
                       N_LOCI = 100, 
                       deltaG = DELTAG,#False for standard optimization, True for deltaG optimization
                       KEEPLIST = KEEPLIST_FA, 
@@ -260,12 +254,12 @@ multipleOptimizations(N_RUNS = 10,
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
                       SEED=None)#primer set from previous optimization run to start with, in CSV format
-#OUTPUT: MAF30_150loci_RunSummary.csv
+#OUTPUT: {OUTNAME}_RunSummary.csv
 
 
-## STEP 7: Convert selected primer set to FASTA format for additional screening
-from scripts.extras.CSVtoFasta import main as CSVtoFASTA
-CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.csv"), 
-           OUT_FA = os.path.join(OUTDIR4,"Microhaps_50loci_Run1_SAprimers.fasta"),
-           ID_FIELD = "PrimerID", 
+## STEP 6: Convert selected primer set to FASTA format for additional screening
+# CHANGE THESE TO THE "BEST" Run based on RunSummary.csv output!
+CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_SAprimers.csv"), 
+           OUT_FA = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_SAprimers.fasta"),
+           ID_FIELD = "PrimerID",  
            SEQ_FIELD = "Sequence")

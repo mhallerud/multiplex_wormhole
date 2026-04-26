@@ -68,6 +68,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     dG_MID_LIMIT = dG_MID_LIMIT*1000
     
     # set up primer3 settings
+    # details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags
     PRIMER3_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgtcagatgtgtataagagacag",
     'SEQUENCE_OVERHANG_RIGHT': "gtctcgtgggctcggagatgtgtataagagacag",
     'PRIMER_ANNEALING_TEMP': 52.0,

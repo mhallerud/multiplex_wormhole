@@ -11,7 +11,7 @@ import os
 import sys
 import glob
 import shutil
-import time
+#import time
 import argparse
 
 sys.path.append(os.path.dirname(__file__))
@@ -88,7 +88,7 @@ def moveAllFiles(filegrep, dest):
     if os.path.exists(dest):
         shutil.rmtree(dest)
     if not os.path.exists(dest):
-        os.mkdir(dest)
+        os.makedirs(dest, exist_ok=True)
     filelist = glob.glob(filegrep)
     for f in filelist:
         # try/except prevents errors and overwriting if same destname already exists

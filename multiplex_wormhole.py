@@ -52,7 +52,6 @@ import pandas as pd
 # load multiplex wormhole functions
 sys.path.append(os.path.dirname(__file__))
 from scripts.primer3_batch_design import main as primer3BatchDesign
-from scripts.filter_primers import main as filterPrimers
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.multiple_run_optimization import main as multipleOptimizations
 from scripts.CSVtoFasta import main as CSVtoFASTA
@@ -106,23 +105,20 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     
     ## Step 0: Set up output directory structure & copy inputs to it
     print("-----SETTING UP OUTPUT DIRECTORY STRUCTURE------")
-    if not os.path.exists(OUTDIR):
-        os.mkdir(OUTDIR)
+    # set up folder structure
+    os.makedirs(OUTDIR, exist_ok=True)
     INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
-    if not os.path.exists(INPUTDIR):
-        os.mkdir(INPUTDIR)
+    os.makedirs(INPUTDIR, exist_ok=True)
+    OUTDIR1 = os.path.join(OUTDIR, "1_PrimerDesign")
+    os.makedirs(OUTDIR1, exist_ok=True)
+    OUTDIR2 = os.path.join(OUTDIR, "2_PredictedDimers")
+    os.makedirs(OUTDIR2, exist_ok=True)
+    OUTDIR3 = os.path.join(OUTDIR, "3_OptimizedMultiplexes")
+    os.makedirs(OUTDIR3, exist_ok=True)
+    # copy inputs here
     shutil.copy2(TEMPLATES, INPUTDIR)
     if KEEPLIST_FA is not None:
         shutil.copy2(KEEPLIST_FA, INPUTDIR)
-    OUTDIR1 = os.path.join(OUTDIR, "1_PrimerDesign")
-    if not os.path.exists(OUTDIR1):
-        os.mkdir(OUTDIR1)
-    OUTDIR2 = os.path.join(OUTDIR, "2_PredictedDimers")
-    if not os.path.exists(OUTDIR2):
-        os.mkdir(OUTDIR2)
-    OUTDIR3 = os.path.join(OUTDIR, "3_OptimizedMultiplexes")
-    if not os.path.exists(OUTDIR3):
-        os.mkdir(OUTDIR3)
     
     # set suffix to current datetime if not given
     if PREFIX is None:
@@ -131,6 +127,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## Step 1: batch design of primers (with intra-pair hairpin and dimer filtering)
     print("")
     print("-----BATCH DESIGNING PRIMERS------")
+    # NOTE: This script includes all of the primer design settings!
+    # These can be adjusted directly in the primer3_batch_design.py script
+    # or by providing a dictionary to SETTINGS.
+    # details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags 
     primer3BatchDesign(TEMPLATES, 
                        os.path.join(OUTDIR1, "FilteredPrimers"),
                        Tm_LIMIT=45, #upper limit for dimer melting temp
@@ -144,23 +144,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     
     
     
-    ## Step 2: filter out primers with dimers
-    ## IMPORTANT NOTE: If you have previous loci that you want included in this panel, now is the time to add them.
-    ## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FWD" and ".REV", and may not contain any other periods.
-    print("")
-    print("-----REMOVING PRIMERS WITH INTRA-PAIR DIMERS-----")
-    filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
-                  OUTPATH = os.path.join(OUTDIR1,'FilteredPrimers'),
-                  Tm_LIMIT=45, 
-                  dG_HAIRPINS=-2000, 
-                  dG_END_LIMIT=-4000,
-                  dG_MID_LIMIT=-8000, 
-                  KEEPLIST=KEEPLIST_FA)
-    # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
-    
-    
-    
-    ## Step 3: Predict primer dimers using MFEprimer
+    ## Step 2: Predict primer dimers using MFEprimer
     # set input based on whether KEEPLIST is provided or not:
     if KEEPLIST_FA is None:
         INPUT = os.path.join(OUTDIR1, "FilteredPrimers.fa")
@@ -192,7 +176,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     
     
     
-    ## Step 4: Convert MFEprimer dimer report to table formats
+    ## Step 3: Convert MFEprimer dimer report to table formats
     ## NOTE: This is the most computationally intensive step. 
     ## It will run substantially faster if you leave the 4th argument blank 
     ## (which means pairwise interactions between individual primers won't be calculated)
@@ -207,7 +191,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     
     
     
-    ## Step 5 (Optional): Explore temperature space for simulated annealing
+    ## Step 4 (Optional): Explore temperature space for simulated annealing
     ## There are two ways to run this script: one calculates temperatures and dimer loads based on the problem at hand, 
     ## the other uses pre-specified temperatures and dimer loads.
     ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
@@ -244,7 +228,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     #             PROB_ADJ=1)#default=2
     
     
-    ## Step 6: Design a set of multiplex primers by minimizing predicted dimer formation
+    ## Step 5: Design a set of multiplex primers by minimizing predicted dimer formation
     # N_LOCI here is the number of loci you want in the final panel (including keeplist loci) 
     # N_RUNS is number of runs of optimization process (1 for simple problems, increase for complex problems)
     print("")
