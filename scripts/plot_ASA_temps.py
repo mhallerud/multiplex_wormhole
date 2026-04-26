@@ -13,13 +13,14 @@ Created on Sun Mar 17 13:21:40 2024
 # load dependencies
 import os
 import sys
-import csv
+#import csv
 import math
 import importlib
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import random as rand
+import argparse
 
 
 # load functions from optimize_primers module
@@ -98,7 +99,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     n_keeplist = len(set(keeplist_pairs))
                 else:
                     keeplist_pairs = []
-                    keeplist_loci = []
+                    #keeplist_loci = []
                     keeplist_seqs = []
                     keeplist_IDs = []
                     n_keeplist = 0
@@ -298,8 +299,8 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
     dimersub = {k: v for k, v in curr_dimer_totals.items() if k not in keeplist}
     worst = sorted(dimersub.items(), key=lambda x: x[1])
     # raise message if all primer pairs outside of the keeplist already have 0 dimers
-    worst_dimers = [x[1] for x in worst]
-    worst_sum = sum(worst_dimers)
+    #worst_dimers = [x[1] for x in worst]
+    #worst_sum = sum(worst_dimers)
     #if worst_sum==0:
     #    costs.append([n_iter, Temp, curr_total])
     #    ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, pairIDs, primer_IDs, 
@@ -391,6 +392,49 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
 
 
 
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-o", "--outpath", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-f", "--primer_fasta", type=str, default=None)
+    parser.add_argument("-s", "--dimer_sums", type=str, default=None)
+    parser.add_argument("-d", "--dimer_table", type=str, default=None)
+    parser.add_argument("-n", "--nloci", type=int, default=None)
+    parser.add_argument("-k", "--keeplist", type=str, default=None)
+    parser.add_argument("-z", "--seed", type=str, default=None)
+    parser.add_argument("-i", "--min_dimers", type=int, default=None)
+    parser.add_argument("-j", "--max_dimers", type=int, default=None)
+    parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
+    parser.add_argument("-t", "--temp_init", type=float, default=None)
+    parser.add_argument("-l", "--temp_final", type=float, default=0.1)
+    parser.add_argument("-b", "--burnin", type=int, default=100)
+    parser.add_argument("-a", "--dimer_adj", type=float, default=0.1)
+    parser.add_argument("-p", "--prob_adj", type=float, default=2)
+    # add flags
+    parser.add_argument("-g", "--deltaG", action="store_true")
+    return parser.parse_args()
+
+
+
 if __name__=="__main__":
-    main(sys.arv[1], sys.arv[2], sys.arv[3], sys.argv[4], sys.argv[5], sys.arv[6], sys.argv[7],
-         sys.arv[8], sys.arv[9], sys.arv[10], sys.argv[11], sys.argv[12], sys.argv[13], sys.argv[14], sys.argv[15])
+    # parse command line arguments
+    args = parse_args()
+    # run main
+    main(OUTPATH = args.outpath, 
+         PRIMER_FASTA = args.primer_fasta, 
+         DIMER_SUMS = args.dimer_sums, 
+         DIMER_TABLE = args.dimer_table, 
+         N_LOCI = args.nloci, 
+         KEEPLIST = args.keeplist,
+         deltaG = args.deltaG,
+         SEED = args.seed, 
+         MIN_DIMER = args.min_dimers, 
+         MAX_DIMER = args.max_dimers, 
+         DECAY_RATE = args.decay_rate, 
+         T_INIT = args.temp_init, 
+         T_FINAL = args.temp_final, 
+         BURNIN = args.burnin, 
+         DIMER_ADJ = args.dimer_adj,
+         PROB_ADJ = args.prob_adj)

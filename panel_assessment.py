@@ -25,13 +25,15 @@ import os
 import sys
 import pandas
 import numpy
+import argparse
 
 
 ## SET PATHS TO DEPENDENCIES:
 MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 
 # load multiplex wormhole scripts
-sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
+#sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
+sys.path.append(os.path.dirname(__file__))
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.CSVtoFasta import main as csv2fasta
 
@@ -47,6 +49,7 @@ def main(PRIMERS, ALL_DIMERS_dG=-5, END_DIMERS_dG=-3, BAD_DIMERS_dG=-8):
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
+    
     # convert CSV primers to FASTA, if needed
     if(PRIMERS.endswith(".csv")):
         # check for requisite fields first...
@@ -60,7 +63,7 @@ def main(PRIMERS, ALL_DIMERS_dG=-5, END_DIMERS_dG=-3, BAD_DIMERS_dG=-8):
         INPUT = FASTA
     else:
         INPUT = PRIMERS
-
+    
     # predict dimers with MFEprimer dimer function
     print("Predicting dimers....")
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")
@@ -132,5 +135,23 @@ class InputError(Exception):
 
 
 
-if __name__=="__main__":
-    main(sys.argv[0])
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-i", "--input", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-a", "--alldimers_dg", type=float, default=-5)
+    parser.add_argument("-e", "--enddimers_dg", type=float, default=-3)
+    parser.add_argument("-b", "--baddimers_dg", type=float, default=-8)
+
+
+
+if __name__ == "__main__":
+    # parse command-line arguments
+    args = parse_args()
+    # run panel assessment
+    main(args.input,
+         args.alldimers_dg,
+         args.enddimers_dg,
+         args.baddimers_dg)

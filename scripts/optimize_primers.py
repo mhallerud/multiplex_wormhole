@@ -51,6 +51,7 @@ import numpy as np
 import random as rand
 import math
 import matplotlib.pyplot as plt
+import argparse
 
 # import plot simulated annealing temps module
 sys.path.append(os.path.dirname(__file__))
@@ -1041,22 +1042,56 @@ class OptimizationWarning(Exception):
     pass
 
 
-# run main function when called from the command line
-if __name__ == "__main__":
-    main(sys.argv[1], #PRIMER_FASTA
-         sys.argv[2], #DIMER_SUMS
-         sys.argv[3], #DIMER_TABLE
-         sys.argv[4], #OUTPATH
-         int(sys.argv[5]), #N_LOCI
-         sys.argv[6], #KEEPLIST
-         sys.argv[7], #SEED
-         sys.arv[8], #VERBOSE
-         sys.argv[9], #SIMPLE
-         sys.argv[10], #ITERATIONS
-         sys.argv[11], #BURNIN
-         sys.argv[12], #DECAY_RATE
-         sys.argv[13], #T_INIT
-         sys.argv[14], #T_FINAL
-         sys.argv[15], #PARTITIONS
-         sys.argv[16], #DIMER_ADJ
-         sys.argv[17]) #PROB_ADJ
+
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-f", "--primer_fasta", type=str, required=True)
+    parser.add_argument("-d", "--dimer_sums", type=str, required=True)
+    parser.add_argument("-t", "--dimer_table", type=str, required=True)
+    parser.add_argument("-o", "--outpath", type=str, required=True)
+    parser.add_argument("-n", "--nloci", type=int, required=True)
+    # add optional arguments
+    parser.add_argument("-k", "--keeplist", type=str, default=None)
+    parser.add_argument("-z", "--seed", type=str, default=None)
+    parser.add_argument("-s", "--simple", type=int, default=5000)
+    parser.add_argument("-i", "--iter", type=int, default=10000)
+    parser.add_argument("-b", "--burnin", type=int, default=100)
+    parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
+    parser.add_argument("-x", "--temp_init", type=float, default=None)
+    parser.add_argument("-l", "--temp_final", type=float, default=0.1)
+    parser.add_argument("-n", "--partitions", type=int, default=1000)
+    parser.add_argument("-y", "--dimer_adj", type=float, default=0.1)
+    parser.add_argument("-a", "--prob_adj", type=float, default=2)
+    # add flags
+    parser.add_argument("-g", "--deltaG", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-m", "--makeplot", action="store_true")
+    return parser.parse_args()
+
+
+
+if __name__=="__main__":
+    # parse command line arguments
+    args = parse_args()
+    # run main
+    main(PRIMER_FASTA = args.primer_fasta, 
+         DIMER_SUMS = args.dimer_sums, 
+         DIMER_TABLE = args.dimer_table, 
+         OUTPATH = args.outpath, 
+         N_LOCI = args.nloci, 
+         KEEPLIST = args.keeplist, 
+         deltaG = args.deltaG, 
+         SEED = args.seed, 
+         VERBOSE = args.verbose,
+         SIMPLE = args.simple, 
+         ITERATIONS = args.iter, 
+         BURNIN = args.burnin, 
+         DECAY_RATE = args.decay_rate, 
+         T_INIT = args.temp_init, 
+         T_FINAL = args.temp_final, 
+         PARTITIONS = args.partitions, 
+         DIMER_ADJ = args.dimer_adj, 
+         PROB_ADJ = args.prob_adj, 
+         MAKEPLOT = args.makeplot)

@@ -207,7 +207,7 @@ def main(PRIMER_DIR, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2000, dG_END_LIMIT=-5000
     if KEEPLIST is not None:
         if os.path.exists(KEEPLIST):
             try: 
-                AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST_FA)
+                AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST)
             except Exception:
                 print("KEEPLIST could not be added to filtered primers FASTA")                
         else:

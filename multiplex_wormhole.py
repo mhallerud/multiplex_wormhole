@@ -33,11 +33,19 @@ Input preparation:
 """
 
 
+## PATHS TO DEPENDENCIES - SET THESE BASED ON WHERE YOU DOWNLOADED THESE!!!
+## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
+MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
+
+
 # load dependencies and modules
 import os
+import shutil
 import sys
+import subprocess
 import datetime
-import getopt
+import argparse
+#import getopt
 import importlib
 import pandas as pd
 
@@ -46,7 +54,7 @@ sys.path.append(os.path.dirname(__file__))
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.filter_primers import main as filterPrimers
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.multiple_run_optimization import multipleOptimizations
+from scripts.multiple_run_optimization import main as multipleOptimizations
 from scripts.CSVtoFasta import main as CSVtoFASTA
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
@@ -85,9 +93,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     5. Predicted dimer loads for primers included in optimized multiplex
     6. Plots of simulated annealing temperature schedule and trace of dimer load
     """
-    ## SET PATHS TO DEPENDENCIES
-    MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
-    PRIMER3_PATH='/Users/maggiehallerud/primer3/src/primer3_core' #full path to primer3 location
+    
+    # check for MFEprimer path
+    if not os.path.exists(MFEprimer_PATH):
+        raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
     
     # set input types
     N_LOCI = int(N_LOCI)
@@ -102,28 +111,36 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
     if not os.path.exists(INPUTDIR):
         os.mkdir(INPUTDIR)
-    os.system("cp "+TEMPLATES+" "+INPUTDIR)
+    shutil.copy2(TEMPLATES, INPUTDIR)
     if KEEPLIST_FA is not None:
-        os.system("cp "+KEEPLIST_FA+" "+INPUTDIR)
-    OUTDIR2 = os.path.join(OUTDIR, "2_FilteredPrimers")
+        shutil.copy2(KEEPLIST_FA, INPUTDIR)
+    OUTDIR1 = os.path.join(OUTDIR, "1_PrimerDesign")
+    if not os.path.exists(OUTDIR1):
+        os.mkdir(OUTDIR1)
+    OUTDIR2 = os.path.join(OUTDIR, "2_PredictedDimers")
     if not os.path.exists(OUTDIR2):
         os.mkdir(OUTDIR2)
-    OUTDIR3 = os.path.join(OUTDIR, "3_PredictedDimers")
+    OUTDIR3 = os.path.join(OUTDIR, "3_OptimizedMultiplexes")
     if not os.path.exists(OUTDIR3):
         os.mkdir(OUTDIR3)
-    OUTDIR4 = os.path.join(OUTDIR, "4_OptimizedSets")
-    if not os.path.exists(OUTDIR4):
-        os.mkdir(OUTDIR4)
     
     # set suffix to current datetime if not given
     if PREFIX is None:
         PREFIX = str(datetime.datetime.now()).replace(" ","_").replace(".","_")
         
-    ## Step 1: batch design of primers
+    ## Step 1: batch design of primers (with intra-pair hairpin and dimer filtering)
     print("")
     print("-----BATCH DESIGNING PRIMERS------")
-    primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
-    # Outputs are found in the 1_InitialPrimers folder. there is a *.out and *.err file per locus
+    primer3BatchDesign(TEMPLATES, 
+                       os.path.join(OUTDIR1, "FilteredPrimers"),
+                       Tm_LIMIT=45, #upper limit for dimer melting temp
+                       dG_HAIRPINS=-2,  #lower limit for hairpin deltaG
+                       dG_END_LIMIT=-4, #lower limit for 3' end dimer deltaG
+                       dG_MID_LIMIT=-8, #lower limit for deltaG of all other dimers
+                       KEEPLIST=None, #keeplist FASTA
+                       ENABLE_BROAD=False, #try broader settings if primer design fails?
+                       SETTINGS=None) #primer3 settings (in dictionary format)
+    # Outputs are found in the 1_PrimerDesign folder. 
     
     
     
@@ -133,10 +150,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     print("")
     print("-----REMOVING PRIMERS WITH INTRA-PAIR DIMERS-----")
     filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
-                  OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
+                  OUTPATH = os.path.join(OUTDIR1,'FilteredPrimers'),
                   Tm_LIMIT=45, 
                   dG_HAIRPINS=-2000, 
-                  dG_END_LIMIT=-5000,
+                  dG_END_LIMIT=-4000,
                   dG_MID_LIMIT=-8000, 
                   KEEPLIST=KEEPLIST_FA)
     # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
@@ -146,17 +163,17 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## Step 3: Predict primer dimers using MFEprimer
     # set input based on whether KEEPLIST is provided or not:
     if KEEPLIST_FA is None:
-        INPUT = os.path.join(OUTDIR2, "FilteredPrimers.fa")
+        INPUT = os.path.join(OUTDIR1, "FilteredPrimers.fa")
     else:
-        INPUT = os.path.join(OUTDIR2, "FilteredPrimers_plusKeeplist.fa")
+        INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
     print("")
     print("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
    # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
     # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
     # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
     # set output paths
-    ALL_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers.txt')
-    END_DIMERS=os.path.join(OUTDIR3, 'MFEprimerDimers_ends.txt')
+    ALL_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers.txt')
+    END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
     # MFEprimer parameters:
     # -i = input FASTA of primer sequences 
     # -o = output file
@@ -167,9 +184,11 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     # --diva = concentration of divalent cations (mM)
     # --mono = concentration of monovalent cations (mM)
     # --dntp = concentration of dNTPs (mM)
-    # --oligo = concentration of annealing oligos (nM) 
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+    # --oligo = concentration of annealing oligos (nM)
+    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50",
+                     shell=True)
+    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p",
+                    shell=True) 
     
     
     
@@ -181,7 +200,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     print("-----TABULATING PREDICTED DIMERS-----")
     tabulateDimers(ALL_DIMERS, 
                    END_DIMERS, 
-                   os.path.join(OUTDIR3, 'PrimerPairInteractions'), 
+                   os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
                    "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
                    deltaG)
     # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
@@ -194,11 +213,11 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
     ## parameters around the defaults.
     print("")
-    print("-----PLOTTING ADDAPTIVE SIMULATED ANNEALING TEMPERATURE SCHEDULE------")
-    plotASAtemps.main(OUTPATH=os.path.join(OUTDIR4, 'ASAplots'),
-                      PRIMER_FASTA=os.path.join(OUTDIR2, 'FilteredPrimers.fa'), 
-                      DIMER_SUMS=os.path.join(OUTDIR3, 'PrimerPairInteractions_sum.csv'), 
-                      DIMER_TABLE=os.path.join(OUTDIR3, 'PrimerPairInteractions_wide.csv'), 
+    print("-----PLOTTING ADAPTIVE SIMULATED ANNEALING TEMPERATURE SCHEDULE------")
+    plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'ASAplots'),
+                      PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                      DIMER_SUMS=os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                       N_LOCI=N_LOCI, #number of target loci in panel
                       KEEPLIST=KEEPLIST_FA, 
                       SEED=None, #this would be an output from optimizeMultiplex
@@ -231,10 +250,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     print("")
     print("-----STARTING OPTIMIZATION FOR MULTIPLEX PRIMER SET-----")
     multipleOptimizations(N_RUNS = N_RUNS, 
-                          PRIMER_FA = os.path.join(OUTDIR2, "FilteredPrimers.fa"),
-                          DIMER_SUMS = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_sum.csv'), 
-                          DIMER_TABLE = os.path.join(OUTDIR3, 'PrimerPairInteractions_binary_wide.csv'), 
-                          OUTPATH = os.path.join(OUTDIR4, PREFIX),
+                          PRIMER_FA = os.path.join(OUTDIR1, "FilteredPrimers.fa"),
+                          DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_binary_sum.csv'), 
+                          DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_binary_wide.csv'), 
+                          OUTPATH = os.path.join(OUTDIR3, PREFIX),
                           N_LOCI = N_LOCI, 
                           deltaG = deltaG, #True: deltaG optimization, False=standard optimization
                           KEEPLIST = KEEPLIST_FA, 
@@ -266,7 +285,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## STEP 7: Convert selected primer set to FASTA format for additional screening
     print("")
     print("-----CONVERTING BEST PRIMER SETS INTO FASTAs FOR ADDITIONAL SCREENING-----")
-    runs = pd.read_csv(os.path.join(OUTDIR4,PREFIX+"_RunSummary.csv"))
+    runs = pd.read_csv(os.path.join(OUTDIR3, PREFIX+"_RunSummary.csv"))
     run = runs['Run']
     run = [str(run[x]).zfill(2) for x in range(len(run))]
     dimers = runs['TotalDimers']
@@ -275,8 +294,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
         print("Run "+str(run[i])+" had "+str(dimers[i])+" dimers.")
         if dimers[i]==min(dimers):
             print(".....Converting to FASTA for additional screening")
-            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR4,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
-                       OUT_FA = os.path.join(OUTDIR4,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
+            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
+                       OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
 
 
 
@@ -288,52 +307,51 @@ def usage():
 
 
 
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-t", "--templates", type=str, required=True)
+    parser.add_argument("-n", "--nloci", type=int, required=True)
+    parser.add_argument("-o", "--outdir", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-p", "--prefix", type=str, default="None")
+    parser.add_argument("-k", "--keeplist", type=str, default=None)
+    parser.add_argument("-r", "--runs", type=int, default=10)
+    parser.add_argument("-i", "--iter", type=int, default=10000)
+    parser.add_argument("-s", "--simple", type=int, default=5000)
+    parser.add_argument("-d", "--deltaG", action="store_true")#type=str, default=False)
+    parser.add_argument("-v", "--verbose", action="store_true")#type=str, default=False)
 
-if __name__=="__main__":
-    # grab command-line arguments
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 
-                                   "t:n:o:pkrisdvh", 
-                                   ["templates=", "nloci=","outdir=",
-                                    "prefix","keeplist","runs","iter",
-                                    "simple","deltaG","verbose","help"]) 
-    except getopt.GetoptError as err: 
-        print(err) 
-        sys.exit(1)
-    # set defaults
-    PREFIX="None"
-    KEEPLIST_FA=None
-    N_RUNS=10
-    ITERATIONS=10000
-    SIMPLE=5000
-    deltaG=False
-    VERBOSE=False
-    # parse input arguments
-    for opt, arg in opts: 
-        if opt in ("-t", "--templates"): 
-            TEMPLATES=str(arg)
-        elif opt in ("-n", "--nloci"): 
-            N_LOCI=int(arg)
-        elif opt in ("-o","--outdir"):
-            OUTDIR=str(arg)
-        elif opt in ("-p","--prefix"):
-            PREFIX=str(arg)
-        elif opt in ("-k","--keeplist"):
-            KEEPLIST_FA=str(arg)
-        elif opt in ("-r","--runs"):
-            N_RUNS=int(arg)
-        elif opt in ("-i","--iter"):
-            ITERATIONS=int(arg)
-        elif opt in ("-s","--simple"):
-            SIMPLE=int(arg)
-        elif opt in ("-d","--deltaG"):
-            deltaG=str(arg)
-        elif opt in ("-v","--verbose"):
-            VERBOSE=str(arg)
-        elif opt in ("-h","--help"):
-            usage()
-        else:
-            assert False, "unhandled option"
-    # run main
-    main(TEMPLATES, N_LOCI, OUTDIR, PREFIX, KEEPLIST_FA, N_RUNS, ITERATIONS,
-         SIMPLE, deltaG, VERBOSE)
+    return parser.parse_args()
+
+
+
+if __name__ == "__main__":
+    # parse command-line arguments
+    args = parse_args()
+    # print to standard out
+    print("TEMPLATES: "+args.templates)
+    print("NLOCI: "+str(args.nloci))
+    print("OUTDIR:"+args.outdir)
+    print("PREFIX: "+str(args.prefix))
+    if args.keeplist is not None:
+        print("KEEPLIST: "+args.keeplist)
+    else:
+        print("KEEPLIST: None")
+    print("RUNS: "+str(args.runs))
+    print("ITERATIONS: "+str(args.iter))
+    print("SIMPLE: "+str(args.simple))
+    print("VERBOSE: "+str(args.verbose))
+    print("DeltaG: "+str(args.deltaG))
+    # run multiplex wormhole module
+    main(TEMPLATES = args.templates,
+         N_LOCI = args.nloci,
+         OUTDIR = args.outdir,
+         PREFIX = args.prefix,
+         KEEPLIST_FA = args.keeplist,
+         N_RUNS = args.runs,
+         ITERATIONS = args.iter,
+         SIMPLE = args.simple,
+         deltaG = args.deltaG,
+         VERBOSE = args.verbose)

@@ -32,6 +32,7 @@ import sys
 import gc
 import pandas as pd #version 1.4.4
 import itertools #paralellized filtering, etc.
+import argparse
 #from operator import truth # converts anything>=1 to True and =0 to False
 #import multiprocessing
 
@@ -210,6 +211,7 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True, deltaG=False):
                                         dropna=False, values=dimers_flipped['DeltaG'], aggfunc="min")
     else:
         # cross-tabulate pair1 vs pair2 counts
+        # pivot_table
         pair_interactions = pd.crosstab(index=dimers_flipped[f1], columns=dimers_flipped[f2],
                                         dropna=False, values=dimers_flipped['Count'], aggfunc="sum")
 
@@ -264,11 +266,27 @@ def ReadDimerTXT(infile):
 
 
 
-if __name__ == "__main__":
-   main(sys.argv[1],
-        sys.argv[2],
-        sys.argv[3],
-        str(sys.argv[4]))
-    # set up pool specs for multiprocessing
-   # with multiprocessing.Pool(4) as pool:
-   #     print(Pooling.tabulateDimers)
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-a", "--all_dimers", type=str, required=True)
+    parser.add_argument("-e", "--end_dimers", type=str, required=True)
+    parser.add_argument("-o", "--outpath", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-p", "--outpath_primers", type=str, default="False")
+    parser.add_argument("-d", "--deltaG", action="store_true")
+    
+    return parser.parse_args()
+
+
+
+if __name__=="__main__":
+    # parse command line arguments
+    args = parse_args()
+    # run main
+    main(ALL_DIMERS=args.all_dimers, 
+         END_DIMERS=args.end_dimers, 
+         OUTPATH=args.outpath, 
+         OUTPRIMERPATH=args.outpath_primers, 
+         deltaG=args.deltaG)

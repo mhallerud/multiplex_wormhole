@@ -108,10 +108,10 @@ primer3BatchDesign(TEMPLATES, OUTDIR, PRIMER3_PATH)
 ## BEFORE RUNNING THIS STEP: Check that keeplist IDs must have suffixes of ".FW" and ".REV", and may not contain any other periods.
 filterPrimers(PRIMER_DIR = os.path.join(OUTDIR, '1_InitialPrimers'), 
               OUTPATH = os.path.join(OUTDIR2,'FilteredPrimers'),
-              Tm_LIMIT=45, 
-              dG_HAIRPINS=-2000, 
-              dG_END_LIMIT=-4000,
-              dG_MID_LIMIT=-8000,
+              Tm_LIMIT = 45, 
+              dG_HAIRPINS = -2.0, 
+              dG_END_LIMIT = -4.0,
+              dG_MID_LIMIT = -8.0,
               KEEPLIST=KEEPLIST_FA)
 # Outputs are found under 2_FilteredPrimers/FilteredPrimers*
 
