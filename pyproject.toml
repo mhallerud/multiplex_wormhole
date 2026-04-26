@@ -7,13 +7,19 @@ authors = [
 description = "In silico optimization for multiplex PCR primer design for targeted sequencing applications"
 readme = "README.md"
 requires-python = ">=3.9"
+dependencies = [ "MFEprimer-3.2" ]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Operating System :: MacOS, Unix, Linux",
-    "Natural Language :: English"
+    "Development Status :: 4 - Beta",
+    "Natural Language :: English",
+
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 license = "GNU GENERAL PUBLIC LICENSE version 3"
 license-files = ["LICENSE"]
+keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
 
 [project.urls]
 Homepage = "https://github.com/mhallerud/multiplex_wormhole"
