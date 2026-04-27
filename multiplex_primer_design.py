@@ -37,14 +37,17 @@ Input preparation:
 
 
 # load dependencies
-import os
 import sys
 import importlib
+import glob
+import os
 import shutil
 import subprocess
 
 # load multiplex wormhole functions
-sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
+#change to YOUR multiplex_wormhole path
+MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole"
+sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.optimize_primers import main as optimizeMultiplex
@@ -55,7 +58,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 ## SET PATHS TO DEPENDENCIES:
 ## SPACES IN FILEPATHS WILL BREAK THE FUNCTION CALL!
-MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
+MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
 
 
 

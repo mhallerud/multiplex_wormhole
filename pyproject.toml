@@ -2,22 +2,28 @@
 name = "multiplex_wormhole"
 version = "1.0.0"
 authors = [
-	{ name="Maggie Hallerud, email="hallerum@oregonstate.edu" },
+	{ name="Maggie Hallerud", email="hallerum@oregonstate.edu" }
 ]
 description = "In silico optimization for multiplex PCR primer design for targeted sequencing applications"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [ "MFEprimer-3.2" ]
+dependencies = [ "matplotlib==3.5.2",
+	"numpy==1.24.4",
+	"pandas==1.4.4",
+	"primer3_py==2.0.0"
+]
 classifiers = [
     "Programming Language :: Python :: 3.9",
-    "Operating System :: MacOS, Unix, Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Unix",
+    "Operating System :: Linux",
     "Development Status :: 4 - Beta",
     "Natural Language :: English",
 
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
-license = "GNU GENERAL PUBLIC LICENSE version 3"
+license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
 
