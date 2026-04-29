@@ -6,17 +6,17 @@ authors = [
 ]
 description = "In silico optimization for multiplex PCR primer design for targeted sequencing applications"
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [ "matplotlib==3.5.2",
-	"numpy==1.24.4",
-	"pandas==1.4.4",
-	"primer3_py==2.0.0"
+requires-python = ">=3.8,<3.12"
+dependencies = [ "matplotlib==3.5",
+	"numpy==1.24,<2.0",
+	"pandas==1.4,<2.0",
+	"primer3-py==2.0.0"
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3",
     "Operating System :: MacOS",
     "Operating System :: Unix",
-    "Operating System :: Linux",
+    "Operating System :: POSIX :: Linux",
     "Development Status :: 4 - Beta",
     "Natural Language :: English",
 
@@ -30,5 +30,5 @@ keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
 [project.urls]
 Homepage = "https://github.com/mhallerud/multiplex_wormhole"
 Issues = "https://github.com/mhallerud/multiplex_wormhole/issues"
-Documentation = "TBD"
+Documentation = "https://mhallerud.github.io/multiplex_wormhole/"
 
