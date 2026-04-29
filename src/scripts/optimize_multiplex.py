@@ -48,25 +48,26 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         -increase iterations for complex problems
         -set to 0 to skip simulated annealing step
     BURNIN : # iterations to sample dimer cost space [integer; default=100]
-    DECAY_RATE : parameter for temperature decay rate in negative exponential [proportion; default=0.98]
+    DECAY_RATE : parameter for temperature decay rate in negative exponential [Default=0.95]
         -closer to 1: least conservative, explores more of cost space but adds more dimers
         -closer to 0: most conservative, does not add dimers but also can't overcome local optima
         -recommended to set lower with more iterations, higher with more:
             # 1000 iterations - 0.98
             # 10000 iterations - 0.90
             # 5000 iterations - 0.95
-    T_INIT : Starting temperature for simulated annealing (default: None, i.e. set adaptively)
+    T_INIT : Starting temperature for simulated annealing [Default: None, i.e. set adaptively]
         -values closer to T_FINAL will reduce dimer acceptance probabilities
-    T_FINAL : Ending temperature for simulated annealing (default: 0.1)
+    T_FINAL : Ending temperature for simulated annealing [Default: 0.1]
         -0 is equivalent to simple iterative improvement, higher values allow more costs
-    PARTITIONS : # partitions for temperature space [default=1000]
+    PARTITIONS : # partitions for temperature space [Default=1000]
         -fewer partitions means algorithm stays in each temperature space longer
         -overriden if iterations < partitions
-    DIMER_ADJ : proportion of dimer load to consider when setting SA temperatures [proportion; default=0.1]
+    DIMER_ADJ : proportion of dimer load to consider when setting SA temperatures [Default=0.1]
         -values closer to 1 will allow many dimers to be accepted
         -values closer to 0 will reject dimers but fail to overcome local optima
-    PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 1)
+    PROB_ADJ : Parameter used to adjust dimer acceptance probabilities [Default: 2]
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
+    VERBOSE : Print progress? [Default: False]
     RNG : Seed for random numbers.
     -------
     Iteratively optimizes a multiplex primer set of given size to minimize

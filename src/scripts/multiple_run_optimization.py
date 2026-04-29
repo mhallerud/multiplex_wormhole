@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Title: MULTIPLE OPTIMIZATION RUN
+Purpose: Runs optimize_multiplex multiple times, organizes outputs and produces a summary.
+    
 Created on Fri Mar 15 14:31:28 2024
-
 @author: maggiehallerud
 """
 
@@ -11,7 +13,6 @@ import os
 import sys
 import glob
 import shutil
-#import time
 import argparse
 
 sys.path.append(os.path.dirname(__file__))
@@ -24,55 +25,45 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
-    N_RUNS : TYPE
-        DESCRIPTION.
-    PRIMER_FA : TYPE
-        DESCRIPTION.
-    DIMER_SUMS : TYPE
-        DESCRIPTION.
-    DIMER_TABLE : TYPE
-        DESCRIPTION.
-    OUTPATH : TYPE
-        DESCRIPTION.
-    N_LOCI : TYPE
-        DESCRIPTION.
-    deltaG : TYPE, optional
-        DESCRIPTION. The default is False.
-    KEEPLIST : TYPE, optional
-        DESCRIPTION. The default is None.
+    N_RUNS : # optimization runs [int]
+    PRIMER_FA : Contains primer IDs and sequences [FASTA]
+    DIMER_SUMS : Sum of interactions per primer pair (binary interactions recommended) [CSV]
+    DIMER_TABLE : Pairwise interaction table of primer pairs (binary interactions recommended) [CSV]
+    OUTPATH : Output path and prefix [filepath]
+    N_LOCI : Number of primer pairs in desired multipled [integer]
+    KEEPLIST : Contains primers that MUST be included in the final solution [FASTA; default=None]
+    deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [Default: False]
     TIMEOUT : TYPE, optional
         DESCRIPTION. The default is 5.
-    VERBOSE : TYPE, optional
-        DESCRIPTION. The default is False.
-    SEED : TYPE, optional
-        DESCRIPTION. The default is None.
-    SIMPLE : TYPE, optional
-        DESCRIPTION. The default is 5000.
-    ITERATIONS : TYPE, optional
-        DESCRIPTION. The default is 10000.
-    BURNIN : TYPE, optional
-        DESCRIPTION. The default is 100.
-    DECAY_RATE : TYPE, optional
-        DESCRIPTION. The default is 0.98.
-    T_INIT : TYPE, optional
-        DESCRIPTION. The default is None.
-    T_FINAL : TYPE, optional
-        DESCRIPTION. The default is None.
-    PARTITIONS : TYPE, optional
-        DESCRIPTION. The default is 1000.
-    DIMER_ADJ : TYPE, optional
-        DESCRIPTION. The default is 0.1.
-    PROB_ADJ : TYPE, optional
-        DESCRIPTION. The default is 2.
-
-    Raises
-    ------
-    TimeoutException
-        DESCRIPTION.
-
-    Returns
+    VERBOSE : Print progress? [Default: False]
+    SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
+    -------SIMULATED ANNEALING PARAMETERS-----
+    SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
+    ITERATIONS : # iterations in simulated annealing optimization step [default=10000]
+        -increase iterations for complex problems
+        -set to 0 to skip simulated annealing step
+    BURNIN : # iterations to sample dimer cost space [integer; default=100]
+    DECAY_RATE : parameter for temperature decay rate in negative exponential [proportion; default=0.98]
+        -closer to 1: least conservative, explores more of cost space but adds more dimers
+        -closer to 0: most conservative, does not add dimers but also can't overcome local optima
+        -recommended to set lower with more iterations, higher with more:
+            # 1000 iterations - 0.98
+            # 10000 iterations - 0.90
+            # 5000 iterations - 0.95
+    T_INIT : Starting temperature for simulated annealing (default: None, i.e. set adaptively)
+        -values closer to T_FINAL will reduce dimer acceptance probabilities
+    T_FINAL : Ending temperature for simulated annealing (default: 0.1)
+        -0 is equivalent to simple iterative improvement, higher values allow more costs
+    PARTITIONS : # partitions for temperature space [default=1000]
+        -fewer partitions means algorithm stays in each temperature space longer
+        -overriden if iterations < partitions
+    DIMER_ADJ : proportion of dimer load to consider when setting SA temperatures [proportion; default=0.1]
+        -values closer to 1 will allow many dimers to be accepted
+        -values closer to 0 will reject dimers but fail to overcome local optima
+    PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 1)
+        -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
     -------
-    None.
+    Outputs N_RUNS optimized multiplexes and a summary.
 
     """
     # set up empty array to hold overall dimer load 
