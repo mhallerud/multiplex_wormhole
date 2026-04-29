@@ -12,7 +12,7 @@ has_children: true
 1. [Installation](#installation)
 2. [Quick Start](#quick-start)
 3. [Input File Format](#input-file-format)
-4. [Multiplex Wormhole Functions[(#multiplex-wormhole-functions)
+4. [Multiplex Wormhole Functions](#multiplex-wormhole-functions)
 5. [Recommended Workflows](#recommended-workflows)
 6. [Handling Outputs](#handling-outputs)
 7. [Optimization Details](#optimization-details)
