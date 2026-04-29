@@ -220,7 +220,7 @@ We recommend the protocol in Eriksson et al. (2020) for lab testing:
 
 
 ## Optimization Details
-The multiplex wormhole `optimize_multiplex.py` function uses a combination of simple iterative improvement and simulated annealing algorithms to minimize dimer load in the multiplex primer set, where dimer load can be measured by a) tallying pairwise dimers or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates will be needed to design larger panels while keeping dimer load low. See [Optimization Algorithm](https://mhallerud.github.io/multiplexwormhole/optimization-process) for details. 
+The multiplex wormhole `optimize_multiplex.py` function uses a combination of simple iterative improvement and simulated annealing algorithms to minimize dimer load in the multiplex primer set, where dimer load can be measured by a) tallying pairwise dimers or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates will be needed to design larger panels while keeping dimer load low. See [Optimization Algorithm](7_OptimizationProcess.md) for details. 
 
 
 ## Problems? Ideas?
