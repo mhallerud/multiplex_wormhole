@@ -33,8 +33,8 @@ import subprocess
 # load multiplex wormhole scripts
 #sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 sys.path.append(os.path.dirname(__file__))
-from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.CSVtoFasta import main as csv2fasta
+from tabulate_dimers import main as tabulateDimers
+from CSVtoFasta import main as csv2fasta
 
 ## SET PATHS TO DEPENDENCIES:
 MFEprimer_PATH=glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
