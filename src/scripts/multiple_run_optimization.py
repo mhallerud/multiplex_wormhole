@@ -24,8 +24,6 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
-    Parameters
-    ----------
     N_RUNS : TYPE
         DESCRIPTION.
     PRIMER_FA : TYPE
@@ -106,7 +104,8 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                          PARTITIONS=PARTITIONS,
                                          DIMER_ADJ=DIMER_ADJ,
                                          PROB_ADJ=PROB_ADJ,
-                                         MAKEPLOT=False)
+                                         MAKEPLOT=False,
+                                         RNG=12345+run)
                 loads.append([str(run), str(cost)])
                 run+=1
                 print(" ")
@@ -133,7 +132,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     #moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     moveAllFiles(OUTDIR+"/*_primers.csv", os.path.join(OUTDIR, "Final_Primers"))
     moveAllFiles(OUTDIR+"/*_dimers.csv", os.path.join(OUTDIR, "Final_Dimers"))
-    moveAllFiles(OUTDIR+"/*_ASA_costs.csv", os.path.join(OUTDIR, "Trace_Dimer_Load"))
+    moveAllFiles(OUTDIR+"/*_costsTrace.csv", os.path.join(OUTDIR, "Trace_Dimer_Load"))
     moveAllFiles(OUTDIR+"/*_DimerLoad.png", os.path.join(OUTDIR, "Plots_Dimer_Load"))
 
 

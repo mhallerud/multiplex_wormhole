@@ -164,6 +164,12 @@ tabulateDimers(ALL_DIMERS,
                "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
                DELTAG)
 # Outputs are found under 2_PredictedDimers/PrimerPairInteractions*
+# names will depend on deltaG....
+if DELTAG:
+    DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_mean.csv')
+else:
+    DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv')
+
 
 
 ## Step 4: Explore temperature space for simulated annealing
@@ -173,7 +179,7 @@ tabulateDimers(ALL_DIMERS,
 ## parameters around the defaults.
 plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
                   PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS=os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_SUMS=DIMER_TOTS,
                   DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                   N_LOCI=N_LOCI, #number of target loci in panel
                   KEEPLIST=KEEPLIST_FA, 
@@ -202,7 +208,7 @@ plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
 # N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
 # To run once:
 optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                  DIMER_SUMS = DIMER_TOTS,
                   DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                   OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
                   N_LOCI = N_LOCI, 

@@ -42,7 +42,7 @@ MFEprimer_PATH=glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
 
 
 
-def main(PRIMERS, ALL_DIMERS_dG=-5, END_DIMERS_dG=-3, BAD_DIMERS_dG=-8):
+def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
     ALL_DIMERS_dG : DeltaG threshold used for dimer prediction (all dimers)
@@ -145,6 +145,7 @@ def parse_args():
     parser.add_argument("-a", "--alldimers_dg", type=float, default=-5)
     parser.add_argument("-e", "--enddimers_dg", type=float, default=-3)
     parser.add_argument("-b", "--baddimers_dg", type=float, default=-8)
+    return parser.parse_args()
 
 
 

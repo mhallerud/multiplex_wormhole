@@ -40,7 +40,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     OUTPATH : Output path and prefix [filepath]
     N_LOCI : Number of primer pairs in desired multipled [integer]
     KEEPLIST : Contains primers that MUST be included in the final solution [FASTA; default=None]
-    deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [False = defalt]
+    deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [Default: False]
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
     SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
@@ -305,14 +305,14 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     print("....Sampling stopped after 2000 swaps with -"+str(len(change))+"- costs>0")
                     if len(change)==0:
                         print(".....Defaults used since cost changes never increase")
-                        T_INIT = 2
-                        T_FINAL = 0.1
+                        T_init = T_INIT = 2
                     break
-
-            print("     Max change observed: "+str(round(max(change),2)))    
+            
             # set temperatures based on burnin results
             if T_INIT is None:
+                print("     Max change observed: "+str(round(max(change),2)))    
                 T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
+
         # use input temps, if provided
         else:
             if T_INIT is not None: 
@@ -321,6 +321,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             else:
                 print("Using default T_INIT=2.0")
                 T_init = 2.0
+
         if T_FINAL is not None:
             print("Using provided T_FINAL")                
             T_final = T_FINAL
@@ -1008,7 +1009,7 @@ def ExportCSVs(OUTPATH, curr_dimer_totals, primer_pairs, current_pairIDs, primer
 
     
     # export cost changes
-    with open(OUTPATH+'_ASA_costs.csv', 'w') as file:
+    with open(OUTPATH+'_costsTrace.csv', 'w') as file:
         for line in costs:
             file.write(str(line[0])+","+str(line[1])+","+str(line[2])+"\n")
 

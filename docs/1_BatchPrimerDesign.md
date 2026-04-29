@@ -59,9 +59,10 @@ The sequence target is in <POSITION,LENGTH> format. In the example, the target f
 
 
 ## Outputs
-* FilteredPrimers.csv
-* FilteredPrimers.fa
-* FilteredPrimers_plusKeeplist.fa
+* `OUTPATH`.csv
+* `OUTPATH`.fa
+* `OUTPATH`_plusKeeplist.fa
+
 
 ## Default Settings
 Default settings are largely based on Eriksson et al. (2020)

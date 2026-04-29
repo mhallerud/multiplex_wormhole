@@ -73,6 +73,16 @@ gtctcgtgggctcggagatgtgtataagagacagttctctggccttcctccag
                                                gaggtcaacaaccactaccggacagagaatatgtgtagaggctcgggtgctctg
 
 
+## Alternative dimer calculation tools
+The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. 
+
+One alternative to MFEprimer dimer is Primer Suite's Primer Dimer tool, though we have found dimers to be overestimated using this tool. To use this tool to calculate dimers:
+1. Copy the *_specificityCheck_passed.csv file into [primer-dimer.com](https://primer-dimer.com), select 'Multiplex Analysis' and 'Dimer Structure Report', and click Submit. Depending on how many loci you provided, this step may take awhile (~20 minutes for primers for 50 loci, multiple hours for 1200 loci).
+
+2. Run [translate_primerSuite_report.R](../scripts/extra/translate_primerSuite_report.R) on the PrimerDimerReport.txt file downloaded from primer-dimer.com to convert this to a CSV. The delta G threshold specified will filter out any primer dimers with delta G above this value.
+
+Another alternative is [ThermoFisher's Multiplex Primer Design](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html), however multiplex_wormhole currently has no support for translating these outputs into tables.
+
 
 ## Citations
 Wang, K. et al., MFEprimer-3.0: quality control for PCR primers. Nucleic acids research 47, W610–W613 (2019).

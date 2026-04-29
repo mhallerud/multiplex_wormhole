@@ -41,17 +41,21 @@ python3 tabulate_MFEprimer_dimers.py -a ALL_DIMERS.txt -e END_DIMERS.txt -o OUTP
 **deltaG (-d)** : Tabulate dimer load using deltaG (True) or standard tally (False) method. (Default: False)
 
 ## Outputs
-1. A N_PRIMER_PAIRS x N_PRIMER_PAIRS table which includes the dimer load estimated for all pairwise combinations of primer pairs.
-2. A N_PRIMERS_PAIRS X N_PRIMER_PAIRS table which specifies pairwise primer pair interactions in binary (0 = no secondary structures between primer 1 and primer 2, 1 = at least 1 secondary structure between primer 1 and primer 2).
-3. A N_PRIMERS x 2 table which includes the total number of primer dimers contributed by each primer pair.
-4. A N_PRIMERS X 2 table which inclues the total number of primer pairs with which each primer pair interacts.
+For deltaG=True:
+* **`OUTPATH`_wide.csv** : N_PRIMER_PAIRS x N_PRIMER_PAIRS table with minimum deltaG per pairwise combination of primer pairs (i.e., the worst pairwise interaction).
+* **`OUTPATH`_mean.csv** : N_PRIMER_PAIRS x 2 table with the mean deltaG per primer pair across all other primer pairs.
 
-Optionally, tables can also be output for per-primer interactions between individual primers (not just pairs) if the `OUT_PRIMERPATH` argument is provided.
+For deltaG=False:
+* **`OUTPATH`_wide.csv** : N_PRIMER_PAIRS x N_PRIMER_PAIRS table with the count of dimers per pairwise combination of primer pairs.
+* **`OUTPATH`_sum.csv** : N_PRIMER_PAIRS x 2 table with the sum of dimers for each predicted primer pair.
+* **`OUTPATH`_binary_wide.csv** & **`OUTPATH`_binary_sum.csv** : Equivalent to the above, but with binary outputs for dimers rather than counts.
 
-### Recommended usage in next steps
-If you want to prioritize minimizing the number of pairwise interactions in a multiplex, use the binary outputs in the optimziation step. 
+Equivalent outputs are provided for individual primers if the `OUTPRIMERPATH` field is provided.
 
-If you want to prioritize minimizing the total dimer load in a multiplex, use the count outputs in the optimization step.
+### But which do I use?
+* If you want to prioritize minimizing the number of pairwise interactions in a multiplex, use the binary outputs in the optimization step. 
+* If you want to prioritize minimizing the total dimer load in a multiplex, use the count outputs in the optimization step.
+* If you want to prioritize minimizing the worst dimers in a multiplex (e.g., for complex problems where dimers are inevitable), use the deltaG outputs in the optimization step.
 
 
 [Previous](2_DimerPrediction.md)		[Next](4A_ExploreOptimParameters.md)

@@ -185,7 +185,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
                    "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
                    deltaG)
     # Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
-    
+    if deltaG:
+        DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_mean.csv')
+    else:
+        DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv')
     
     
     ## Step 4 (Optional): Explore temperature space for simulated annealing
@@ -197,7 +200,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     print("-----PLOTTING ADAPTIVE SIMULATED ANNEALING TEMPERATURE SCHEDULE------")
     plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'ASAplots'),
                       PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                      DIMER_SUMS=os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                      DIMER_SUMS=DIMER_TOTS,
                       DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                       N_LOCI=N_LOCI, #number of target loci in panel
                       KEEPLIST=KEEPLIST_FA, 
