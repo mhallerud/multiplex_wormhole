@@ -1,4 +1,4 @@
-name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
+name: Publish Python 🐍 distribution 📦 to TestPyPI
 
 on: push
 
@@ -30,35 +30,8 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
-        
-
-  # define workflow job environment for PyPi
-  publish-to-pypi:
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
-    needs:
-    - build
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/multiplex_wormhole  # Replace <package-name> with your PyPI project name
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-    # steps for actively publishing to pypi
-    steps:
-    - name: Download all the dists
-    # downloads stored distribution
-      uses: actions/download-artifact@v6
-      with:
-        name: python-package-distributions
-        path: dist/
-    # uploads to PyPi unconditionally
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-
-
-# separate workflow for publishing to testpypi
+  
+  # workflow for publishing to testpypi
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
     needs:
