@@ -1,7 +1,7 @@
 # multiplex_wormhole
 *In silico* optimization for multiplex PCR assays that minimized predicted primer dimer loads. The pipeline was developed for genotyping by amplicon sequencing (i.e., reduced SNP panel) applications, however, the process is transferable to any multiplex PCR targeted sequencing approach. The impetus for multiplex_wormhole was genotyping noninvasive wildlife genetic samples. Default primer design settings are therefore conservative and tailored towards amplifying low concentration and degraded DNA such as that found in fecal and hair samples. 
 
-Documentation webpage: [https://github.io/mhallerud/multiplex_wormhole]( https://github.io/mhallerud/multiplex_wormhole)
+Documentation webpage: [https://mhallerud.github.io/multiplex_wormhole](https://mhallerud.github.io/multiplex_wormhole/)
 
 ## Installation
 
