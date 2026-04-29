@@ -110,7 +110,7 @@ The primary input to multiplex wormhole is a CSV format containing information o
 Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should be non-overlapping and unique). The file should have 3 columns named:
 * SEQUENCE_ID : template names, without punctuation. All punctuation will be automatically removed. Names should also be unique. 
 * SEQUENCE_TEMPLATE : DNA template sequence in the 5'-->3' direction.
-* SEQUENCE_TARGET : identifies the base pairs targeted for PCR ampflication following primer3 format: <startBP,length>. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in this field. If there are 2 SNPs, for example at the 50th and 90th base pairs in the sequence, 50,40 would be the target. See the [example input CSV](../examples/Input_Templates.csv). 
+* SEQUENCE_TARGET : identifies the base pairs targeted for PCR ampflication following primer3 format: <startBP,length>. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in this field. If there are 2 SNPs, for example at the 50th and 90th base pairs in the sequence, 50,40 would be the target. See the [example input CSV](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/Input_Templates.csv). 
 
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
@@ -119,7 +119,7 @@ Each DNA sequence in the FASTA file will be treated as a unique target for PCR a
 | ...           | ...                  | ...                |
 
 
-The [create_in_templates](scripts/create_in_templates.R) R script can be used to create this file using VCF and FASTA as inputs. The R script handles two input types:
+The [create_in_templates](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/create_in_templates.R) R script can be used to create this file using VCF and FASTA as inputs. The R script handles two input types:
 
 * *de novo*: Matches formatting output of *de novo* Stacks pipeline with FASTA created by `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a set prefix such as "CLocus_".
 
@@ -159,7 +159,7 @@ For example, I use the following steps to prepare input data for applications fo
 
 
 ## Multiplex Wormhole Functions
-For maximum flexibility, the full multiplex wormhole workflow is available at: [multiplex_primer_design.py](../multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
+For maximum flexibility, the full multiplex wormhole workflow is available at: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
 1. [Batch Primer Design](1_BatchPrimerDesign.md) with `primer3_batch_design.py`
    
