@@ -1,6 +1,6 @@
 [project]
 name = "multiplex_wormhole"
-version = "1.0.3"
+version = "1.0.4"
 authors = [
 	{ name="Maggie Hallerud", email="hallerum@oregonstate.edu" }
 ]
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.8,<3.12"
 dependencies = [ "matplotlib==3.5.2",
 	"numpy==1.24.4,<2.0",
-	"pandas==1.4,<2.0",
+	"pandas==1.4.4,<2.0",
 	"primer3-py==2.0.0"
 ]
 classifiers = [
