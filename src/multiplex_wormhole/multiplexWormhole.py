@@ -44,10 +44,10 @@ import argparse
 
 # load multiplex wormhole functions
 sys.path.append(os.path.dirname(__file__))
-from scripts.primer3_batch_design import main as primer3BatchDesign
-from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.multiple_run_optimization import main as multipleOptimizations
-from scripts.CSVtoFasta import main as CSVtoFASTA
+from primer3_batch_design import main as primer3BatchDesign
+from tabulate_MFEprimer_dimers import main as tabulateDimers
+from multiple_run_optimization import main as multipleOptimizations
+from CSVtoFasta import main as CSVtoFASTA
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 ## FINE PATH TO BINARY DEPENDENCIES

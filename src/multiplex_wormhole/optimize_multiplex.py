@@ -290,7 +290,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                           primer_pairs, primer_loci, 
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
-                                                          random=True, keeplist=keeplist_pairs)
+                                                          random=True, keeplist=keeplist_pairs, RNG=12345+i)
                 # compare newSet to original set
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
                     compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
@@ -380,7 +380,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                           primer_pairs, primer_loci,
                                                           OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
-                                                          random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
+                                                          random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
                 # if e^(-change/temp) < random number (0,1), accept the change
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
                     compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
@@ -471,7 +471,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blockedlist,
                                 primer_pairs, primer_loci, 
                                 OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                [], random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
+                                [], random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
             i+=1
             if newSet is None:
                 comparison = False
@@ -517,7 +517,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                             primer_pairs, primer_loci, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total)
+                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
                         if newSet is None:
                             #print("ca")
                             if VERBOSE:
