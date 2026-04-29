@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Title: Plot Simulated Annealing Temperatures
+Title: PLOT SIMULATED ANNEALING PARAMETERS
 Purpose: Assessing effects of simulated annealing parameter choices on acceptance
 probability of dimer loads.
+Dependencies: matplotlib (developed w/ v3.5.2)
+              pandas (developed w/ v1.4.4)
 
 Created on Sun Mar 17 13:21:40 2024
 @author: maggiehallerud
@@ -25,48 +27,32 @@ import argparse
 
 # load functions from optimize_primers module
 sys.path.append(os.path.dirname(__file__))
-op = importlib.import_module("optimize_primers")
+op = importlib.import_module("optimize_multiplex")
+
+
 
 
 def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, deltaG=False, SEED=None, 
          MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
     """
-    PRIMER_FASTA : Fasta path
-        Contains primer IDs and sequences
-    DIMER_SUMS : CSV path
-        Sum of interactions per primer pair (binary interactions recommended)
-    DIMER_TABLE : CSV path
-        Pairwise interaction table of primer pairs (binary interactions recommended)
-    OUTPATH : Path
-        Output path and prefix
-    N_LOCI : integer
-        Number of loci in final set
-    KEEPLIST : Fasta path
-        Contains primers that must be included in panel (Default: None)
-    deltaG : True / False
-    SEED : CSV path
-        Initial primer set to start with from previous multiplex_wormhole run
-    MIN_DIMER : Numeric
-        Minimum # dimers to calculate acceptance probabilities for
-    MAX_DIMER : Numeric
-        Maximum # dimers to calculate acceptance probabilities for
-    DECAY_RATE : numeric (0-1)
-        Multiplier for negative exponential decay of temperatures (higher values = slower decay)
-    T_INIT : Numeric >= 0
-        Starting temperature for fixed schedule simulated annealing
-    T_FINAL : Numeric < T_INIT
-        Ending temperature for filxed schedule simulated annealing
-    BURNIN : Numeric
-        Iterations used to sample cost space before calculating temperatures
-    DIMER_ADJ : Numeric (0-1)
-        Proportion of max dimer load to consider when setting T_INIT (high values = more 'bad' changes accepted)
-    PROB_ADJ : Numeric (1-Inf)
-        Parameters used to adjust dimer acceptance probabilities in exponential model (higher = lower 'bad' changes accepted)
+    PRIMER_FASTA : Primer sequences and IDs. [FASTA]
+    DIMER_SUMS : Total dimer load per primer pair. [CSV]
+    DIMER_TABLE : Pairwise interaction table of primer pairs. [CSV]
+    OUTPATH : Prefix for output files. [Filepath]
+    N_LOCI : Number of primer pairs in final multiplex. [int]
+    KEEPLIST : FASTA of primers required to be included in final multiplex [Default: None]
+    deltaG : Optimize for total dimer tally (False) or maximum average deltaG among dimers (True)? [Default: False]
+    SEED : Initial primer set to use as starting point, e.g., from previous run. [CSV] Default: None
+    MIN_DIMER : Minimum # dimers for plotting acceptance probabilities. [int] Default: None
+    MAX_DIMER : Maximum # dimers for plotting acceptance probabilities. [int] Default: None
+    DECAY_RATE : Base for exponential decay of temperatures -- closer to 1 is slower decay rate. [num: 0-1; Default: 0.95]
+    T_INIT : Starting simulated annealing temperature. [num>=0; Default: None]
+    T_FINAL : Ending simulated annealing temperature. [num<T_INIT; Default: 0.1]
+    BURNIN : Iterations used to sample cost space before calculating temperatures. [Default: 100]
+    DIMER_ADJ : Proportion of max dimer load to consider when setting T_INIT (high values = more 'bad' changes accepted). [Default: 0.1]
+    PROB_ADJ : Adjustment for dimer acceptance probabilities in exponential function (higher = fewer 'bad' changes accepted). [Default: 2]
     -------
-    Iteratively optimizes a multiplex primer set of given size to minimize
-            predicted dimer content. NOTE: This script relies on having a large ratio of 
-            loci to choose from relative to the number of loci needed.
-    Outputs : CSVs of selected primer pairs + dimer loads
+    Plots temperature schedule and dimer acceptance probabilities based on given simulated annealing parameters.
     """
     ## OPTION a: SIMULATED ANNEALING WITH FIXED SCHEDULE
     if T_INIT is not None and T_FINAL is not None:

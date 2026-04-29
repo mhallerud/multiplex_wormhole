@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr 24 21:01:43 2026
+Title: PRIMER3 BATCH DESIGN
+Purpose: Designs primers using primer3 for targets within provided template sequences
+Dependencies: primer3-py python module
 
+Created on Fri Apr 24 21:01:43 2026
 @author: maggiehallerud
 """
 
@@ -11,7 +14,7 @@ import os
 import csv
 import sys
 import string
-import primer3
+import primer3 #primer design with primer3-py
 import pandas as pd
 import argparse
 
@@ -25,17 +28,19 @@ from add_keeplist_to_fasta import main as AddKeeplist2FASTA
 def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4, 
          dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None):
     """
-    TEMPLATES : CSV
-    OUTPATH : Filename for output CSV
-    Tm_LIMIT : Melting temperature threshold limit for dimers.
-    dG_HAIRPINS : Delta G threshold for hairpin structures. (Default: -2000)
-    dG_END_LIMIT : Delta G threshold for 3' end dimers. (Default: -4000)
-    dG_MID_LIMIT : Delta G threshold for other dimers. (Default: -8000)
-    KEEPLIST : Fasta file of primer pairs that must be included in final panel.
-    ENABLE_BROAD : Use broader settings if no primers designed? (Default: False)
-    SETTINGS : Primer3 Settings in dictionary format i.e. {'SETTINGNAME': 123, 'SETTINGNAME': "string",...}
+    TEMPLATES : DNA templates with 'SEQUENCE_ID', 'SEQUENCE_TEMPLATE', and 'SEQUENCE_TARGET' 
+        (in "start_bp,length" format) fields. [CSV]
+    OUTPATH : Filename prefix for outputs [Path]
+    Tm_LIMIT : Melting temperature (*C) threshold for dimers. [Default: 45]
+    dG_HAIRPINS : Gibbs free energy threshold for hairpin structures. [Default: -2]
+    dG_END_LIMIT : Gibbs free energy for 3' end dimers. [Default: -4]
+    dG_MID_LIMIT : Gibbs free energy for non-end dimers. [Default: -8]
+    KEEPLIST : FASTA of primers that must be included in final panel. [Default: None]
+    ENABLE_BROAD : Use broader settings if no primers designed? [Default: False]
+    SETTINGS : Primer3 Settings in dictionary format [Default: None]
+        e.g. {'SETTINGNAME': 123, 'SETTINGNAME': "string",...}
     ------
-    Output: CSV of filtered primer sequences and details
+    Outputs CSV and FASTA of filtered primer sequences
     """
     
     # read in templates as pandas dictionary
@@ -566,7 +571,7 @@ def parse_args():
     parser.add_argument("-o", "--out", type=str, required=True)
     # add optional arguments
     parser.add_argument("-l", "--tm_limit", type=float, default=45.0)
-    parser.add_argument("-h", "--hairpins_dg", type=float, default=-2)
+    parser.add_argument("-d", "--hairpins_dg", type=float, default=-2)
     parser.add_argument("-m", "--middimers_dg", type=float, default=-8)
     parser.add_argument("-e", "--enddimers_dg", type=float, default=-4)
     parser.add_argument("-k", "--keeplist", type=str, default=None)

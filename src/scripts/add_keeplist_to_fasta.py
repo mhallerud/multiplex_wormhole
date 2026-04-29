@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Title: Add Keeplist Primers to Fasta
-Input: Keeplist primers fasta and main primers fasta
-Purpose: Combines FASTA files so that there is one record per unique primer, based on primer IDs.
-Created on Thu Mar 14 15:00:12 2024
+Title: ADD KEEPLIST TO FASTA
+Purpose: Combines FASTA files for one record per unique primer, based on primer IDs.
 
+Created on Thu Mar 14 15:00:12 2024
 @author: maggiehallerud
 """
 
 # load dependencies
-import sys
+import argparse
 
 
 
@@ -18,15 +17,11 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     """
     Parameters
     ----------
-    MAIN_FA : Fasta
-        Specificity check passed output from step 3
-    KEEPLIST_FA : Fasta
-        Previously designed primers to add to newly designed primers
-
-    Returns
+    MAIN_FA : Template primer sequences [FASTA]
+    KEEPLIST_FA : Keeplist primer sequences [FASTA]
+    OUTPATH : Filepath to save merged FASTA [default: MAIN_FA+"_plusKeeplist.fa"]
     -------
-    Outputs combined FASTA
-
+    Outputs combined FASTA, attempts to handle redundant IDs / sequences
     """
     # set output filepath if not provided
     if OUTPATH==None:
@@ -49,7 +44,12 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     if len(dup_ids)>0:
         main_seqs = [main_seqs[x] for x in range(len(main_seqs)) if main_ids[x] not in dup_ids]
         main_ids = [main_ids[x] for x in range(len(main_ids)) if main_ids[x] not in dup_ids]
-        
+    
+    # if MAIN_FA contains sequences matching those in KEEPLIST_FA, remove from MAIN_FA to avoid duplicates
+    dup_seqs = [keeplist_seqs[x] for x in range(len(keeplist_seqs)) if keeplist_seqs[x] in main_seqs]
+    if len(dup_seqs)>0:
+        main_seqs = [main_seqs[x] for x in range(len(main_seqs)) if keeplist_seqs[x] in dup_seqs]
+        main_ids = [main_ids[x] for x in range(len(main_ids)) if keeplist_seqs[x] in dup_seqs]
     
     # combine fastas and write to file
     combo_seqs = main_seqs + keeplist_seqs
@@ -59,6 +59,7 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
             file.write(combo_ids[row])
             file.write(combo_seqs[row])
     print("     Output saved to: "+OUTPATH)
+
 
 
 def readFasta(FA):
@@ -78,5 +79,20 @@ def readFasta(FA):
 
 
 
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-i", "--input", type=str, required=True)
+    parser.add_argument("-k", "--keeplist", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-o", "--outpath", type=str, default=None)
+    return parser.parse_args()
+
+
+
 if __name__=="__main__":
-    main(sys.argv[1], sys.argv[2])
+    args = parse_args()
+    main(MAIN_FA=args.input, 
+         KEEPLIST_FA=args.keeplist, 
+         OUTPATH=args.outpath)

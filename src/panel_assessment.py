@@ -23,13 +23,12 @@ Input preparation:
 # load packages
 import os
 import sys
+import glob
 import pandas
 import numpy
 import argparse
+import subprocess
 
-
-## SET PATHS TO DEPENDENCIES:
-MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 
 # load multiplex wormhole scripts
 #sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
@@ -37,6 +36,9 @@ sys.path.append(os.path.dirname(__file__))
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
 from scripts.CSVtoFasta import main as csv2fasta
 
+## SET PATHS TO DEPENDENCIES:
+MFEprimer_PATH=glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
+#MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 
 
 
@@ -49,7 +51,6 @@ def main(PRIMERS, ALL_DIMERS_dG=-5, END_DIMERS_dG=-3, BAD_DIMERS_dG=-8):
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
-    
     # convert CSV primers to FASTA, if needed
     if(PRIMERS.endswith(".csv")):
         # check for requisite fields first...
@@ -69,10 +70,10 @@ def main(PRIMERS, ALL_DIMERS_dG=-5, END_DIMERS_dG=-3, BAD_DIMERS_dG=-8):
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+ALL_DIMERS_dG+\
-              " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50")
-    os.system(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+END_DIMERS_dG+\
-              " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p")
+    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_dG)+\
+                    " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
+    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
+                    " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
     
     # tabulate dimers into pairwise dimer table
     print("Tabulating dimers (standard)...")

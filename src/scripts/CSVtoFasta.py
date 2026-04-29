@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Title: Convert CSV to FASTA
+Title: CONVERT CSV TO FASTA
+Purpose: Converts input sequences from CSV to FASTA format
+
 Created on Thu Dec 21 20:06:00 2023
 @author: maggiehallerud
 """
@@ -9,6 +11,7 @@ Created on Thu Dec 21 20:06:00 2023
 # load modules
 import sys
 import csv
+import argparse
 
 
 
@@ -59,9 +62,25 @@ class InputError(Exception):
 
 
 
+def parse_args():
+    # initialize argparser
+    parser = argparse.ArgumentParser()
+    # add required arguments
+    parser.add_argument("-i", "--incsv", type=str, required=True)
+    parser.add_argument("-o", "--outfa", type=str, required=True)
+    # add optional arguments
+    parser.add_argument("-p", "--primeridfield", type=str, default="PrimerID")
+    parser.add_argument("-s", "--seqfield", type=str, default="Sequnce")
+    parser.add_argument("-e", "--csv_encoding", type=str, default=sys.getfilesystemencoding())
+    return parser.parse_args()
+
+
+         
 # set up to run via command line
 if __name__=="__main__":
-    main(sys.argv[1],
-         sys.argv[2],
-         sys.argv[3],
-         sys.argv[4])
+    args = parse_args()
+    main(IN_CSV=args.incsv,
+         OUT_FA=args.outfa, 
+         ID_FIELD=args.primeridfield,
+         SEQ_FIELD=args.sequence,
+         ENCODING=args.csv_encoding)

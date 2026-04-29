@@ -1,102 +1,96 @@
-# Batch Primer Design with `primer3_batch_design`
+---
+layout: default
+nav_order: 1
+parent: index
+permalink: /primer-design
+---
 
-## Purpose
-Primers are designed for each template sequence using primer3, including predicting secondary structure formation for adapter-ligated primers.
+# Batch Primer Design
+Designs primers for each template sequence provided using primer3. Filters for secondary structure formation within pairs based on primer3 output, where primer pairs are removed if the melting temperature AND deltaG thresholds are not met for hairpins, homodimers, and heterodimers. Outputs primer sequences and details to a table and FASTA file(s)- at this stage, keeplist primers are added to the FASTA.
+
+**Important**: By default, primers are designed with the Illumina Nextera i5 and i7 adapters attached. If other adapter sequences are desired, use SETTINGS={'SEQUENCE_OVERHANG_LEFT': "your_FWD_adapter_sequence", 'SEQUENCE_OVERHANG_RIGHT': "your_REV_adapter_sequence"}
 
 
 ## Usage
-For primer3_batch_design to run, ***primer3.sh*** must be found in the same folder and settings files for Primer3 must be in the multiplex_wormhole/settings folder under ***Primer3_Base_NoSecondaryFilters.txt*** and ***Primer3_Broad_NoSecondaryFilters.txt***.
+### Dependencies
+Requires primer3-py Python module
 
 ### Python syntax
 ```
-import os
-os.chdir('/multiplex_wormhole')
+import sys
+sys.path.append('/multiplex_wormhole/src/')
 from scripts.primer3_batch_design import main as primer3BatchDesign
-primer3BatchDesign(IN_CSV, OUTDIR, PRIMER3_PATH)
+primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
 ```
 
 ### Command line syntax
 ```
-cd multiplex_wormhole/scripts
-python3 primer3_batch_design.py IN_CSV OUTDIR PRIMER3_PATH
+cd ./multiplex_wormhole/src/scripts/
+python3 primer3_batch_design.py -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
 ```
 
-### Arguments
-**IN_CSV** : Path to CSV file containing DNA template sequences in the following format (including headers):
+### Parameters
+**TEMPLATES (-t)** : CSV filepath to templates in the following format (including these specific headers):
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
 | ------------- | -------------------- | ------------------ |
 | CLocus_704    | TCAGAGAC...          | 53,1               |
 | ...           | ...                  | ...                |
 
-The sequence target is in <POSITION,LENGTH> format. In the example, there is a SNP at basepair 53 within the locus 704.
+The sequence target is in <POSITION,LENGTH> format. In the example, the target for PCR is a 1-bp region (i.e., SNP or indel) at basepair 53. (Required)
 
-**OUTDIR** : Directory where primer output files will be saved. This directory must already exist.
+**OUTPATH (-o)** : Prefix (including directory structure) for output files which will include a CSV and FASTA. (Required)
 
-**PRIMER3_PATH** : Path to primer3_core file.
+**Tm_LIMIT (-l)** : Upper limit for melting temperatures (in Celsius) of intra-pair secondary structures, including hairpins, homodimers, and heterodimers. (Default: 45.0)
+
+**dG_HAIRPINS (-d)** : Lower limit for delta G (i.e., Gibbs free energy) of hairpin structures. (Default: -2)
+
+**dG_MID_LIMIT (-m)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers not occurring at 3' ends. (Default: -8)
+
+**dG_END_LIMIT (-e)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers at 3' ends. (Default: -4)
+
+**KEEPLIST (-k)** : FASTA of keeplist primers, where names follow the format <SeqID>.<#>.FWD and <SeqID>.<#>.REV (e.g., MACA01.1.FWD, MACA01.1.REV). *IMPORTANT*: If the same target is in the keeplist and the templates file, ensure that SeqIDs name match- otherwise, multiple primer pairs may be designed for the same target. (Default: None)
+
+**ENABLE_BROAD (-b)** : Try less conservative settings if primers could not be developed for a template under strict design settings? (Default: False)
+
+**SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
+
+**(-h)**: Help for usage.
 
 
 ## Outputs
-For each template sequence, a Primer3 output file and error file will be saved with naming based on the template SEQUENCE_ID: <SEQUENCE_ID>.out and <SEQUENCE_ID>.err. All outputs will be saved to `OUTDIR`. See the [primer3 Manual](https://primer3.org/manual.html) for interpreting output files.
+* FilteredPrimers.csv
+* FilteredPrimers.fa
+* FilteredPrimers_plusKeeplist.fa
 
-## Defaults
-Default settings are found in the ***Primer3_Base_NoSecondaryFilters.txt*** and ***Primer3_Broad_NoSecondaryFilters.txt*** under multiplex_wormhole/primer3_settings. These settings can be manually changed in the text files. For details on primer3 setting options and definitions, see the [primer3 Manual](https://primer3.org/manual.html). Settings can also be explored in [Primer3Plus](https://www.primer3plus.com) and settings file saved. Make sure that SEQUENCE_ID=, SEQUENCE_TEMPLATE=, and SEQUENCE_TARGET= remain blank before inputting to the script.
+## Default Settings
+Default settings are largely based on Eriksson et al. (2020)
 
-These default settings follow Eriksson et al. 2020 and are intended for amplifying DNA for SNP-based genotyping assays of wildlife from degraded samples (specifically, noninvasive genetic samples such as scats). Specifically, some of the important defaults include:
-
-Illumina Nextera i5 and i7 adapters are added to 5'ends of output primers
-- SEQUENCE_OVERHANG_LEFT=tcgtcggcagcgtcagatgtgtataagagacag
-- SEQUENCE_OVERHANG_RIGHT=gtctcgtgggctcggagatgtgtataagagacag
-
-Primer annealing temp is 52 Celsius
-- PRIMER_ANNEALING_TEMP=52
-
-Amplicon size is 70-120 base pairs, with an optimal of 100 bp
-- PRIMER_PRODUCT_SIZE_RANGE=70-120
-- PRIMER_PRODUCT_OPT_SIZE=100
-
-Primer size range is 18-26 bp (optimal 20 bp)
-- PRIMER_OPT_SIZE=20
-- PRIMER_MIN_SIZE=18
-- PRIMER_MAX_SIZE=26
-
-Primer Tm range from 57-63 (optimal 60)
-- PRIMER_MIN_TM=57
-- PRIMER_MAX_TM=63
-- PRIMER_OPT_TM=60
-
-Primer GC content must be between 30-70% (optimal 50%)
-- PRIMER_MAX_GC=70
-- PRIMER_MIN_GC=30
-- PRIMER_OPT_GC_PERCENT=50
-
-Primers must have at least one G or C (a GC clamp) at the 3' end
-- PRIMER_GC_CLAMP=1
-
-At most, primers can have 4 Gs or Gcs at the ends
-- PRIMER_MAX_END_GC=4
-
-At most, primers can have 4 repeats of the same base
-- PRIMER_MAX_POLY_X=4
-
-Primer concentrations are 0.25 nM in the final PCR reaction
-- PRIMER_DNTP_CONCENTRATOIN=0.25
-
-DNA template concentration is 50 nM in the final PCR reaction
-- PRIMER_DNA_CONCENTRATION=50
-
-Salt concentrations are 3.8 mM for divalent cations and 50 mM for monovalenet cations
-- PRIMER_SALT_DIVALENT=3.8
-- PRIMER_SALT_MONOVALENT=50
-
-If primers can't be found for the above settings, constraints are relaxed:
-- Primer GC content: 20-80%
-- GC Clamp: 0
-- Max End GC: 5
-- Max Poly X: 5
+* 'SEQUENCE_OVERHANG_LEFT'="tcgtcggcagcgtcagatgtgtataagagacag" #Illumina Nextera i5 (5'-->3')
+* 'SEQUENCE_OVERHANG_RIGHT'="gtctcgtgggctcggagatgtgtataagagacag" #Illumina Nextera i7 (5'-->3')
+* 'PRIMER_ANNEALING_TEMP'=52 #primer annealing temp (Celsius)
+* 'PRIMER_PRODUCT_SIZE_RANGE'=70-120 #allowed amplicon size (bp)
+* 'PRIMER_PRODUCT_OPT_SIZE'=100 #optimal amplicon size (bp)
+* 'PRIMER_OPT_SIZE'=20 #optimal primer size'
+* PRIMER_MIN_SIZE'=18 #min primer size
+* 'PRIMER_MAX_SIZE'=26 #max primer size
+* 'PRIMER_MIN_TM'=57 #min primer melting temp
+* 'PRIMER_MAX_TM'=63 #max primer melting temp
+* 'PRIMER_OPT_TM'=60 #optimal primer melting temp
+* 'PRIMER_MAX_GC'=70 #max primer GC content
+* 'PRIMER_MIN_GC'=30 #min primer GC content
+* 'PRIMER_OPT_GC_PERCENT'=50 #optimal primer GC content
+* 'PRIMER_MAX_END_GC'=4 #max of for GC at 3' end
+* 'PRIMER_MAX_POLY_X'=4 #max nucleotide repeats
+* 'PRIMER_DNTP_CONCENTRATION'=0.25 #primer concentrations in PCR (nM)
+* 'PRIMER_DNA_CONCENTRATION'=50 #template DNA concentration (nM)
+* 'PRIMER_SALT_DIVALENT'=3.8 #divalent salt cation concentration (mM)
+* 'PRIMER_SALT_MONOVALENT'=50 #monovalent salt cation conc (mM)
 
 
 ## Citations
-Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(4): 10.1111/1755-0998.13208.
+Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(4): [doi: 10.1111/1755-0998.13208](https://doi.org/10.1111/1755-0998.13208).
 
-[Next](2_FilterPrimers.md)
+Untergasser, A, Cutcutache, I, Koressaar, T, Ye, J, Faircloth, BC, Remm, M, Rozen SG. 2012. Primer3--new capabilities and interfaces. Nucleic Acids Research: e115. [doi: 10.1093/nar/gks596](https://doi.org/10.1093/nar/gks596). 
+
+[Next](2_DimerPrediction.md)

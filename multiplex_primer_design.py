@@ -1,64 +1,71 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Title: MULTIPLEX PRIMER DESIGN with multiplex_wormhole
-
-Created on Tue Dec 19 19:50:45 2023
-@author: maggiehallerud
-
+Title: MULTIPLEX PRIMER DESIGN & ASSESSMENT with multiplex_wormhole
 Purpose: multiplex_wormhole optimizes primer design for multiplex amplicon sequencing 
-    by minimizing predicted pairwise dimers. The target audience is for SNP panel
-    development, however the process is transferable to any application where multiple
-    distinct amplicons are being targeted for multiplex PCR.
-    
-
-IMPORTANT NOTE: Before running this script, make sure that you have installed the 
-dependencies primer3 (available at https://github.com/primer3-org/primer3/releases)
-and MFEprimer (available at https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version)
-
-
+    by minimizing predicted pairwise dimers, and assesses existing multiplexes. 
+    The target audience is for SNP panel development, however the process is transferable 
+    to other targeted sequencing applications.
+Dependencies: primer3-py (developed w/ v2.0.0)
+              pandas (developed w/ v1.4.4)
+              matplotlib (developed w/ v3.5.2)
+              MFEprimer v3 --> install and setup with setup_mfeprimer.py
+              
 Input preparation:
-    TEMPLATES : A CSV containing loci being targeted for multiplex amplicon sequencing
-        The TEMPLATES csv should be in openprimer format:
-        - 3 columns: locus ID, DNA sequence, and target position (start bp, length following primer3 format)
-        - each target locus should have a separate entry in the CSV
-        - locus IDs MUST be unique for multiplex_wormhole to work correctly!
-        The script create_in_templates.R will create the template CSV by taking an input VCF file 
-        containing target SNPs and a FASTA file containing the sequences associated with these SNPs 
-        (with FASTA seq IDs matching the CHROM field in the VCF)
+1) TEMPLATES : A CSV containing information on the DNA template targeted for sequencing.
+The following format is required!
+    - 3 fields with the names: 
+        SEQUENCE_ID : contains names of targets, without punctutation
+        SEQUENCE_TEMPLATE : contains DNA template sequence, including target and flanking regions.
+        SEQUENCE_TARGET : target region within template, in <start_bp,length> format. 
+            for example, a SNP at bp 45 would be 45,1
+            a microhaplotype with SNPs at bp 45 & 80 would be 45,35
+    - primer pairs will be developed and optimized for each row, so names and sequences must be unique
+
+A helper script (create_in_templates.R) is provided to help convert a VCF + FASTA inputs
+into this CSV format. 
         
-    KEEPLIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
+2) KEEPLIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
         assay that you are looking to add to. 
         Forward primers must be designated with ".FWD" or ".FW" as a suffix and reverse primers with ".REV"
     
-    Note that locus IDs in the TEMPLATES file and primer IDs in the KEEPLIST_FA must be unique
-    for multiplex_wormhole to function properly. IDs may not contain periods.
+Created on Tue Dec 19 19:50:45 2023
+@author: maggiehallerud
 """
 
-
-# load dependencies
+#### LOAD MULTIPLEX WORMHOLE FUNCTIONS & DEPENDENCIES ####
 import sys
-import importlib
 import glob
+
+
+## CHANGE TO YOUR MULTIPLEX_WORMHOLE PATH!
+## NO SPACES IN FILEPATHS ALLOWED HERE!
+MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole/"
+sys.path.append(MULTIPLEX_WORMHOLE+"/src")
+
+## INSTALL MFEprimer - THIS ONLY NEEDS TO BE RUN ONCE!
+from setup_mfeprimer import main as setup_mfeprimer
+setup_mfeprimer()
+## IF THIS FAILS, YOU CAN ALSO MANUALLY DOWNLOAD & SET THE PATH TO MFEPRIMER BELOW:
+## (Remember- no spaces in filepaths)
+## If downloading manually, you may also need to change permission. In terminal, run e.g.:
+## chmod +x /yourpath/multiplex_wormhole/src/mfeprimer*
+MFEprimer_PATH=glob.glob(MULTIPLEX_WORMHOLE+"src/*mfeprimer*")[0]
+#MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
+
+
+# load multiplex wormhole functions
+import importlib
 import os
 import shutil
 import subprocess
-
-# load multiplex wormhole functions
-#change to YOUR multiplex_wormhole path
-MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole"
-sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')
 from scripts.primer3_batch_design import main as primer3BatchDesign
 from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.optimize_primers import main as optimizeMultiplex
+from scripts.optimize_multiplex import main as optimizeMultiplex
 from scripts.multiple_run_optimization import main as multipleOptimizations
 from scripts.CSVtoFasta import main as CSVtoFASTA
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
-
-## SET PATHS TO DEPENDENCIES:
-## SPACES IN FILEPATHS WILL BREAK THE FUNCTION CALL!
-MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
 
 
 
@@ -72,12 +79,12 @@ assessPanel("Primers.fasta")
 
     
     
-#### PRIMARY WORKFLOW: PANEL DESIGN FOR MULTIPLEX PCR PRIMERS ####
+#### PRIMARY WORKFLOW: OPTIMIZED PANEL DESIGN FOR MULTIPLEX PCR ####
 ## SET INPUTS:
-os.chdir("/Users/maggiehallerud/Desktop/GrayFoxSNPs/insilico_design")#path to project folder
-TEMPLATES="../Input_SNPs/GrayFox_microhapsTemplates.csv"#CSV containing candidate sequences (path relative to project folder)
-KEEPLIST_FA=None #"MartenPanel1.fa" #FASTA containing previously designed primer set
-OUTDIR='OnlyMicrohaplotypes' # folder name where outputs will be saved
+os.chdir("MW_TEST/")#path to project folder
+TEMPLATES = "/multiplex_wormhole/examples/Input_Templates.csv"#CSV containing candidate sequences (path relative to project folder)
+KEEPLIST_FA = None #"MartenPanel1.fa" #FASTA containing previously designed primer set
+OUTDIR = "TEST" # folder name where outputs will be saved
 N_LOCI = 50 # target panel size (# sequences amplified)
 DELTAG = False #set to True if you want to use deltaG optimization algorithm
 
@@ -113,7 +120,7 @@ primer3BatchDesign(TEMPLATES,
                    KEEPLIST = KEEPLIST_FA, #FASTA for keeplist
                    ENABLE_BROAD = False, #use broader settings if no primers for template?
                    SETTINGS = None) #primer3 settings in dictionary {} format 
-# Outputs are 1_PrimedDesign folder and include a FASTA & CSV with primer details.
+# Outputs are 1_PrimerDesign folder and include a FASTA & CSV with primer details.
 
 
 ## Step 2: Predict primer dimers using MFEprimer
@@ -156,7 +163,7 @@ tabulateDimers(ALL_DIMERS,
                os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
                "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
                DELTAG)
-# Outputs are found under 3_PredictedDimers/PrimerPairInteractions*
+# Outputs are found under 2_PredictedDimers/PrimerPairInteractions*
 
 
 ## Step 4: Explore temperature space for simulated annealing
@@ -223,11 +230,17 @@ optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'),
                       # decrease if local optima are not being overcome
                   SEED=None,#primer set from previous optimization run to start with, in CSV format
                   MAKEPLOT=False)#whether to run plotSAtemps within
-# Outputs are found under 4_OptimizedSets/*
+# Outputs are found under 3_OptimizedSets/* and include:
+# OUTPATH_primers.fa & _primers.csv: primers included in the optimized multiplex
+# OUTPATH_dimers.fa : dimer load of each primer pair within the optimized multiplex
+# OUTPATH_ASA_costs.csv : Recorded change in dimer load at each accepted swap in the multiplex.
+# OUTPATH_dimerload.png : Trace plot of cost function through algorithm progression
 
-## NOTE: I recommend rerunning this multiple times and taking the best option, since this is a 
-## random process and each run may be slightly different.
-## Here's a helper function:
+
+## The above function just runs the optimization process once. I highly recommend
+## multiplex runs and then using the best option, especially for complex problems
+## where outputs will vary. 
+## The multipleOptimizations function will run optimizeMultiplex N_RUNS times:
 multipleOptimizations(N_RUNS = 10, 
                       PRIMER_FA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
                       DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
@@ -258,12 +271,13 @@ multipleOptimizations(N_RUNS = 10,
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
                       SEED=None)#primer set from previous optimization run to start with, in CSV format
-#OUTPUT: {OUTNAME}_RunSummary.csv
+#OUTPUTS: 3_OptimizedSets/{OUTNAME}_RunSummary.csv = run summary
+#3_OptimizedSets/{OUTNAME}_RunSummary.csv = run summary
 
 
 ## STEP 6: Convert selected primer set to FASTA format for additional screening
 # CHANGE THESE TO THE "BEST" Run based on RunSummary.csv output!
-CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_SAprimers.csv"), 
-           OUT_FA = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_SAprimers.fasta"),
+CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_primers.csv"), 
+           OUT_FA = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_primers.fasta"),
            ID_FIELD = "PrimerID",  
            SEQ_FIELD = "Sequence")

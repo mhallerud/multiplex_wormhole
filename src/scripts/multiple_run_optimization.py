@@ -15,14 +15,68 @@ import shutil
 import argparse
 
 sys.path.append(os.path.dirname(__file__))
-from optimize_primers import main as optimizeMultiplex
+from optimize_multiplex import main as optimizeMultiplex
 
 
 
-def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, deltaG=False,
-                          KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
-                          SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
-                          T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
+def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
+         deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
+         SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
+         T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
+    """
+    Parameters
+    ----------
+    N_RUNS : TYPE
+        DESCRIPTION.
+    PRIMER_FA : TYPE
+        DESCRIPTION.
+    DIMER_SUMS : TYPE
+        DESCRIPTION.
+    DIMER_TABLE : TYPE
+        DESCRIPTION.
+    OUTPATH : TYPE
+        DESCRIPTION.
+    N_LOCI : TYPE
+        DESCRIPTION.
+    deltaG : TYPE, optional
+        DESCRIPTION. The default is False.
+    KEEPLIST : TYPE, optional
+        DESCRIPTION. The default is None.
+    TIMEOUT : TYPE, optional
+        DESCRIPTION. The default is 5.
+    VERBOSE : TYPE, optional
+        DESCRIPTION. The default is False.
+    SEED : TYPE, optional
+        DESCRIPTION. The default is None.
+    SIMPLE : TYPE, optional
+        DESCRIPTION. The default is 5000.
+    ITERATIONS : TYPE, optional
+        DESCRIPTION. The default is 10000.
+    BURNIN : TYPE, optional
+        DESCRIPTION. The default is 100.
+    DECAY_RATE : TYPE, optional
+        DESCRIPTION. The default is 0.98.
+    T_INIT : TYPE, optional
+        DESCRIPTION. The default is None.
+    T_FINAL : TYPE, optional
+        DESCRIPTION. The default is None.
+    PARTITIONS : TYPE, optional
+        DESCRIPTION. The default is 1000.
+    DIMER_ADJ : TYPE, optional
+        DESCRIPTION. The default is 0.1.
+    PROB_ADJ : TYPE, optional
+        DESCRIPTION. The default is 2.
+
+    Raises
+    ------
+    TimeoutException
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'TotalDimers']]
     
@@ -127,14 +181,14 @@ def parse_args():
     parser.add_argument("-n", "--nloci", type=int, required=True)
     # add optional arguments
     parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-z", "--seed", type=str, default=None)
+    parser.add_argument("-e", "--seed", type=str, default=None)
     parser.add_argument("-s", "--simple", type=int, default=5000)
     parser.add_argument("-i", "--iter", type=int, default=10000)
     parser.add_argument("-b", "--burnin", type=int, default=100)
     parser.add_argument("-y", "--decay_rate", type=float, default=0.95)
     parser.add_argument("-x", "--temp_init", type=float, default=None)
     parser.add_argument("-l", "--temp_final", type=float, default=0.1)
-    parser.add_argument("-n", "--partitions", type=int, default=1000)
+    parser.add_argument("-p", "--partitions", type=int, default=1000)
     parser.add_argument("-w", "--dimer_adj", type=float, default=0.1)
     parser.add_argument("-a", "--prob_adj", type=float, default=2)
     parser.add_argument("-u", "--timeout", type=float, default=5)

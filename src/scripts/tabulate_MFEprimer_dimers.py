@@ -1,34 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan 16 11:06:54 2024
-
-@author: maggiehallerud
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jan 15 18:36:10 2024
-
-@author: maggiehallerud
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
 Title: TABULATE MFEprimer DIMERS
-Created on Wed Aug  2 11:57:09 2023
-@author: maggiehallerud
-
-Dependencies: pandas (developed with version 1.4.4)
-
 Purpose: Converts text output from MFEprimer dimer function into a pairwise interaction table
         and sum of primer interactions per primer and primer pair
+Dependencies: pandas (developed with version 1.4.4)
+
+Created on Wed Aug  2 11:57:09 2023
+@author: maggiehallerud
 """
 
 # load dependencies
-import sys
 import gc
 import pandas as pd #version 1.4.4
 import itertools #paralellized filtering, etc.
@@ -40,17 +22,14 @@ import argparse
 
 def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     """
-    ALL_DIMERS : Filepath
-        Output from MFEprimer dimer
-    END_DIMERS : Filepath
-        Output from MFEprimer dimer -p
-    OUTPATH : Filepath
-        Filepath prefix for all primer pair outputs
-    OUTPRIMERPATH : Filepath [DEFAULT: None]
-        Filepath prefix for all primer outputs
-    deltaG : Tabulate minimum deltaG (True) or dimer counts False (default: False)
+    ALL_DIMERS : MFEprimer dimer text file output. [Filepath]
+    END_DIMERS : MFEprimer dimer text file output for -p flag. [Filepath]
+        <None> can be used if no end dimers were calculated (not recommended).
+    OUTPATH : Prefix for all primer pair interaction outputs. [Filepath]
+    OUTPRIMERPATH : Prefix for all primer interaction outputs. [Default "False"]
+    deltaG : Tabulate minimum deltaG <True> or dimer counts <False>? [Default: False]
     -------
-    Converts MFEprimer dimer outputs into CSV tables
+    Converts MFEprimer text outputs into CSV tables of pairwise and total dimer load.
     """
     
     print("Reading in files............")
