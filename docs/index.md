@@ -180,6 +180,7 @@ Helper Functions:
 * [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `add_keeplist_to_fasta.py`
 
 ![diagram showing mw workflow](assets/images/diagram.png)
+
 Diagram for multiplex wormhole workflow, with black arrows showing the panel design workflow and blue arrows showing the panel assessment workflow.
 
 
