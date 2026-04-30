@@ -41,16 +41,16 @@ import glob
 ## CHANGE TO YOUR MULTIPLEX_WORMHOLE PATH!
 ## NO SPACES IN FILEPATHS ALLOWED HERE!
 MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole/"
-sys.path.append(MULTIPLEX_WORMHOLE+"/src")
+sys.path.append(MULTIPLEX_WORMHOLE+"/src/multiplex_wormhole")
 
 ## INSTALL MFEprimer - THIS ONLY NEEDS TO BE RUN ONCE!
-from setup_mfeprimer import main as setup_mfeprimer
+from helpers.setup_mfeprimer import main as setup_mfeprimer
 setup_mfeprimer()
 ## IF THIS FAILS, YOU CAN ALSO MANUALLY DOWNLOAD & SET THE PATH TO MFEPRIMER BELOW:
 ## (Remember- no spaces in filepaths)
 ## If downloading manually, you may also need to change permission. In terminal, run e.g.:
 ## chmod +x /yourpath/multiplex_wormhole/src/mfeprimer*
-MFEprimer_PATH=glob.glob(MULTIPLEX_WORMHOLE+"src/*mfeprimer*")[0]
+MFEprimer_PATH=glob.glob(MULTIPLEX_WORMHOLE+"/src/*mfeprimer*")[0]
 #MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
 
 
@@ -59,18 +59,18 @@ import importlib
 import os
 import shutil
 import subprocess
-from scripts.primer3_batch_design import main as primer3BatchDesign
-from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-from scripts.optimize_multiplex import main as optimizeMultiplex
-from scripts.multiple_run_optimization import main as multipleOptimizations
-from scripts.CSVtoFasta import main as CSVtoFASTA
+from batch_primer3_design import main as primer3BatchDesign
+from tabulate_dimers import main as tabulateDimers
+from optimize_multiplex import main as optimizeMultiplex
+from multiple_run_optimization import main as multipleOptimizations
+from helpers.CSVtoFasta import main as CSVtoFASTA
+from panel_assessment import main as assessPanel
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 
 
 #### ALTERNATIVE WORKFLOW: PANEL ASSESSMENT ####
-from panel_assessment import main as assessPanel
 # INPUT: FASTA or CSV (PrimerID, Sequence) file with primers, PrimerIDs following rules
 # described above (e.g., "MACA1.FWD" & "MACA1.REV")
 assessPanel("Primers.fasta")

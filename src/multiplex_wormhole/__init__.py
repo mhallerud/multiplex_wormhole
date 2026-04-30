@@ -4,13 +4,13 @@ sys.path.append(os.path.dirname(__file__))
 
 import multiplexWormhole
 import panel_assessment
-import setup_mfeprimer
 import batch_primer3_design
 import tabulate_dimers
 import optimize_multiplex 
 import multiple_run_optimization 
-import CSVtoFasta
-import add_keeplist_to_fasta
+from helpers import setup_mfeprimer
+from helpers import CSVtoFasta
+from helpers import add_keeplist_to_fasta
 plot_ASA_temps = importlib.import_module("plot_ASA_temps")
 
 

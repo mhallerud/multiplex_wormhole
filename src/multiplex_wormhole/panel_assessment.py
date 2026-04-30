@@ -24,6 +24,9 @@ Input preparation:
 import os
 import sys
 import glob
+import logging
+import traceback
+from datetime import datetime
 import pandas
 import numpy
 import argparse
@@ -34,12 +37,13 @@ import subprocess
 #sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
 sys.path.append(os.path.dirname(__file__))
 from tabulate_dimers import main as tabulateDimers
-from CSVtoFasta import main as csv2fasta
+from helpers.CSVtoFasta import main as csv2fasta
+from helpers.logging_setup import setup_logging
+
 
 ## SET PATHS TO DEPENDENCIES:
-MFEprimer_PATH=glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
+MFEprimer_PATH=glob.glob(os.path.dirname(os.path.dirname(__file__))+"/*mfeprimer*")[0]
 #MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
-
 
 
 def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
@@ -51,6 +55,22 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
+    # setup logging
+    logger = setup_logging(PRIMERS.split(".")[0]+".log", True, PRIMERS.split(".")[0])
+    logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logger.info("")
+    logger.info("panel_assessment inputs: ")
+    logger.info("      PRIMERS: %s", PRIMERS)
+    logger.info("      ALL_DIMERS_dG: %s", ALL_DIMERS_dG)
+    logger.info("      END_DIMERS_dG: %s", END_DIMERS_dG)
+    logger.info("      BAD_DIMERS_dG: %s", BAD_DIMERS_dG)
+    logger.info("")
+
+    # check paths
+    if not os.path.exists(MFEprimer_PATH):
+        raise InputError("Could not find MFEprimer!"+
+                         "Set path on line 44 of panel_assessment.py which can be found here: "+
+                         os.path.dirname(__file__))
     # convert CSV primers to FASTA, if needed
     if(PRIMERS.endswith(".csv")):
         # check for requisite fields first...
@@ -66,26 +86,28 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
         INPUT = PRIMERS
     
     # predict dimers with MFEprimer dimer function
-    print("Predicting dimers....")
+    logger.info("Predicting dimers....")
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
-    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_dG)+\
-                    " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
-    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
-                    " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
+    try:
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_dG)+\
+                        " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
+                        " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
+    except Exception as err:
+        logger.info("MFEprimer failed! Full error message:")
+        logger.info(traceback.format_exc(err))
     
     # tabulate dimers into pairwise dimer table
-    print("Tabulating dimers (standard)...")
+    logger.info("Tabulating dimers (standard)...")
     OUT_DIMERS = PREFIX+"_PrimerPairDimers"
     tabulateDimers(ALL_DIMERS, 
                    END_DIMERS, 
                    OUT_DIMERS, 
                    "False",#specify if you want interactions per primer
                    deltaG=False)#count dimers
-    print("Tabulating dimers (mean min deltaG)")
-    print("            delta G threshold: "+str(ALL_DIMERS_dG()))
-    print("            delta G threshold (3' end dimers): "+str(END_DIMERS_dG))
+    logger.info("Tabulating dimers (mean min deltaG)")
     OUT_DELTAG = PREFIX+"_PrimerPairDeltaG"
     tabulateDimers(ALL_DIMERS,
                    END_DIMERS,
@@ -94,40 +116,44 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
                    deltaG=True)
     
     # count dimers
-    print("")
-    print("---------PANEL ASSESSMENT---------")
-    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", BAD_DIMERS_dG)
+    logger.info("")
+    logger.info("---------PANEL ASSESSMENT---------")
+    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", BAD_DIMERS_dG, logger)
+    
+    # close out logger
+    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logging.shutdown()
 
 
 
-def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD): 
+def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD, logger): 
     ## SUMMARIZE DIMER COUNTS
     # read in pairwise dimer load CSV
     df = pandas.read_csv(DIMERS_WIDE)
-    print("Number of primer pairs assessed: "+str(len(df)))
+    logger.info("Number of primer pairs assessed: %s", str(len(df)))
     # take sum across upper triangle, including diagonal
     s = numpy.triu(df,1).sum()
-    print("Number of pairwise dimers: "+str(s))
+    logger.info("Number of pairwise dimers: %s", str(s))
     # take sum across rows (i.e., # interactions per primer pair)
     df = df.sum()[1:]#take sum across rows
     # sum of sums>0
     p = (df>0).sum()
-    print("Number of primer pairs involved in dimer interactions: "+str(p))
-    print("Dimers per pair: "+str(round( s/len(df), 2)))
+    logger.info("Number of primer pairs involved in dimer interactions: %s", str(p))
+    logger.info("Dimers per pair: "+str(round( s/len(df), 2)))
     
     ## SUMMARIZE DELTAG
     df = pandas.read_csv(DELTAG_WIDE)
     # take mean across upper triangle, including diagonal
     s = numpy.triu(df,1).mean()
-    print("Mean deltaG: "+str(round(s,2)))
+    logger.info("Mean deltaG: "+str(round(s,2)))
     # convert to binary for primer pairs with dimers below a given deltaG threshold
     df.drop(df.columns[0], axis=1, inplace=True)
     df = df<dG_THRESHOLD
     df = df.replace({True: 1, False: 0})
     # take count of pairwise interactions with dimers below threshold
     b = numpy.triu(df,1).sum()
-    print("Number of pairwise interactions with 'bad' dimers: "+str(b))
-    print("    (based on a deltaG threshold "+str(dG_THRESHOLD)+")")
+    logger.info("Number of pairwise interactions with 'bad' dimers: %s", str(b))
+    logger.info("    (based on a deltaG threshold %s)", str(dG_THRESHOLD))
 
 
 

@@ -16,6 +16,8 @@ Created on Sun Mar 17 13:21:40 2024
 import os
 import sys
 #import csv
+import logging
+from datetime import datetime
 import math
 import importlib
 import pandas as pd
@@ -28,7 +30,7 @@ import argparse
 # load functions from optimize_primers module
 sys.path.append(os.path.dirname(__file__))
 op = importlib.import_module("optimize_multiplex")
-
+from helpers.logging_setup import setup_logging
 
 
 
@@ -54,6 +56,33 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     -------
     Plots temperature schedule and dimer acceptance probabilities based on given simulated annealing parameters.
     """
+    # initialize logging
+    logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)    
+    #print("Logging printed to: ")
+    #for h in logger.handlers:
+    #    print(type(h), getattr(h, OUTPATH+'.log', None))
+    # log start time & inputs
+    logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logger.info("")
+    logger.info("plot_ASA_temps inputs: ")
+    logger.info("     OUTPATH: %s", OUTPATH)
+    logger.info("     PRIMER_FASTA: %s", PRIMER_FASTA)
+    logger.info("     DIMER_SUMS: %s", DIMER_SUMS)
+    logger.info("     DIMER_TABLE: %s", DIMER_TABLE)
+    logger.info("     N_LOCI: %s", N_LOCI)
+    logger.info("     KEEPLIST: %s", KEEPLIST)
+    logger.info("     deltaG: %s", deltaG)
+    logger.info("     SEED: %s", SEED)
+    logger.info("     MIN_DIMER: %s", MIN_DIMER)
+    logger.info("     MAX_DIMER: %s", MAX_DIMER)
+    logger.info("     DECAY_RATE: %s", DECAY_RATE)
+    logger.info("     BURNIN: %s", BURNIN)
+    logger.info("     T_INIT: %s", T_INIT)
+    logger.info("     T_FINAL: %s", T_FINAL)
+    logger.info("     DIMER_ADJ: %s", DIMER_ADJ)
+    logger.info("     PROB_ADJ: %s", PROB_ADJ)
+    logger.info("")
+    
     ## OPTION a: SIMULATED ANNEALING WITH FIXED SCHEDULE
     if T_INIT is not None and T_FINAL is not None:
         pass
@@ -69,13 +98,13 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                                 " PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, and N_LOCI parameters.")
             else:
                 ## Read in IDs and primers
-                print("Reading in inputs..........")
+                logger.info("Reading in inputs..........")
                 # read in IDs and primers
                 primer_loci, primer_seqs, primer_IDs, primer_pairs = op.LoadPrimers(PRIMER_FASTA)
 
             
                 # read in dimer info
-                #print("Reading in primer dimer counts........")
+                #logger.info("Reading in primer dimer counts........")
                 dimer_table = pd.read_csv(DIMER_TABLE)
                 dimer_sums = pd.read_csv(DIMER_SUMS)
             
@@ -94,7 +123,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     ## A) Choose initial primer set based on pseudo-Greedy algorithm
                     # Choose initial set of loci based on loci with minimum dimer counts
                     # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
-                    print("Generating initial primer set........")
+                    logger.info("Generating initial primer set........")
                     # make list of unique loci
                     # convert to list because new versions of random.sample won't be able to handle sets...
                     uniq_loci = list(set(primer_loci))
@@ -103,8 +132,8 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     best_primer_pairs = op.BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
                     # if there are fewer loci than desired, use all of them
                     if nloci < N_LOCI:
-                        print("WARNING: Fewer loci passed filtering than desired in panel")
-                        print("# loci used: " + str(nloci))
+                        logger.info("WARNING: Fewer loci passed filtering than desired in panel")
+                        logger.info("# loci used: %s", str(nloci))
                         initial_pairs = best_primer_pairs
                     else:
                         # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
@@ -126,7 +155,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 
                 ## If a SEED file is provided, use this as the initial primer set....
                 else:
-                    print("Loading initial primer set from seed file........")
+                    logger.info("Loading initial primer set from seed file........")
                     initial_pairs = []
                     with open(SEED, 'r') as file:
                         lines = file.readlines()
@@ -152,7 +181,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 
                 ## B) Sample cost space
                 if nloci <= N_LOCI:
-                    print("FEWER LOCI INPUT THAT DESIRED IN FINAL PANEL: "+
+                    logger.info("FEWER LOCI INPUT THAT DESIRED IN FINAL PANEL: "+
                           "Proceeding to plot with default temps with 1-5 dimers, "+
                           "but true optimization for this problem set would stop prior to the simulated annealing step.")
                     T_INIT = 2
@@ -160,7 +189,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     MIN_DIMER = 1
                     MAX_DIMER = 5
                 else:
-                    print("Sampling dimer load changes.......")
+                    logger.info("Sampling dimer load changes.......")
                     # A) sample x iterations
                     change = []
                     i = 0
@@ -183,9 +212,9 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                         # stop if 2000 swaps made
                         i += 1
                         if i>2000:
-                            print("....Sampling stopped after 2000 swaps with "+str(len(change))+" costs>0")
+                            logger.info("....Sampling stopped after 2000 swaps with %s costs>0.", str(len(change)))
                             if len(change)==0:
-                                print(".....Defaults used since cost changes never increase")
+                                logger.info(".....Defaults used since cost changes never increase")
                                 T_INIT = 2
                                 T_FINAL = 0
                                 MIN_DIMER=1
@@ -194,12 +223,12 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     if len(change)>0:
                         MIN_DIMER = min(change)
                         MAX_DIMER = max(change)
-                        print(".....Maximum dimer load observed "+ str(MAX_DIMER))
-                        print(".....Minimum dimer load observed "+ str(MIN_DIMER))
+                        logger.info(".....Maximum dimer load observed %s", str(MAX_DIMER))
+                        logger.info(".....Minimum dimer load observed %s", str(MIN_DIMER))
 
 
         ## STEP 2: Set adaptive temperature schedule based on cost calcs
-        print("Setting temperature schedule...")
+        logger.info("Setting temperature schedule...")
         if T_FINAL is None:
             # set initial and final temps
             T_FINAL = 0
@@ -216,9 +245,9 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         i+=1
         new_temp = (T_INIT-T_FINAL)*DECAY_RATE**i+T_FINAL
         temps.append(new_temp)
-    print(".....Initial temp for adaptive simulated annealing: "+str(T_INIT))
-    print(".....Final temp for adaptive simulated annealing: "+str(T_FINAL))
-    print("Plotting temperature schedule over 100 iterations")
+    logger.info(".....Initial temp for adaptive simulated annealing: %s", str(T_INIT))
+    logger.info(".....Final temp for adaptive simulated annealing: %s", str(T_FINAL))
+    logger.info("Plotting temperature schedule over 100 iterations")
     plt.figure() # new plotting figure
     plt.plot(temps)
     plt.ylabel("Temperature")
@@ -228,7 +257,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     
     
     ## PLOT 2: DIMER ACCEPTANCE PROBABILITY BY SA TEMPERATURE
-    print("Plotting acceptance probabilities for dimers across temperatures...")
+    logger.info("Plotting acceptance probabilities for dimers across temperatures...")
     plt.figure() # new plotting figure
     # grab color gradient
     reds = mpl.colormaps['Reds']
@@ -270,6 +299,10 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     plt.legend(loc="upper right")
     plt.savefig(OUTPATH+"_DimerAcceptanceByIteration.png")
     
+    # end logging
+    logger.info("")
+    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logging.shutdown()
 
 
 

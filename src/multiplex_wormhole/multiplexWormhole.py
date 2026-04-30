@@ -2,44 +2,25 @@
 # -*- coding: utf-8 -*-
 """
 Title: MULTIPLEX WORMHOLE (Python wrapper)
-Created on Mon Aug 18 22:45:01 2025
-@author: maggiehallerud
-
 Purpose: multiplex_wormhole optimizes primer design for multiplex amplicon sequencing 
     by minimizing predicted pairwise dimers. The target audience is for SNP panel
     development, however the process is transferable to any application where multiple
     distinct amplicons are being targeted for multiplex PCR.
-    
-IMPORTANT NOTE: Before running this script, make sure that you have installed the 
-dependencies primer3 (available at https://github.com/primer3-org/primer3/releases)
-and MFEprimer (available at https://www.mfeprimer.com/mfeprimer-3.1/#2-command-line-version)
 
-Input preparation:
-    TEMPLATES : A CSV containing loci being targeted for multiplex amplicon sequencing
-        The TEMPLATES csv should be in openprimer format:
-        - 3 columns: locus ID, DNA sequence, and target position (start bp, length following primer3 format)
-        - each target locus should have a separate entry in the CSV
-        - locus IDs MUST be unique for multiplex_wormhole to work correctly!
-        The script create_in_templates.R will create the template CSV by taking an input VCF file 
-        containing target SNPs and a FASTA file containing the sequences associated with these SNPs 
-        (with FASTA seq IDs matching the CHROM field in the VCF)
-        
-    KEEPLIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
-        assay that you are looking to add to. 
-        Forward primers must be designated with ".FWD" or ".FW" as a suffix and reverse primers with ".REV"
-    
-    Note that locus IDs in the TEMPLATES file and primer IDs in the KEEPLIST_FA must be unique
-    for multiplex_wormhole to function properly. IDs may not contain periods.
+Created on Mon Aug 18 22:45:01 2025
+@author: maggiehallerud
 """
 # load dependencies and modules
 import sys
 import importlib
+import logging
+import traceback
+from datetime import datetime
 import glob
 import os
 import shutil
 import pandas as pd
 import subprocess
-import datetime
 import argparse
 
 # load multiplex wormhole functions
@@ -47,49 +28,57 @@ sys.path.append(os.path.dirname(__file__))
 from batch_primer3_design import main as primer3BatchDesign
 from tabulate_dimers import main as tabulateDimers
 from multiple_run_optimization import main as multipleOptimizations
-from CSVtoFasta import main as CSVtoFASTA
+from helpers.CSVtoFasta import main as CSVtoFASTA
+from helpers.logging_setup import setup_logging
 plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 ## FINE PATH TO BINARY DEPENDENCIES
 ## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
-MFEprimer_PATH = glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
+MFEprimer_PATH = glob.glob(os.path.dirname(os.path.dirname(__file__))+"/*mfeprimer*")[0]
 
 
 
 def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
          ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
     """
-    NOTE: DEPENDENCY PATHS MUST BE SET IN THIS SCRIPT FOR IT TO RUN
-    Parameters
     ----------
-    TEMPLATES : CSV filepath
-        Contains ID, DNA sequence, and target in "startBP,lengthBP" format
-    N_LOCI : integer
-        Target number of amplicons in multiplex PCR
-    OUTDIR : Filepath
-        Directory where all outputs will be stored
-    PREFIX : String
-        Prefix to use for optimization output files
-    KEEPLIST_FA : FASTA filepath, optional (default: None)
-        Primers that MUST be included in final multiplex set.
-    N_RUNS : integer (default: 10)
-        Number of optimization runs
-    ITERATIONS : integer (default: 5000)
-        Iterations to run simulated annealing optimization
-    SIMPLE : integer (default: 2000)
-        Iterations to run simple iterative improvement optimization
-    deltaG : True (deltaG optimization) / False (standard optimization)
-    VERBOSE : print updates as function runs? (Default: False)
+    TEMPLATES : CSV containing DNA sequences, IDs, and target sin "startBP,lengthBP" format. [filepath]
+    N_LOCI : Target number of amplicons in multiplex PCR. [int]
+    OUTDIR : Directory where all outputs will be stored. [Filepath]    
+    PREFIX : Prefix to use for optimization output files. [Default: timestamp]
+    KEEPLIST_FA : FASTA of primers that MUST be included in final multiplex. [Default: None)
+    N_RUNS : Number of optimization runs. [Default: 10]
+    ITERATIONS : Iterations to run simulated annealing optimization. [Default: 10000]
+    SIMPLE : Iterations to run simple iterative improvement optimization. [Default: 5000]
+    deltaG : True (deltaG optimization) / False (standard optimization). [Default: False]
+    VERBOSE : Print updates as function runs? (Default: False)
     -------
     Returns
-    1. Designs primers for each candidate sequences in TEMPLATES
-    2. Filtered primer sets in CSV format
-    3. Pairwise dimers predicted between all filtered primer pairs
-    4. Optimized multiplex primer set for target N_LOCI
-    5. Predicted dimer loads for primers included in optimized multiplex
-    6. Plots of simulated annealing temperature schedule and trace of dimer load
-    """
-    
+    1. Designs & filters primers for each candidate sequences in TEMPLATES
+    2. Pairwise dimers predicted between all filtered primer pairs
+    3. Optimized multiplex primer set for target N_LOCI
+    """    
+    # set suffix to current datetime if not given
+    if PREFIX is None:
+        PREFIX = str(datetime.now()).replace(" ","_").replace(".","_")
+
+    # initialize logging
+    mwlogger = setup_logging("multiplex_wormhole_"+PREFIX+".log", VERBOSE, "mw_main")
+    # log start time & inputs
+    mwlogger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    mwlogger.info("")
+    mwlogger.info("multiplex_wormhole inputs: ")
+    mwlogger.info("     TEMPLATES: %s", TEMPLATES)
+    mwlogger.info("     N_LOCI: %s", N_LOCI)
+    mwlogger.info("     OUTDIR: %s", OUTDIR)
+    mwlogger.info("     PREFIX: %s", PREFIX)
+    mwlogger.info("     KEEPLIST_FA: %s", KEEPLIST_FA)
+    mwlogger.info("     N_RUNS: %s", N_RUNS)
+    mwlogger.info("     SIMPLE: %s", SIMPLE)
+    mwlogger.info("     ITERATIONS: %s", ITERATIONS)
+    mwlogger.info("     deltaG: %s", deltaG)
+    mwlogger.info("     VERBOSE: %s", VERBOSE)
+
     # check for MFEprimer path
     if not os.path.exists(MFEprimer_PATH):
         raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
@@ -101,7 +90,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     SIMPLE = int(SIMPLE)
     
     ## Step 0: Set up output directory structure & copy inputs to it
-    print("-----SETTING UP OUTPUT DIRECTORY STRUCTURE------")
+    mwlogger.info("-----SETTING UP OUTPUT DIRECTORY STRUCTURE------")
     # set up folder structure
     os.makedirs(OUTDIR, exist_ok=True)
     INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
@@ -117,13 +106,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     if KEEPLIST_FA is not None:
         shutil.copy2(KEEPLIST_FA, INPUTDIR)
     
-    # set suffix to current datetime if not given
-    if PREFIX is None:
-        PREFIX = str(datetime.datetime.now()).replace(" ","_").replace(".","_")
-        
     ## Step 1: batch design of primers (with intra-pair hairpin and dimer filtering)
-    print("")
-    print("-----BATCH DESIGNING PRIMERS------")
+    mwlogger.info("")
+    mwlogger.info("-----BATCH DESIGNING PRIMERS------")
+    mwlogger.info("Logging to: %s", os.path.join(OUTDIR1, "FilteredPrimers.log"))
     # NOTE: This script includes all of the primer design settings!
     # These can be adjusted directly in the primer3_batch_design.py script
     # or by providing a dictionary to SETTINGS.
@@ -147,8 +133,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
         INPUT = os.path.join(OUTDIR1, "FilteredPrimers.fa")
     else:
         INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
-    print("")
-    print("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
+    mwlogger.info("")
+    mwlogger.info("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
    # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
     # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
     # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
@@ -166,10 +152,14 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     # --mono = concentration of monovalent cations (mM)
     # --dntp = concentration of dNTPs (mM)
     # --oligo = concentration of annealing oligos (nM)
-    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50",
-                     shell=True)
-    subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p",
-                    shell=True) 
+    try:
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50",
+                        shell=True)
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p",
+                        shell=True)
+    except Exception:
+        print("MFEprimer dimer step failed! Error message & traceback:")
+        print(traceback.format_exc())
     
     
     
@@ -177,8 +167,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## NOTE: This is the most computationally intensive step. 
     ## It will run substantially faster if you leave the 4th argument blank 
     ## (which means pairwise interactions between individual primers won't be calculated)
-    print("")
-    print("-----TABULATING PREDICTED DIMERS-----")
+    mwlogger.info("")
+    mwlogger.info("-----TABULATING PREDICTED DIMERS-----")
+    mwlogger.info("Logging to: %s", os.path.join(OUTDIR2, 'PrimerPairInteractions.log'))
     tabulateDimers(ALL_DIMERS, 
                    END_DIMERS, 
                    os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
@@ -196,8 +187,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## the other uses pre-specified temperatures and dimer loads.
     ## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
     ## parameters around the defaults.
-    print("")
-    print("-----PLOTTING ADAPTIVE SIMULATED ANNEALING TEMPERATURE SCHEDULE------")
+    mwlogger.info("")
+    mwlogger.info("-----PLOTTING ADAPTIVE SIMULATED ANNEALING TEMPERATURE SCHEDULE------")
+    mwlogger.info("Logging to: %s", os.path.join(OUTDIR3, 'ASAplots.log'))
     plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'ASAplots'),
                       PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
                       DIMER_SUMS=DIMER_TOTS,
@@ -231,8 +223,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     ## Step 5: Design a set of multiplex primers by minimizing predicted dimer formation
     # N_LOCI here is the number of loci you want in the final panel (including keeplist loci) 
     # N_RUNS is number of runs of optimization process (1 for simple problems, increase for complex problems)
-    print("")
-    print("-----STARTING OPTIMIZATION FOR MULTIPLEX PRIMER SET-----")
+    mwlogger.info("")
+    mwlogger.info("-----STARTING OPTIMIZATION FOR MULTIPLEX PRIMER SET-----")
+    mwlogger.info("Logged to %s",  os.path.join(OUTDIR3, PREFIX)+".log")
     multipleOptimizations(N_RUNS = N_RUNS, 
                           PRIMER_FA = os.path.join(OUTDIR1, "FilteredPrimers.fa"),
                           DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_binary_sum.csv'), 
@@ -267,28 +260,27 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
     
     
     ## STEP 7: Convert selected primer set to FASTA format for additional screening
-    print("")
-    print("-----CONVERTING BEST PRIMER SETS INTO FASTAs FOR ADDITIONAL SCREENING-----")
+    mwlogger.info("")
+    mwlogger.info("-----CONVERTING BEST PRIMER SETS INTO FASTAs FOR ADDITIONAL SCREENING-----")
     runs = pd.read_csv(os.path.join(OUTDIR3, PREFIX+"_RunSummary.csv"))
     run = runs['Run']
     run = [str(run[x]).zfill(2) for x in range(len(run))]
     dimers = runs['TotalDimers']
-    print("The BEST multiplex had "+str(min(dimers))+ " total predicted dimers.")
+    mwlogger.info("The BEST multiplex had %s total predicted dimers.", str(min(dimers)))
     for i in range(len(runs)):
-        print("Run "+str(run[i])+" had "+str(dimers[i])+" dimers.")
+        mwlogger.info("Run %s had %s dimers.", str(run[i]), str(dimers[i]))
         if dimers[i]==min(dimers):
-            print(".....Converting to FASTA for additional screening")
+            mwlogger.info(".....Converting to FASTA for additional screening")
             CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
                        OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
-
-
-
-def usage():
-    #print("\nWelcome to multiplex wormhole! Here's how to use the function:\n")
-    print("Usage: '+sys.argv[0]+' -t <templatesCSV> -n <#loci> -o <outdir> [-p <prefix> -k <keeplistFA> "+\
-          "-r <nruns> -i <iterations> -s <simple> -d <deltaG> -v <verbose> -h <help>]")
-    print("\nAdditional documentation can be found at https://github.com/mhallerud/multiplex_wormhole")
-
+    
+    # finish logging
+    # end logging
+    mwlogger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    print("")
+    print("LOGGED TO: multiplex_wormhole_"+PREFIX+".log")
+    logging.shutdown()
+    
 
 
 def parse_args():

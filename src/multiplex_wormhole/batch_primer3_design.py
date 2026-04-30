@@ -14,14 +14,17 @@ import os
 import csv
 import sys
 import string
+import logging
 import primer3 #primer design with primer3-py
 import pandas as pd
 import argparse
+from datetime import datetime
 
 # import additional sub-modules
 sys.path.append(os.path.dirname(__file__))
-from CSVtoFasta import main as CSV2FASTA
-from add_keeplist_to_fasta import main as AddKeeplist2FASTA
+from helpers.CSVtoFasta import main as CSV2FASTA
+from helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+from helpers.logging_setup import setup_logging
 
 
 
@@ -42,10 +45,35 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     ------
     Outputs CSV and FASTA of filtered primer sequences
     """
-    
+    # initialize logger
+    logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)
     # read in templates as pandas dictionary
     templates = pd.read_csv(TEMPLATES)
-    
+    logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logger.info("")
+    logger.info("batch primer design input: ")
+    logger.info("      TEMPLATES: %s", TEMPLATES)
+    logger.info("      OUTPATH: %s", OUTPATH)
+    logger.info("      Tm_LIMIT: %s", Tm_LIMIT)
+    logger.info("      dG_HAIRPINS: %s", dG_HAIRPINS)
+    logger.info("      dG_END_LIMIT: %s", dG_END_LIMIT)
+    logger.info("      dG_MID_LIMIT: %s", dG_MID_LIMIT)
+    logger.info("      KEEPLIST: %s", KEEPLIST)
+    logger.info("      ENABLE_BROAD: %s", ENABLE_BROAD)
+    logger.info("")
+
+    if SETTINGS is not None:
+        logger.info("      SETTINGS: ")
+        try:
+            for k, v in SETTINGS:
+                logger.info("         %s : %s", k, v)
+        except Exception:
+            logger.info("          Failed to print settings")
+            pass
+    else:
+        logger.info("SETTINGS: None")
+        
+
     # Raise error if names aren't SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET
     if not all([x in templates.keys() for x in ['SEQUENCE_ID', 'SEQUENCE_TEMPLATE', 'SEQUENCE_TARGET']]):
         raise InputError("TEMPLATES must include fields named SEQUENCE_ID, SEQUENCE_TEMPLATE, & SEQUENCE TARGET.")
@@ -54,7 +82,9 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     if len(set(templates['SEQUENCE_ID'])) != len(templates):
         counts = templates['SEQUENCE_ID'].value_counts()
         duplicates = counts.loc[counts>1]
-        print(duplicates)
+        logger.info("Templates include non-unique sequenceID values that need to be fixed:")
+        for d in duplicates:
+            logger.info("      %s", d)
         raise InputError("TEMPLATES INCLUDE NON-UNIQUE SEQUENCEID VALUES!"+
                          "   (Non-unique values and counts printed above) ")
     
@@ -314,17 +344,19 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
             if k in PRIMER3_SETTINGS:
                 # check type of setting
                 if type(PRIMER3_SETTINGS[k]) != type(SETTINGS[k]):
-                    print("Primer3 setting "+str(k)+" could not be adjusted- Format should be "+str(type(PRIMER3_SETTINGS[k])))
+                    logger.info("Primer3 setting %S could not be adjusted- Format should be %s", 
+                                str(k), str(type(PRIMER3_SETTINGS[k])))
                 # update otherwise.
                 else:                    
                     try:
                         PRIMER3_SETTINGS[k] = v
                         BROAD_SETTINGS[k] = v
                     except Exception:
-                        print("Primer3 setting "+str(k)+" could not be adjusted. "+
-                                 "Default value ("+str(PRIMER3_SETTINGS[k])+") used.")
+                        logger.info("Primer3 setting %s could not be adjusted. "+
+                                 "Default value (%s) used.", 
+                                 str(k), str(PRIMER3_SETTINGS[k]))
             else:
-                print("Primer3 setting "+str(k)+" not found- are you sure this is a primer3 setting?")    
+                logger.info("Primer3 setting %s not found- are you sure this is a primer3 setting?", str(k))    
                 try:
                     PRIMER3_SETTINGS[k] = v
                     BROAD_SETTINGS[k] = v
@@ -354,7 +386,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         # progress tracking
         row+=1
         if row%100 == 0:
-            print("      primers designed for "+str(row)+" sequences")
+           logger.info("      primers designed for %s sequences....", str(row))
         
         # extract sequence ID, template, target info
         seqid = str(k).translate(translator)
@@ -366,8 +398,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                         'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
                     global_args=PRIMER3_SETTINGS)
         except Exception as err:
-            print("PRIMER DESIGN FAILED FOR "+k+" WITH THE FOLLOWING ERROR:")
-            print(err)
+           logger.error("PRIMER DESIGN FAILED FOR %s WITH THE FOLLOWING ERROR:", str(k))
+           logger.error(err)
             
 
         # save full primer3 output to file
@@ -390,8 +422,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                                 'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
                             global_args=BROAD_SETTINGS)
                 except Exception as err:
-                    print("PRIMER DESIGN FAILED FOR "+k+" WITH THE FOLLOWING ERROR:")
-                    print(err)
+                    logger.info("PRIMER DESIGN FAILED FOR %s WITH THE FOLLOWING ERROR:", str(k))
+                    logger.error(err)
         
         # loop through primer pairs & filter dimers     
         passed = 0 # track number pairs passed per template
@@ -511,14 +543,14 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                 failed_ids.append(seqid)
     
     # Print number loci in filtered output
-    print("# Input loci: "+str(len(templates)))
-    print("# Loci with primers passing filtering: "+str(len(passed_ids)))
-    print("# Primer pairs designed: "+str(tot_pairs))
-    print("# Primer pairs passing filtering: "+str(len(filtered_primers)))
+    logger.info("# Input loci: %s", str(len(templates)))
+    logger.info("# Loci with primers passing filtering: %s", str(len(passed_ids)))
+    logger.info("# Primer pairs designed: %s", str(tot_pairs))
+    logger.info("# Primer pairs passing filtering: %s", str(len(filtered_primers)))
     if len(failed_ids)>0:
-        print("Filtering failed for the following loci:")
+        logger.info("Filtering failed for the following loci:")
         for l in failed_ids:
-            print("          "+l)
+            logger.info("          %s", l)
 
     # Export filtered primers as CSV
     if len(filtered_primers)>1:
@@ -536,11 +568,17 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
             try: 
                 AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST)
             except Exception:
-                print("KEEPLIST could not be added to filtered primers FASTA")                
+                logger.info("KEEPLIST could not be added to filtered primers FASTA")                
 
     # raise Exception here if no primer passed filtering since pointless to continue
     else:
         raise OutputError("NO PRIMER PAIRS PASSED FILTERING- STOPPING AT DESIGN/FILTER STEP!")
+    
+    # finish logging
+    templates = pd.read_csv(TEMPLATES)
+    print("")
+    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logging.shutdown()
     
 
 

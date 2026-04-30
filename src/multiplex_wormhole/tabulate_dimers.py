@@ -12,11 +12,15 @@ Created on Wed Aug  2 11:57:09 2023
 
 # load dependencies
 import gc
+import os
 import pandas as pd #version 1.4.4
 import itertools #paralellized filtering, etc.
 import argparse
+import logging
+from datetime import datetime
 #from operator import truth # converts anything>=1 to True and =0 to False
 #import multiprocessing
+from logging_setup import setup_logging
 
 
 
@@ -31,16 +35,27 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     -------
     Converts MFEprimer text outputs into CSV tables of pairwise and total dimer load.
     """
+    # set up logging
+    logger = setup_logging(OUTPATH+".log", True, OUTPATH)
+    logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logger.info("")
+    logger.info("tabulate_dimers inputs: ")
+    logger.info("     ALL_DIMERS: %s", ALL_DIMERS)
+    logger.info("     END_DIMERS: %s", END_DIMERS)
+    logger.info("     OUTPATH: %s", OUTPATH)
+    logger.info("     OUTPRIMERPATH: %s", OUTPRIMERPATH)
+    logger.info("     deltaG: %s", deltaG)
+    logger.info("")
     
-    print("Reading in files............")
     # read in files - convert each interaction to a single line in array
+    logger.info("Reading in files............")
     all_dimers = ReadDimerTXT(ALL_DIMERS)
     if END_DIMERS is None:
         end_dimers = []
     else:
         end_dimers = ReadDimerTXT(END_DIMERS)
     
-    print("Remove duplicate dimers..................")
+    logger.info("Remove duplicate dimers..................")
     # combine dimers into dataframe
     dimers_df = pd.concat([end_dimers, all_dimers])
     # get counts of each row
@@ -59,7 +74,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
         counts_pairs = dimers_subset.value_counts()
         pair_dimers = pd.DataFrame(list(counts_pairs.keys()), columns=['Primer1','Primer2', 'Pair1','Pair2'])
     
-    print("Extracting primer ID info.....")
+    logger.info("Extracting primer ID info.....")
     # get list of primer IDs, locusIDs, and primer pair IDs
     with open(ALL_DIMERS, 'r') as file:
         lines = file.readlines()
@@ -71,7 +86,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     #del lines # clean up
     gc.collect() # clean up
     
-    print("Calculating pairwise primer pair interactions........")
+    logger.info("Calculating pairwise primer pair interactions........")
     pair_interactions = CalcPairwiseDimers(pair_dimers, primerIDs, pairs=True, deltaG=deltaG)
     
     # convert to binary format (for counting dimers)
@@ -80,15 +95,15 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
         pair_interactions_bin[pair_interactions_bin>=1] = 1
     
     if deltaG:
-        print("Calculating mean deltaG of interactions per primer pair...........")
+        logger.info("Calculating mean deltaG of interactions per primer pair...........")
         pair_sums = pair_interactions.mean(axis=1)
     else:
-        print("Calculating total interactions per primer pair...........")
+        logger.info("Calculating total interactions per primer pair...........")
         # calculate sum of interactions for each primer pair
         pair_sums = pair_interactions.sum(axis=1)
         pair_sums_bin = pair_interactions_bin.sum(axis=1) # total pairs interacted with
     
-    print("Saving primer pair output files!")
+    logger.info("Saving primer pair output files!")
     ## Export all files
     if deltaG:
         # set output name to aggregate file
@@ -112,24 +127,24 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     
     # calculate interactions per primer
     if OUTPRIMERPATH!="False":
-        print("")
-        print("")
-        print("Calculating pairwise primer interactions..........")
+        logger.info("")
+        logger.info("")
+        logger.info("Calculating pairwise primer interactions..........")
         # primers - total # interactions
         dimers_sub = pd.DataFrame(list(zip(dimers['Primer1'],dimers['Primer2'],dimers['Pair1'],dimers['Pair2'])),
                                   columns=['Primer1','Primer2','Pair1','Pair2'])
         primer_interactions = CalcPairwiseDimers(dimers_sub, primerIDs, pairs=False)
     
-        print("Converting primer interactions to binary format.......")
+        logger.info("Converting primer interactions to binary format.......")
         primer_interactions_bin = primer_interactions.copy()
         primer_interactions_bin[primer_interactions_bin>=1] = 1
     
         # calculate # interactions per primer
-        print("Calculating total interactions per primer............")
+        logger.info("Calculating total interactions per primer............")
         primer_sums = primer_interactions.sum(axis=1) # total interactions       
         primer_sums_bin = primer_interactions.sum(axis=1) # total primers interacted with
         
-        print("Saving primer output files!")
+        logger.info("Saving primer output files!")
         # export pairwise interactions per primer (wide)
         primerwide = OUTPRIMERPATH + '_wide.csv'
         primer_interactions.to_csv(primerwide)
@@ -147,6 +162,11 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
             # export pairwise interactions per primer (wide)
             primerwide = OUTPRIMERPATH + '_binary_wide.csv'
             primer_interactions_bin.to_csv(primerwide)
+            
+    # close out logging
+    logger.info("")
+    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logging.shutdown()
 
 
 
@@ -208,8 +228,13 @@ def CalcPairwiseDimers(dimers, primerIDs, pairs=True, deltaG=False):
 
 def ReadDimerTXT(infile):
     dimers = []
+    if not os.path.exists(infile):
+        raise InputError(infile+" could not be found!")
+    
     with open(infile, 'r') as file:
         lines=file.readlines()
+        if len(lines)<2:
+            raise InputError(infile+" is an empty file- did MFEprimer fail?")
         # grab IDs for all input primers
         #startprimers = list(filter(lambda x: "Primer ID" in lines[x], range(len(lines))))+3
         #endprimers = list(filter(lambda x: "Dimer List" in lines[x], range(len(lines))))-4
@@ -257,6 +282,10 @@ def parse_args():
     parser.add_argument("-d", "--deltaG", action="store_true")
     
     return parser.parse_args()
+
+
+def InputError(Exception):
+    pass
 
 
 
