@@ -12,17 +12,30 @@ Created on Mon Apr 27 09:55:08 2026
 # load dependency modules
 import sys
 import os
+import glob
 import urllib
 import gzip
 import shutil
 import subprocess
-pwd = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 
 def main():
     """
+    Checks for MFEprimer binary, downloads & configures if can't be found.
     ---
+    Returns path to MFEprimer
+    """
+    outdir = os.path.dirname(os.path.dirname(__file__))
+    path = glob.glob(outdir+"/*mfeprimer*")
+    if len(path)==0:
+        path = install_mfeprimer()
+    return path[0]
+
+
+
+def install_mfeprimer(outdir):
+    """
     Auto-downloads MFEprimer binaries and stores within multiplex_wormhole src code
     *NOTE*: Requires internet connection.
     """
@@ -39,40 +52,43 @@ def main():
         
     # attempt to download
     print("Downloading MFEprimer......")
-    outpath = os.path.join(pwd, os.path.basename(mfeprimer))
+    outpath = os.path.join(outdir, os.path.basename(mfeprimer))
     try:
         urllib.request.urlretrieve(mfeprimer, outpath)
+        # unzip file
+        if outpath.endswith(".gz"):
+            print("Unzipping downloaded file......")
+            try:
+                with gzip.open(outpath, "rb") as f_in:
+                    with open(outpath.replace(".gz",""), "wb") as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                # delete gz
+                try:
+                    os.remove(outpath)
+                except Exception:
+                    pass
+                
+                # change permissions to allow usage
+                f_out = outpath.replace(".gz","")
+                if os.path.exists(f_out):
+                    print("Allowing usage as executable....")
+                    try:
+                        subprocess.call("chmod +x "+f_out, shell=True)
+                        return [f_out]
+                    except Exception:
+                        print("Permissions could not be changed for MFEprimer- try running:")
+                        print("    chmod +x "+f_out)
+                        print("in terminal/command line, or change permissions manually.")
+            
+            except Exception:
+                print("MFEprimer successfully downloaded to "+outpath+
+                      " but could not be unzipped. To proceed, please manually unzip the package"+
+                      " and ensure that permissions allow execution (chmod + x <file>) "+
+                      "so that binaries are accessible to multiplex_wormhole.")
+            
     except Exception:
         print("Failed to download - try manual download from "+mfeprimer)
-        print("Save to "+pwd)
-    
-    # unzip file
-    if outpath.endswith(".gz"):
-        print("Unzipping downloaded file......")
-        try:
-            with gzip.open(outpath, "rb") as f_in:
-                with open(outpath.replace(".gz",""), "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            # delete gz
-            try:
-                os.remove(outpath)
-            except Exception:
-                pass
-        except Exception:
-            print("MFEprimer successfully downloaded to "+outpath+
-                  " but could not be unzipped. To proceed, please manually unzip the package"+
-                  " so that binaries are accessible to multiplex_wormhole.")
-    
-    # change permissions to allow usage
-    f_out = outpath.replace(".gz","")
-    if os.path.exists(f_out):
-        print("Allowing usage as executable....")
-        try:
-            subprocess.call("chmod +x "+f_out, shell=True)
-        except Exception:
-            print("Permissions could not be changed for MFEprimer- try running:")
-            print("    chmod +x "+f_out)
-            print("in terminal/command line, or change permissions manually.")
+        print("Save to "+outdir, " then unzip and ensure that permissions allow execution (chmod +x <file>)")
 
 
 

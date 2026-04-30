@@ -40,10 +40,11 @@ from tabulate_dimers import main as tabulateDimers
 from helpers.CSVtoFasta import main as csv2fasta
 from helpers.logging_setup import setup_logging
 
+## FIND PATH TO BINARY DEPENDENCIES
+## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
+from helpers.setup_mfeprimer import main as setup_mfeprimer
+MFEprimer_PATH = setup_mfeprimer()
 
-## SET PATHS TO DEPENDENCIES:
-MFEprimer_PATH=glob.glob(os.path.dirname(os.path.dirname(__file__))+"/*mfeprimer*")[0]
-#MFEprimer_PATH='/Users/maggiehallerud/Marten_Primer_Design/Plate1_First55Pairs_Sep2023/mfeprimer-3.2.7-darwin-10.6-amd64'#full path to mfeprimer location
 
 
 def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):

@@ -43,14 +43,13 @@ import glob
 MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole/"
 sys.path.append(MULTIPLEX_WORMHOLE+"/src/multiplex_wormhole")
 
-## INSTALL MFEprimer - THIS ONLY NEEDS TO BE RUN ONCE!
+## FIND PATH TO MFEprimer BINARY
+## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
 from helpers.setup_mfeprimer import main as setup_mfeprimer
-setup_mfeprimer()
+MFEprimer_PATH = setup_mfeprimer()
 ## IF THIS FAILS, YOU CAN ALSO MANUALLY DOWNLOAD & SET THE PATH TO MFEPRIMER BELOW:
-## (Remember- no spaces in filepaths)
 ## If downloading manually, you may also need to change permission. In terminal, run e.g.:
 ## chmod +x /yourpath/multiplex_wormhole/src/mfeprimer*
-MFEprimer_PATH=glob.glob(MULTIPLEX_WORMHOLE+"/src/*mfeprimer*")[0]
 #MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
 
 
