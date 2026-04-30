@@ -13,7 +13,7 @@ conda activate py39 #enter virtual env
 Some clusters used pixi instead of conda environments:
 ```
 pixi init #initialize virtual env
-pixi add "python==3.9" #set python version 
+pixi add "python=3.9" #set python version
 pixi shell #enter virtual env
 ```
 
@@ -21,10 +21,19 @@ pixi shell #enter virtual env
 ```
 pip install -i https://test.pypi.org/simple/ multiplex-wormhole
 ```
+Note: Pixi/conda can be finicky... Dependening on your system, you may run into dependency errors here. If that happens, `exit` your virtual env and install the missing dependencies following the instructions below.
 
 ### Back-up installation option
 If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
-1. Install the following Python packages within your virtual env:
+1. Install Python dependencies to your virtual environment (replace "pixi add" with "conda install" if using conda):
+```
+pixi add primer3-py
+pixi add pandas==1.4.4
+pixi add numpy==1.24.4
+pixi add matplotlib==3.5.2
+```
+
+Or, if not using a virtual environment:
 ```
 pip install primer3-py==2.0.0
 pip install pandas==1.4.4
@@ -39,6 +48,8 @@ git clone https://github.com/mhallerud/multiplex_wormhole/
 
 ### Configuring the MFE primer binary
 MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer v3.2.7 version that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
+
+Now you are ready to run multiplex wormhole!
 
 
 ## Full Workflow Example
