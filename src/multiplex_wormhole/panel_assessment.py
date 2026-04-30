@@ -119,7 +119,7 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     # count dimers
     logger.info("")
     logger.info("---------PANEL ASSESSMENT---------")
-    countDimers(PREFIX+"PrimerPairInteractions_wide.csv", BAD_DIMERS_dG, logger)
+    countDimers(OUT_DIMERS+"_wide.csv", OUT_DELTAG+"_wide.csv", BAD_DIMERS_dG, logger)
     
     # close out logger
     logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
