@@ -1,7 +1,7 @@
 # multiplex_wormhole
 *In silico* optimization for multiplex PCR assays that minimized predicted primer dimer loads. The pipeline was developed for genotyping by amplicon sequencing (i.e., reduced SNP panel) applications, however, the process is transferable to any multiplex PCR targeted sequencing approach. The impetus for multiplex_wormhole was genotyping noninvasive wildlife genetic samples. Default primer design settings are therefore conservative and tailored towards amplifying low concentration and degraded DNA such as that found in fecal and hair samples. 
 
-Documentation: [https://mhallerud.github.io/multiplex_wormhole](https://mhallerud.github.io/multiplex_wormhole/)
+Full documentation: [https://mhallerud.github.io/multiplex_wormhole](https://mhallerud.github.io/multiplex_wormhole/)
 
 ## Installation
 ### Set up a virtual environment
@@ -22,40 +22,23 @@ pixi shell #enter virtual env
 pip install -i https://test.pypi.org/simple/ multiplex-wormhole
 ```
 
-### Back-up option
-The following Python packages are required and can be installed after entering your virtual env:
+### Back-up installation option
+If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
+1. Install the following Python packages within your virtual env:
 ```
 pip install primer3-py==2.0.0
 pip install pandas==1.4.4
 pip install numpy==1.24.4
 pip install matplotlib==3.5.2
 ```
-General Python modules required (these come pre-installed with most Python installations): os, sys, csv, string, subprocess, random, math, signal, gc, itertools, shutil, glob, datetime, argparse
 
-### Download multiplex wormhole
-From the command line:
+2. Download source code from GitHub:
 ```
 git clone https://github.com/mhallerud/multiplex_wormhole/
 ```
 
-### Configure up MFE primer binaries
-MFEprimer is used for dimer calculations and can be configured with the setup_mfeprimer.py script. In python:
-```
-# load the function
-import sys
-sys.path.append("pathtoyour/multiplex_wormhole/src")
-from setup_mfeprimer import main as setup_mfeprimer
-# run
-setup_mfeprimer()
-```
-From the command line:
-```
-# navigate into your mw directory
-cd pathtoyour/multiplex_wormhole/src
-python3 setup_mfeprimer.py 
-```
-
-If this fails, you can also manually download [here](https://github.com/quwubin/MFEprimer-3.0/releases). Then unzip and move the binaries into your /multiplex_wormhole/src directory. MFEprimer Version 3.2.7 was used during development. 
+### Configuring the MFE primer binary
+MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer v3.2.7 version that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
 
 
 ## Full Workflow Example
@@ -63,4 +46,4 @@ See [multiplex_primer_design](multiplex_primer_design.py) to run the full pipeli
 
 
 ## Comments/Questions/Ideas
-Please report any problems or potential enhancements in the GitHub Issues page.
+Please report any problems, questions, or potential enhancements in the [GitHub Issues](https://github.com/mhallerud/multiplex_wormhole/issues) page.
