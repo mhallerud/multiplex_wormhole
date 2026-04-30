@@ -20,7 +20,7 @@ import logging
 from datetime import datetime
 #from operator import truth # converts anything>=1 to True and =0 to False
 #import multiprocessing
-from logging_setup import setup_logging
+from helpers.logging_setup import setup_logging
 
 
 
