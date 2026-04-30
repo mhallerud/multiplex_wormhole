@@ -16,7 +16,7 @@ import urllib
 import gzip
 import shutil
 import subprocess
-pwd = os.path.dirname(os.path.dirname(__file__))
+pwd = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 
