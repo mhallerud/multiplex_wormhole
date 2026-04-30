@@ -25,41 +25,50 @@ has_children: true
 
 
 ## Installation
-1.  **Set up a Python virtual environment**
-If you already use Python, we recommend setting up a virtual environment to avoid affecting your pre-existing scripts. [Anaconda](https://www.anaconda.com/products/navigator) is the recommended virtual env manager for Python. We recommend the Spyder Python interpreter for running code line-by-line, other options are PyCharm and VScode. 
-
-To set up a unix virtual environment with conda or pixi, run `pixi init` or `conda init` within the folder from which you plan to run multiplex_wormhole. Then, to enter your python environment, run `pixi shell` or `conda activate`. 
-
-2. **Install dependencies**
-multiplex_wormhole depends on the Python libraries primer3-py for primer design, pandas and numpy for data frame handling, and matplotlib for plotting. The required versions can be installed on the command line/terminal using:
+### Set up a virtual environment
+multiplex_wormhole was built and tested on MacOS with Python v3.9.13 in the Spyder IDE managed under Anaconda-Navigator. For those new to Python or with existing python packages, [Anaconda](https://www.anaconda.com/products/navigator) is the recommended virtual environment manager. For a conda virtual environment within your working directory:
 ```
+conda create -n py39 python=3.9 #create new virtual env w/ python v3.9
+conda activate py39 #enter virtual env
+```
+Some clusters used pixi instead of conda environments:
+```
+pixi init #initialize virtual env
+pixi add "python=3.9" #set python version
+pixi shell #enter virtual env
+```
+
+### Install multiplex wormhole
+```
+pip install -i https://test.pypi.org/simple/ multiplex-wormhole
+```
+Note: Pixi/conda can be finicky... Dependening on your system, you may run into dependency errors here. If that happens, `exit` your virtual env and install the missing dependencies following the instructions below.
+
+### Back-up installation option
+If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
+1. Install Python dependencies to your virtual environment (replace "pixi add" with "conda install" if using conda):
+```
+pixi add primer3-py
+pixi add pandas==1.4.4
+pixi add numpy==1.24.4
+pixi add matplotlib==3.5.2
+```
+
+Or, if not using a virtual environment:
+```
+pip install primer3-py==2.0.0
 pip install pandas==1.4.4
 pip install numpy==1.24.4
 pip install matplotlib==3.5.2
-pip install primer3-py==2.0.0
 ```
 
-3. **Download multiplex wormhole**
-multiplex wormhole scripts can be downloaded from Github. On the command line, run:
+2. Download source code from GitHub:
 ```
-git clone https://github.com/mhallerud/multiplex_wormhole
-```
-
-4. **Configure MFEprimer dependency**
-MFEprimer (Wang et al. 2019) is used for dimer prediction in multiplex wormhole. To install and configure the MFEprimer binaries, run from the command line:
-```
-python3 multiplex_wormhole/src/scripts/setup_mfeprimer.py
-```
-or, from within a Python interpreter:
-```
-# load multiplex wormhole functions
-import sys
-sys.path.append("/multiplex_wormhole/src")
-from setup_mfeprimer import main as setup_mfeprimer
-setup_mfeprimer()
+git clone https://github.com/mhallerud/multiplex_wormhole/
 ```
 
-If this fails, MFEprimer3.2.7 can be downloaded manually [here](https://github.com/quwubin/MFEprimer-3.0/releases), then unzip, ensure permissions allow execution (chmod +x), and save to your ~/multiplex_wormhole/src directory. 
+### Configuring the MFE primer binary
+MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer v3.2.7 version that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
 
 Now you are ready to run multiplex wormhole!
 
