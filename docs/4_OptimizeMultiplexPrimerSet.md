@@ -6,7 +6,7 @@ nav_order: 1
 parent: index
 ---
 # Optimize Multiplex PCR Primers
-A set of primers for "N" loci is selected that minimizes off-target interactions among primer pairs. Optionally, a "keeplist" set of primers (containing primers from a previous assay, primers for important loci, etc.) may be provided that *must* be included in the final primer set. 
+A panel that amplifies "N" target loci is selected by minimizing off-target interactions among primer pairs. Optionally, a "keeplist" set of primers (containing primers from a previous assay, primers for important loci, etc.) can be provided that *must* be included in the final primer set. 
 
 [See details on the optimization process](7_OptimizationProcess.md) to better understand parameter settings.
 
@@ -14,20 +14,19 @@ A set of primers for "N" loci is selected that minimizes off-target interactions
 ## Usage
 ### Python syntax
 ```
-import sys
-sys.path.append('/multiplex_wormhole/src')
-from scripts.optimize_multiplex import main as optimizeMultiplex
-# with minimum parameters:
-optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, deltaG=False)
+import multiplex_wormhole as mw
+
+# with minimal inputs:
+mw.optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, deltaG=False)
+
 # with all parameters & their defaults:
-optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, #data
-   SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, #sim anneal params
-   DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False,  VERBOSE=False, RNG=12345)
+mw.optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, #data args
+SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False,  VERBOSE=False, RNG=12345) #sim anneal params
 ```
 
 ### Command line syntax
 ```
-cd /multiplex_wormhole/src/scripts/
+cd ~/multiplex_wormhole #navigate to scripts
 python3 optimize_multiplex.py -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] /
 [-i ITER] [-b BURNIN] [-r DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-p PARTITIONS] [-y DIMER_ADJ] [-a PROB_ADJ] [-g] [-v] [-m]
 ```
@@ -77,8 +76,8 @@ python3 optimize_multiplex.py -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OU
 ## Outputs
 1. **`OUTPATH`_dimers.csv** : Table with pairwise dimer loads of primer pairs in optimized multiplex.
 2. **`OUTPATH`_primers.csv** : Table with Primer IDs and (adapter-ligated) sequences. 
-3. **`OUTPATH`_costsTrace.csv** : Trace of dimer load cost, temperatures, and iterations as the algorithm progressed. Only accepted changes are reported.
-4. **`OUTPATH`_DimerLoad.png** : Plot of dimer load trace across optimization iterations. Example below, with dashed line showing the transition between simulated annealing and simple iterative improvement.
+3. **`OUTPATH`_costsTrace.csv** : Trace of dimer load cost, simulated annealing temperature, and iterations as the algorithm progressed. Only accepted changes are reported.
+4. **`OUTPATH`_DimerLoad.png** : Plot of dimer load trace across iterations. Example below.
 
 ![SimulatedAnnealing_DimerLoadExample](assets/images/Example_DimerLoad.png)
 
