@@ -4,14 +4,14 @@ nav_order: 2
 has_children: true
 ---
 # multiplex wormhole
-*In silico* multiplex PCR primer design for noninvasive wildlife genetics.
+### *In silico* multiplex PCR primer design for noninvasive wildlife genetics.
 
 ![Multiplex wormhole logo with DNA entering black hole](assets/images/logo.png)
 
 # Contents
 1. [Installation](#installation)
-2. [Quick Start](#quick-start)
-3. [Input File Format](#input-file-format)
+2. [Input File Format](#input-file-format)
+3. [Quick Start](#quick-start)
 4. [Multiplex Wormhole Functions](#multiplex-wormhole-functions)
 5. [Recommended Workflows](#recommended-workflows)
 6. [Handling Outputs](#handling-outputs)
@@ -72,52 +72,13 @@ MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automa
 
 Now you are ready to run multiplex wormhole!
 
-## Quick Start
-Command line usage:
-```
-# panel design
-# -d: deltaG optimization (details in Optimization section below
-# -v: verbose
-python3.9 multiplex_wormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-s SIMPLE] [-d] [-v]
-
-# panel assessment
-panel_assessment.py [PRIMERFASTA | PRIMERCSV]
-```
-
-Python usage:
-```
-# setup
-import sys
-sys.path.append("YOURPATHTO/multiplex_wormhole")
-
-# panel design
-from multiplex_wormhole import main as multiplex_wormhole
-multiplex_wormhole(TEMPLATES,
-                   N_LOCI,
-                   OUTDIR,
-                   KEEPLIST,
-                   N_RUNS,
-                   ITERATIONS,
-                   SIMPLE,
-                   deltaG,
-                   VERBOSE)
-
-# panel assessment
-from panel_assessment import main as assess_panel
-assess_panel(PRIMERFASTA)
-# or
-assess_panel(PRIMERCSV)
-```
-
-**Using the multiplex_wormhole function will use defaults for all other parameters. Check out the workflow below and specific functions for higher flexibility in settings.**
-
 
 ## Input file format
 ### Templates file
-The primary input to multiplex wormhole is a CSV format containing information on template DNA sequences and target regions. multiplex wormhole was developed for SNP-based genotyping with data originating from new or previously published genomic sequencing data or pre-existing SNP panels, but the method can be easily adjusted to accommodate multiplex PCR design for other targeted sequencing applications such as microsatellites, methylation regions, or functional regions. 
+The primary input to multiplex wormhole is a CSV table containing information on template DNA sequences and target regions. multiplex wormhole was developed for SNP-based genotyping with data originating from new or previously published genomic sequencing data or pre-existing SNP panels, but the method can be easily adjusted to accommodate multiplex PCR design for other targeted sequencing applications such as microsatellites, methylation regions, or functional regions. 
 
-Each DNA sequence in the FASTA file will be treated as a unique target for PCR amplification (i.e., sequences should be non-overlapping and unique). The file should have 3 columns named:
-* SEQUENCE_ID : template names, without punctuation. All punctuation will be automatically removed. Names should also be unique. 
+Each DNA sequence in the CSV will be treated as a unique target for PCR amplification (i.e., sequences should be non-overlapping and unique). The file should include these three columns (exact capitalized field names required):
+* SEQUENCE_ID : Template names, without punctuation. All punctuation will be automatically removed. Names should also be unique. 
 * SEQUENCE_TEMPLATE : DNA template sequence in the 5'-->3' direction.
 * SEQUENCE_TARGET : identifies the base pairs targeted for PCR ampflication following primer3 format: <startBP,length>. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in this field. If there are 2 SNPs, for example at the 50th and 90th base pairs in the sequence, 50,40 would be the target. See the [example input CSV](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/Input_Templates.csv). 
 
@@ -128,7 +89,7 @@ Each DNA sequence in the FASTA file will be treated as a unique target for PCR a
 | ...           | ...                  | ...                |
 
 
-The [create_in_templates](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/create_in_templates.R) R script can be used to create this file using VCF and FASTA as inputs. The R script handles two input types:
+The [create_in_templates](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/multiplex_wormhole/create_in_templates.R) R script can be used to create this CSV from VCF and FASTA inputs. R dependencies include vcfR for VCF handling and openPrimeR for defining primer binding regions. The R script handles two input types:
 
 * *de novo*: Matches formatting output of *de novo* Stacks pipeline with FASTA created by `populations --fasta-loci`. Assumes the VCF 'CHROM' field matches the FASTA sequence headers with a set prefix such as "CLocus_".
 
@@ -154,23 +115,80 @@ bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.F
 ```
 
 ### Keeplist file (Optional)
-Users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel or representing functionally important regions (e.g., sexing loci). This option can be invoked for augmenting existing panels. Importantly, primer design settings in the batch primer design step (details below) should be adjusted to match the PCR settings used to design the keeplist primers. 
+Users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel or representing functionally important regions (e.g., sexing loci). This option can be invoked for augmenting existing panels. Importantly, primer design settings in the batch primer design step (details below) should be adjusted to match the PCR settings used to design the keeplist primers. Primer sequences and template names matching those in the KEEPLIST fasta will be removed from the TEMPLATES to avoid duplication, so make sure that sequence names match if there is any overlap between the two files. KEEPLIST primer names should follow the format <SequenceID>.<#>.FWD & <SequenceID>.<#>.REV, e.g., MACA01.0.FWD and MACA01.0.REV. 
 
 ### A Note on Candidate Loci
 Multiplex wormhole treats all candidates equally, it is therefore the responsibility of the user to select informative candidate DNA sequences based on their objectives. 
 
 For example, I use the following steps to prepare input data for applications focused on individual identification:
-1. *SNP discovery*: Identifying SNPs from reduced representation sequencing (e.g., RADseq) or whole genome sequencing (WGS) projects, if available. Alternatively, SNP data can be pulled from pre-existing panels, including Fluidigm panels.
-2. *Initial SNP filtering*: If using genomic data, follow standard genomics guidelines to remove erroneous SNPs (e.g., removing SNPs with low quality scores, low depths or extremely high depths, and high missingness; O'Leary et al. 2018). 
-3. *Candidate SNP filtering*: SNPs with high information content based on the objective(s) of the panel are selected. For example, SNPs with high minor allele frequencies are selected for individual identification, while SNPs with high Fst or delta values are selected for population assignment. 
-4. *Extract flanking regions around SNPs*: Using --fasta-loci for de novo RADseq data and bedtools getfasta for reference-aligned RADseq or WGS data. For reference-aligned data, masking repetitive regions (e.g., using RepeatMasker) is recommended prior to this step.
-5. *Remove candidates in known repetitive regions*: Check alignments against known repetitive elements using (CENSOR](https://www.girinst.org/censor/index.php).
+1. **SNP discovery**: Identifying SNPs from reduced representation sequencing (e.g., RADseq) or whole genome sequencing (WGS) projects, if available. Alternatively, SNP data can be pulled from templates of pre-existing panels, including Fluidigm and other SNP genotyping approaches.
+2. **Initial SNP filtering**: If using genomic data, follow standard genomics guidelines to remove erroneous SNPs (e.g., removing SNPs with low quality scores, low depths or extremely high depths, high missingness, etc.; O'Leary et al. 2018). 
+3. **Candidate SNP identification**: SNPs with high information content based on the objective(s) of the panel are selected. For example, SNPs with high minor allele frequencies are informative for individual identification, while SNPs with high Fst or delta values are informative for population assignment. 
+4. **Extract flanking regions around SNPs**: Using `populations --fasta-loci` for de novo RADseq data and `bedtools getfasta` for reference-aligned RADseq or WGS data. For reference-aligned data, masking repetitive regions (e.g., using RepeatMasker) is recommended prior to this step.
+5. **Remove candidates in known repetitive regions**: Check alignments against known repetitive elements using [CENSOR](https://www.girinst.org/censor/index.php). This step is recommended even with previous masking as repetitive regions / paralogs can cause genotyping error, particularly in low-quality samples where dropout rates are high.
+
+
+## Quick Start
+**The multiplexWormhole function is a wrapper around all sub-modules and will optimize a panel using the defaults for all other functions. Check out the [full workflow](#multiplex-wormhole-functions) and settings within individual functions for ultimate flexibility.**m
+
+### Python usage
+```
+# load module
+import multiplex_wormhole as mw
+
+# panel design
+mw.multiplexWormhole(TEMPLATES,
+                   N_LOCI,
+                   OUTDIR,
+                   KEEPLIST,
+                   N_RUNS,
+                   ITERATIONS,
+                   SIMPLE,
+                   deltaG,
+                   VERBOSE)
+
+# panel assessment
+mw.assessPanel(PRIMERFASTA, ALL_DIMERS_dG, END_DIMERS_dG, BAD_DIMERS_dG)
+# or
+mw.assessPanel(PRIMERCSV, ALL_DIMERS_dG, END_DIMERS_dG, BAD_DIMERS_dG)
+```
+
+### Command line usage
+```
+# move to path where scripts live
+cd ~/multiplex_wormhole/src/multiplex_wormhole 
+
+# panel design
+python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-s SIMPLE] [-d] [-v]
+
+# panel assessment
+python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e END_DIMERS_DG] [-b BAD_DIMERS_DG]
+```
+
+### Arguments
+#### multiplexWormhole
+**TEMPLATES (-t)** : Path to templates CSV. 
+**NLOCI (-n)** : Final panel size (i.e., # primer pairs & # templates amplified).
+**OUTDIR (-o)** : Filepath where output directory will be created and all outputs saved within a generated folder structure.
+**PREFIX (-p)** : Prefix for all outputs. [Defaults to a timestamp if None provided]
+**KEEPLIST (-k)** : Path to keeplist FASTA. [Default: None]
+**N_RUNS (-r)** : Number of optimization runs. [Default: 10]
+**ITERATIONS (-i)** : Number of simulated annealing iterations per run. [Default: 10000]
+**SIMPLE (-s)** : Number of simple iterative improvement iterations per run. [Default: 5000]
+**deltaG (-d)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
+**VERBOSE (-v)** : Print all steps and swaps at the optimization step. [Default: False]
+
+#### assessPanel
+**PRIMERS (-i)** : FASTA or CSV of primers. Sequence names must match the format <SequenceID>.<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
+**ALL_DIMERS_dG (-a)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8]
+**END_DIMERS_dG (-e)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
+**BAD_DIMERS_dG (-b)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
 
 ## Multiplex Wormhole Functions
-For maximum flexibility, the full multiplex wormhole workflow is available at: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
+For maximum flexibility, the full multiplex wormhole workflow is available at: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
-1. [Batch Primer Design](1_BatchPrimerDesign.md) with `primer3_batch_design.py`
+1. [Batch Primer Design](1_BatchPrimerDesign.md) with `batch_primer3_design.py`
    
 2. [Dimer Prediction](2_DimerPrediction.md) with `MFEprimer dimer`
   
@@ -210,7 +228,7 @@ This workflow assesses dimer load of an existing multiplex primer set (PRMERS).
 PRIMERS --> panel_assessment.py
 
 ### Re-designing an Existing Panel
-An existing panel (or combined panels) can be redesigned, but the approach will depend on whether only primer sequences available or the full templates are available. If template data are available, ensure that there is one template per target and use the "novel panel" or "augmented panel" (if unequal data availability) workflows. If only primer sequences are available, the only approach for optimization is to reduce panel size. To do so, use the following workflow with the original PRIMERS as the input fasta at the optimization step and set N_LOCI smaller than the current panel:
+An existing panel can be redesigned, or multiple existing panels combined, but the approach will depend on whether only primer sequences available or the full templates are available. If template data are available, ensure that there is one template per target and use the "novel panel" or "augmented panel" (if unequal data availability) workflows. If only primer sequences are available, the only approach for optimization is to reduce panel size. To do so, use the following workflow with the original PRIMERS as the input fasta at the optimization step and set N_LOCI smaller than the current panel:
 
 PRIMERS --> MFEprimer dimer --> tabulate_dimers.py --> multiple_run_optimization.py
 
@@ -233,12 +251,12 @@ We recommend the protocol in Eriksson et al. (2020) for lab testing:
 The multiplex wormhole `optimize_multiplex.py` function uses a combination of simple iterative improvement and simulated annealing algorithms to minimize dimer load in the multiplex primer set, where dimer load can be measured by a) tallying pairwise dimers or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates will be needed to design larger panels while keeping dimer load low. See [Optimization Algorithm](7_OptimizationProcess.md) for details. 
 
 
-## Problems? Ideas?
-Problems, bugs, or thoughts for enhancement can be reported on the [GitHub Issues page](https://github.com/mhallerud/multiplex_wormhole/issues). You can also contact Maggie Hallerud (hallerum@oregonstate.edu).
+## Problems? Questions?
+Problems/bugs, questions, or ideas for enhancement can be directed to the [GitHub Issues page](https://github.com/mhallerud/multiplex_wormhole/issues). You can also directly contact Maggie Hallerud (hallerum@oregonstate.edu).
 
 
 ## Success Stories
-Multiplex wormhole has been used to develop noninvasive genotyping panels for:
+Multiplex wormhole has been used to develop or improve noninvasive genotyping panels for:
 
 ![Humboldt marten](assets/images/marten.png)
 ![Gray wolf](assets/images/graywolf.png)
@@ -252,10 +270,10 @@ Contact us if you want to add your species to the list!
 
 
 ## Citations
-Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(4): [doi: 10.1111/1755-0998.13208](https://doi.org/10.1111/1755-0998.13208).
+Eriksson, CE, Ruprecht J, Levi T. 2020. More affordable and effective noninvasive SNP genotyping using high-throughput amplicon sequencing. Molecular Ecology Resources 20(6): 1505:1516. [doi: 10.1111/1755-0998.13208](https://doi.org/10.1111/1755-0998.13208).
 
-O'Leary et al. 
+O’Leary, SJ, JB Puritz, SC Willis, CM Hollenbeck, and DS Portnoy. 2019. These aren’t the loci you’re looking for: Principles of effective SNP filtering for molecular ecologists. Molecular Ecology Resources 27(16): 3193-3206. [doi: 10.1111/mec.14792](https://doi.org/10.1111/mec.14792).
 
 Untergasser, A, Cutcutache, I, Koressaar, T, Ye, J, Faircloth, BC, Remm, M, Rozen SG. 2012. Primer3--new capabilities and interfaces. Nucleic Acids Research: e115. [doi: 10.1093/nar/gks596](https://doi.org/10.1093/nar/gks596). 
 
-Wang et al. 2019
+Wang, K, H Li, Y Xu, Q Shao, J Yi, R Wang, W Cai, X Hang, C Zhang, H Cai, and W Qu. 2019. MFEprimer-3.0: quality control for PCR primers. Nucleic Acids Research 47 (W1): W610-W613. [doi: 10.1093/nar/gkz351](https://doi.org/10.1093/nar/gkz351).
