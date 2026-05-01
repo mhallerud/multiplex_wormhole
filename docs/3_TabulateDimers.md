@@ -11,16 +11,13 @@ Converts text files output by MFEprimer dimer into tables of pairwise primer pai
 ## Usage
 ### Python syntax
 ```
-import sys
-sys.path.append('/multiplex_wormhole/src/')
-from scripts.tabulate_MFEprimer_dimers import main as tabulateDimers
-tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False)
+mw.tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False)
 ```
 
 ### Command line syntax
 ```
-cd multiplex_wormhole/src/scripts/
-python3 tabulate_MFEprimer_dimers.py -a ALL_DIMERS.txt -e END_DIMERS.txt -o OUTPATH [-p PRIMERS_OUTPATH] [-d]
+cd ~/multiplex_wormhole/
+python3 tabulate_dimers.py -a ALL_DIMERS.txt -e END_DIMERS.txt -o OUTPATH [-p PRIMERS_OUTPATH] [-d]
 ```
 
 ### Arguments
@@ -46,7 +43,7 @@ For deltaG=False:
 
 Equivalent outputs are provided for individual primers if the `OUTPRIMERPATH` field is provided.
 
-### But which do I use?
+### But which do I use moving forwards?
 * If you want to prioritize minimizing the number of pairwise interactions in a multiplex, use the binary outputs in the optimization step. 
 * If you want to prioritize minimizing the total dimer load in a multiplex, use the count outputs in the optimization step.
 * If you want to prioritize minimizing the worst dimers in a multiplex (e.g., for complex problems where dimers are inevitable), use the deltaG outputs in the optimization step.
