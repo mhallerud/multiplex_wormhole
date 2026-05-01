@@ -6,27 +6,23 @@ nav_order: 1
 parent: index
 ---
 # Dimer Prediction
-Primer dimers are predicted using [MFEprimer v3](https://www.mfeprimer.com) (Wang et al. 2019). The `MFEprimer dimer` function is run twice: first for all primer dimers expected to form, and then for primer dimers forming on the 3' end of primers which are more problematic. This allows different filtering parameters to be used for end dimers.
+Primer dimers are predicted using MFEprimer (Wang et al. 2019). The `MFEprimer dimer` function is run twice: first for all primer dimers expected to form, and then for primer dimers forming on the 3' end of primers which are more problematic. This allows different filtering parameters to be used for end dimers.
 
 
 ## Input
 By default, multiplex_wormhole uses the FASTA output from the batch primer design step, with keeplist primers added. 
 
-    **IMPORTANT**: All candidate primers need to be included at this step, including keeplist primers. These should have been added in the previous step, otherwise you can use add_keeplist_to_fasta.py. For highest accuracy, primers should include adapter sequences. Primers should be in the 5'-->3' orientation.
+**IMPORTANT: All primers need to be included at this step, including keeplist primers. These should have been added in the previous step, otherwise you can use `add_keeplist_to_fasta.py`. For highest accuracy dimer prediction, primers should include adapter sequences. Primers should be in the 5'-->3' orientation.**
 
 
 ## Usage
 ### Dependencies
-[MFEprimer3.2.7](https://github.com/quwubin/MFEprimer-3.0/releases/) must be downloaded and located in the /multiplex_wormhole/src directory. MFEprimer can be auto-downloaded with the setup_mfeprimer.py script- [see the homepage Quick Start](index.md#quick-start) for instructions, or otherwise manually downloaded and copied to /multiplex_wormhole/src.
+`setup_mfeprimer.py` will attempt to download and configure the [MFEprimer3.2.7](https://github.com/quwubin/MFEprimer-3.0/releases/) binary file for use with multiplex_wormhole. If the function fails, it will print out specific instructions for manually downloading and configuring. This only needs to be completed once, upon the installation of multiplex wormhole.
 
 ### Python syntax
 ```
-# setup
-import sys
-import glob
-import subprocess
-sys.path.append("/multiplex_wormhole/src")
-MFEprimer_PATH = glob.glob("/multiplex_wormhole/src/*mfeprimer*)[0]
+# setup path to MFEprimer binary
+MFEprimer_PATH = mw.setup_mfeprimer()
 
 subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
 subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True) 
@@ -34,11 +30,11 @@ subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3
 
 ### Command line syntax
 ```
-/multiplex_wormhole/src/*mfeprimer* dimer -i <INPUT> -o <ALL_DIMERS> -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50
-/multiplex_wormhole/src/*mfeprimer* dimer -i <INPUT> -o <END_DIMERS> -d -5 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p
+~/multiplex_wormhole/*mfeprimer* dimer -i <INPUT> -o <ALL_DIMERS> -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50
+~/multiplex_wormhole/*mfeprimer* dimer -i <INPUT> -o <END_DIMERS> -d -4 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p
 ```
 
-### Parameters
+### Arguments
 **INPUT (-i)** : FASTA of primer sequences (with adapters) used to predict dimers. (Required)
 
 **ALL_DIMERS (-o)** : Filepath for MFEprimer text output containing information on predicted dimers.
