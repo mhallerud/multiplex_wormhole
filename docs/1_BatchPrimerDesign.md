@@ -26,7 +26,7 @@ cd ~/multiplex_wormhole/src/multiplex_wormhole
 python3 batch_primer3_design.py -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
 ```
 
-### Parameters
+### Arguments
 **TEMPLATES (-t)** : CSV filepath to templates in the following format (including these specific headers):
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
