@@ -380,8 +380,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     # set up empty tuple to hold filtered output
     filtered_primers = []
     filtered_primers.append(["PrimerID","LocusID","PrimerPair","Direction","Sequence",
-                             "AmpliconSize","StartBP","Length","AnnealingTempC",
-                             "GC%","PropBound","EndStability","Penalty","TemplMispriming"])
+                             "AmpliconSize","StartBP","Length","MeltingTempC",
+                             "GC%","PropBound","EndStability","Penalty","TempMispriming"])
     
     # set up arrays for progress tracking
     passed_ids = []
