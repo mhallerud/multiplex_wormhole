@@ -10,18 +10,17 @@ The [optimization process](7_OptimizationProcess.md) includes randomness and out
 ## Usage
 ### Python syntax
 ```
-import sys
-sys.path.append("/multiplex_wormhole/src/")
-from multiple_run_optimization import main as multipleOptimizations
-multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
+import multiplex_wormhole as mw
+mw.multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
 	deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
-         SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
-         T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2)
+    SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98,
+    T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2)
 ```
 
 ### Command line syntax
 ```
-cd /multiplex_wormhole/src/scripts
+cd ~/multiplex_wormhole #navigate to where mw scripts live
+
 python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] [-i ITER] [-b BURNIN] [-y DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-p PARTITIONS] [-w DIMER_ADJ] [-a PROB_ADJ] [-u TIMEOUT] [-g] [-v] [-m]
 ```
 
@@ -69,10 +68,11 @@ python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DI
 
 ## Outputs
 Outputs are copied into directories with prefixes as `OUTPATH`_Run`N`...:
-* **Final_Primers**: CSV of primer sequences in optimized multiplex.
-* **Final_Dimers**: CSV of pairwise dimer loads in the optimized multiplex.
-* **Trace_Dimer_Load**: CSV of dimer load reported at each swap in optimization
-* **Dimer_Load_Plots**: Dimer load plots
+* **Final_Primers** : CSV of primer sequences in optimized multiplex.
+* **Final_Dimers** : CSV of pairwise dimer loads in the optimized multiplex.
+* **Trace_Dimer_Load** : CSV of dimer load reported at each swap in optimization
+* **Dimer_Load_Plots** : Dimer load plots
+* **Logfiles** : stdout log for each run.
 
 The dimer load per optimized multiplex is output to `OUTPATH`_RunSummary.csv. Then, the best set(s) are output to FASTAs in the output directory as Run`N`_`OUTPATH`_primers.fa
 
