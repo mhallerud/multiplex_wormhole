@@ -6,7 +6,7 @@ permalink: /primer-design
 ---
 
 # Batch Primer Design
-Designs primers for each template sequence provided using primer3. Filters for secondary structure formation within pairs based on primer3 output, where primer pairs are removed if the melting temperature AND deltaG thresholds are not met for hairpins, homodimers, and heterodimers. Outputs primer sequences and details to a table and FASTA file(s)- at this stage, keeplist primers are added to the FASTA.
+Designs primers for each template sequence provided using primer3 (Untergasser et al. 2012). Filters for secondary structure formation within pairs based on primer3 output, where primer pairs are removed if the melting temperature AND deltaG thresholds are not met for hairpins, homodimers, and heterodimers. Outputs primer sequences and details to a table and FASTA file(s)- at this stage, keeplist primers are added to the FASTA.
 
 **Important: By default, primers are designed with the Illumina Nextera i5 and i7 adapters attached. If other adapter sequences are desired, use SETTINGS={'SEQUENCE_OVERHANG_LEFT': "your_FWD_adapter_sequence", 'SEQUENCE_OVERHANG_RIGHT': "your_REV_adapter_sequence"}**
 
