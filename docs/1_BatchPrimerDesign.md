@@ -8,7 +8,7 @@ permalink: /primer-design
 # Batch Primer Design
 Designs primers for each template sequence provided using primer3. Filters for secondary structure formation within pairs based on primer3 output, where primer pairs are removed if the melting temperature AND deltaG thresholds are not met for hairpins, homodimers, and heterodimers. Outputs primer sequences and details to a table and FASTA file(s)- at this stage, keeplist primers are added to the FASTA.
 
-**Important**: By default, primers are designed with the Illumina Nextera i5 and i7 adapters attached. If other adapter sequences are desired, use SETTINGS={'SEQUENCE_OVERHANG_LEFT': "your_FWD_adapter_sequence", 'SEQUENCE_OVERHANG_RIGHT': "your_REV_adapter_sequence"}
+**Important: By default, primers are designed with the Illumina Nextera i5 and i7 adapters attached. If other adapter sequences are desired, use SETTINGS={'SEQUENCE_OVERHANG_LEFT': "your_FWD_adapter_sequence", 'SEQUENCE_OVERHANG_RIGHT': "your_REV_adapter_sequence"}**
 
 
 ## Usage
@@ -17,16 +17,13 @@ Requires primer3-py Python module
 
 ### Python syntax
 ```
-import sys
-sys.path.append('/multiplex_wormhole/src/')
-from scripts.primer3_batch_design import main as primer3BatchDesign
-primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
+mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
 ```
 
 ### Command line syntax
 ```
-cd ./multiplex_wormhole/src/scripts/
-python3 primer3_batch_design.py -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
+cd ~/multiplex_wormhole/src/multiplex_wormhole
+python3 batch_primer3_design.py -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
 ```
 
 ### Parameters
@@ -59,13 +56,13 @@ The sequence target is in <POSITION,LENGTH> format. In the example, the target f
 
 
 ## Outputs
-* `OUTPATH`.csv
-* `OUTPATH`.fa
-* `OUTPATH`_plusKeeplist.fa
+* `OUTPATH`.csv : CSV of filtered primer pair details output by primer3, including primerIDs, sequences, amplicon size, start BP within template, primer length, melting temperature, % GC content, proportion bound at annealing temp, 3' end stability, penalty, and template mispriming.
+* `OUTPATH`.fa : FASTA of filtered primer pairs.
+* `OUTPATH`_plusKeeplist.fa : FASTA merging filtered primer pairs with KEEPLIST primer pairs (automatically removes any duplicate names & primers between the KEEPLIST and TEMPLATES).
 
 
 ## Default Settings
-Default settings are largely based on Eriksson et al. (2020)
+Default settings are largely based on Eriksson et al. (2020). Important ones include:
 
 * 'SEQUENCE_OVERHANG_LEFT'="tcgtcggcagcgtcagatgtgtataagagacag" #Illumina Nextera i5 (5'-->3')
 * 'SEQUENCE_OVERHANG_RIGHT'="gtctcgtgggctcggagatgtgtataagagacag" #Illumina Nextera i7 (5'-->3')
