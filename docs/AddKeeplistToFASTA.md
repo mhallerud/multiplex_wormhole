@@ -9,12 +9,13 @@ Merges FASTA of newly designed primers with keeplist primers, accounting for ove
 ## Usage
 ### Python usage
 ```
-from add_keeplist_to_fasta import main as AddKeeplist2FASTA
-AddKeeplist2FASTA(MAIN_FA, KEEPLIST_FA, OUTPATH=None)
+import multiplex_wormhole as mw
+mw.AddKeeplist2FASTA(MAIN_FA, KEEPLIST_FA, OUTPATH=None)
 ```
 
 ### Command line usage
 ```
+cd ~/multiplex_wormhole #navigate to where mw scripts live
 python3 add_keeplist_to_fasta.py -i MAIN_FA -k KEEPLIST_FA [-o OUTPATH]
 ```
 
