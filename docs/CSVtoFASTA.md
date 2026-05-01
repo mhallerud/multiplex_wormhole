@@ -4,7 +4,7 @@ layout: page
 permalink: /csv-to-fasta
 ---
 # Convert CSV to FASTA
-Converts CSV containing primers (one per row) to a FASTA file. If the output is to be used in other multiplex wormhole functions, primer sequences must be in the format <sequenceID>.<#>.FWD & <sequenceID>.<#>.REV - e.g., MACA01.0.FWD and MACA01.0.REV signify the "0th" set of primers that amplify the "MACA01" template.
+Converts CSV containing primers (one per row) to a FASTA file. If the output is to be used in other multiplex wormhole functions, primer sequences must be in the format `sequenceID`.`#`.FWD & `sequenceID`.`#`.REV - e.g., MACA01.0.FWD and MACA01.0.REV signify the "0th" set of primers that amplify the "MACA01" template.
 
 
 ## Usage
