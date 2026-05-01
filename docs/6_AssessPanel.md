@@ -10,12 +10,13 @@ The panel assessment function calculates the dimer load (both dimer count and me
 ## Usage
 ### Python syntax
 ```
-from panel_assessment import main as assessPanel
-assessPanel(PRIMERS,  ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
+import multiplex_wormhole as mw
+mw.assessPanel(PRIMERS,  ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 ```
 
 ### Command line syntax
 ```
+cd ~/multiplex_wormhole #navigate to where mw functions live
 python3 panel_assessment.py  -i INPUT [-a ALLDIMERS_DG] [-e ENDDIMERS_DG] [-b BADDIMERS_DG]
 ```
 
