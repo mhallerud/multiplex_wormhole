@@ -16,25 +16,28 @@ The plot_ASA_temps.py function is setup to accept two different sets of inputs: 
 
 ### Python syntax
 ```
-import sys
-sys.path.append('/multiplex_wormhole/src`)
-from scripts.plot_ASA_temps import main as plotASAtemps
+import multiplex_wormhole as mw
 # provided parameters (with defaults shown):
-plotASAtempls(OUTPATH, MIN_DIMER, MAX_DIMER, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, DIMER_ADJ=0.1, PROB_ADJ=2):
+mw.plotASAtemps(OUTPATH, MIN_DIMER, MAX_DIMER, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, DIMER_ADJ=0.1, PROB_ADJ=2):
+
 # provided datasets using default parameters:
-plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False)
+mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False)
+
 # providing a dataset with user-defined paramers:
-plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False, 
+mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False, 
 DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, DIMER_ADJ=0.1, PROB_ADJ=2)
+
 # providing a previous set of primers (e.g., from previous optimization) rather than new data, with all other defaults:
-plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None)
+mw.plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None)
 ```
 
 ### Command line syntax
 ```
-cd /multiplex_wormhole/src/scripts
+cd ~/multiplex_wormhole/src/multiplex_wormhole #move into directory holding scripts
+
 # provided parameters:
 python3 plot_ASA_temps.py -o OUTPATH [-i MIN_DIMERS] [-j MAX_DIMERS] [-r DECAY_RATE] [-t TEMP_INIT]  [-l TEMP_FINAL] [-a DIMER_ADJ] [-p PROB_ADJ] [-g]
+
 # providing datasets:
 python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-s DIMER_SUMS] [-d DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-z SEED] [-g] 
 ```
