@@ -125,6 +125,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     moveAllFiles(OUTDIR+"/*_dimers.csv", os.path.join(OUTDIR, "Final_Dimers"))
     moveAllFiles(OUTDIR+"/*_costsTrace.csv", os.path.join(OUTDIR, "Trace_Dimer_Load"))
     moveAllFiles(OUTDIR+"/*_DimerLoad.png", os.path.join(OUTDIR, "Plots_Dimer_Load"))
+    moveAllFiles(OUTDIR+"/*log", os.path.join(OUTDIR, "Logfiles"))
 
 
 

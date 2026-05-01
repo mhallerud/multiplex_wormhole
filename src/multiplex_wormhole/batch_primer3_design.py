@@ -218,8 +218,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     'PRIMER_WT_TEMPLATE_MISPRIMING_TH': 0.0,
     'PRIMER_WT_TM_GT': 1.0,
     'PRIMER_WT_TM_LT': 1.0,
-    'P3_PILE_FLAG': 1,
-    'NONSENSE': 'ABCD'}
+    'P3_PILE_FLAG': 1}
     
     BROAD_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgtcagatgtgtataagagacag",
     'SEQUENCE_OVERHANG_RIGHT': "gtctcgtgggctcggagatgtgtataagagacag",
@@ -362,6 +361,18 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                     BROAD_SETTINGS[k] = v
                 except Exception:
                     pass
+    
+    # save primer3 settings to log file
+    logger.info("")
+    logger.info("---------PRIMER3 SETTINGS USED:---------")
+    for k, v in PRIMER3_SETTINGS.items():
+        logger.info("%s: %s", k, v)
+    
+    if ENABLE_BROAD:
+        logger.info("------------BROAD PRIMER3 SETTINGS:-------------")
+        for k, v in BROAD_SETTINGS.items():
+            logger.info("%s: %s", k, v)
+    logger.info("")
     
     Ladapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_LEFT'].upper()
     Radapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_RIGHT'].upper()

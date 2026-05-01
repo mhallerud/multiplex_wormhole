@@ -16,7 +16,6 @@ import importlib
 import logging
 import traceback
 from datetime import datetime
-import glob
 import os
 import shutil
 import pandas as pd
@@ -39,7 +38,7 @@ MFEprimer_PATH = setup_mfeprimer()
 
 
 
-def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
+def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, 
          ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
     """
     ----------
@@ -121,7 +120,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, \
                        dG_HAIRPINS=-2,  #lower limit for hairpin deltaG
                        dG_END_LIMIT=-4, #lower limit for 3' end dimer deltaG
                        dG_MID_LIMIT=-8, #lower limit for deltaG of all other dimers
-                       KEEPLIST=None, #keeplist FASTA
+                       KEEPLIST=KEEPLIST_FA, #keeplist FASTA
                        ENABLE_BROAD=False, #try broader settings if primer design fails?
                        SETTINGS=None) #primer3 settings (in dictionary format)
     # Outputs are found in the 1_PrimerDesign folder. 

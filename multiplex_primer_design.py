@@ -2,16 +2,60 @@
 # -*- coding: utf-8 -*-
 """
 Title: MULTIPLEX PRIMER DESIGN & ASSESSMENT with multiplex_wormhole
+Full Documentation: https://mhallerud.github.io/multiplex_wormhole/
 Purpose: multiplex_wormhole optimizes primer design for multiplex amplicon sequencing 
     by minimizing predicted pairwise dimers, and assesses existing multiplexes. 
     The target audience is for SNP panel development, however the process is transferable 
     to other targeted sequencing applications.
+
 Dependencies: primer3-py (developed w/ v2.0.0)
               pandas (developed w/ v1.4.4)
               matplotlib (developed w/ v3.5.2)
-              MFEprimer v3 --> install and setup with setup_mfeprimer.py
+              MFEprimer v3.2.7
               
-Input preparation:
+Created on Tue Dec 19 19:50:45 2023
+@author: maggiehallerud
+"""
+
+#-----LOAD MULTIPLEX WORMHOLE FUNCTIONS & DEPENDENCIES------#
+import os
+import shutil
+import subprocess
+import multiplex_wormhole as mw
+
+## Alternative: load from locally cloned repository
+#MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole/" #no spaces!
+#import sys
+#sys.path.append(MULTIPLEX_WORMHOLE+"/src/multiplex_wormhole")
+
+# load multiplex wormhole functions from cloned repo
+#import importlib
+#from batch_primer3_design import main as primer3BatchDesign
+#from tabulate_dimers import main as tabulateDimers
+#from optimize_multiplex import main as optimizeMultiplex
+#from multiple_run_optimization import main as multipleOptimizations
+#from helpers.CSVtoFasta import main as CSVtoFASTA
+#from panel_assessment import main as assessPanel
+#plotASAtemps = importlib.import_module("plot_ASA_temps")
+
+
+
+#---------------------PANEL ASSESSMENT WORKFLOW ------------------------#
+# INPUT: FASTA or CSV (PrimerID, Sequence) file with primers, PrimerIDs following rules
+# described below (e.g., "MACA1.FWD" & "MACA1.REV")
+mw.assessPanel("Primers.fasta",
+               ALL_DIMERS_dG=-8, #deltaG threshold used to predict non-end dimers
+               END_DIMERS_dG=-4, #deltaG threshold used to predict 3' end dimers
+               BAD_DIMERS_dG=-10) #deltaG threshold for counting "bad" dimers
+# OUTPUTS: # primer pairs, total # pairwise dimers, # primer pairs forming dimers
+# also dimer files from MFEprimer and dimer tables from tabulateDimers
+
+    
+    
+##----------PRIMARY WORKFLOW: OPTIMIZED PANEL DESIGN FOR MULTIPLEX PCR-------##
+##--------This will run all of the sub-modules under default settings--------##
+"""
+INPUT PREPARATION:
 1) TEMPLATES : A CSV containing information on the DNA template targeted for sequencing.
 The following format is required!
     - 3 fields with the names: 
@@ -24,72 +68,35 @@ The following format is required!
 
 A helper script (create_in_templates.R) is provided to help convert a VCF + FASTA inputs
 into this CSV format. 
-        
+            
 2) KEEPLIST_FA : A FASTA formatted file containing adapter-ligated primer sequences from a current multiplex
-        assay that you are looking to add to. 
-        Forward primers must be designated with ".FWD" or ".FW" as a suffix and reverse primers with ".REV"
-    
-Created on Tue Dec 19 19:50:45 2023
-@author: maggiehallerud
-"""
-
-#### LOAD MULTIPLEX WORMHOLE FUNCTIONS & DEPENDENCIES ####
-import sys
-import glob
-
-
-## CHANGE TO YOUR MULTIPLEX_WORMHOLE PATH!
-## NO SPACES IN FILEPATHS ALLOWED HERE!
-MULTIPLEX_WORMHOLE = "/Users/maggiehallerud/Desktop/multiplex_wormhole/"
-sys.path.append(MULTIPLEX_WORMHOLE+"/src/multiplex_wormhole")
-
-## FIND PATH TO MFEprimer BINARY
-## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
-from helpers.setup_mfeprimer import main as setup_mfeprimer
-MFEprimer_PATH = setup_mfeprimer()
-## IF THIS FAILS, YOU CAN ALSO MANUALLY DOWNLOAD & SET THE PATH TO MFEPRIMER BELOW:
-## If downloading manually, you may also need to change permission. In terminal, run e.g.:
-## chmod +x /yourpath/multiplex_wormhole/src/mfeprimer*
-#MFEprimer_PATH='/Users/maggiehallerud/Desktop/multiplex_wormhole/src/mfeprimer-3.2.7-darwin-10.6-amd64'
-
-
-# load multiplex wormhole functions
-import importlib
-import os
-import shutil
-import subprocess
-from batch_primer3_design import main as primer3BatchDesign
-from tabulate_dimers import main as tabulateDimers
-from optimize_multiplex import main as optimizeMultiplex
-from multiple_run_optimization import main as multipleOptimizations
-from helpers.CSVtoFasta import main as CSVtoFASTA
-from panel_assessment import main as assessPanel
-plotASAtemps = importlib.import_module("plot_ASA_temps")
-
-
-
-
-#### ALTERNATIVE WORKFLOW: PANEL ASSESSMENT ####
-# INPUT: FASTA or CSV (PrimerID, Sequence) file with primers, PrimerIDs following rules
-# described above (e.g., "MACA1.FWD" & "MACA1.REV")
-assessPanel("Primers.fasta")
-# OUTPUTS: # primer pairs, total # pairwise dimers, # primer pairs forming dimers
-# also dimer files from MFEprimer and dimer tables from tabulateDimers
-
-    
-    
-#### PRIMARY WORKFLOW: OPTIMIZED PANEL DESIGN FOR MULTIPLEX PCR ####
-## SET INPUTS:
-os.chdir("MW_TEST/")#path to project folder
-TEMPLATES = "/multiplex_wormhole/examples/Input_Templates.csv"#CSV containing candidate sequences (path relative to project folder)
-KEEPLIST_FA = None #"MartenPanel1.fa" #FASTA containing previously designed primer set
-OUTDIR = "TEST" # folder name where outputs will be saved
+    assay that you are looking to add to. 
+    Forward primers must be designated with ".FWD" or ".FW" as a suffix and reverse primers with ".REV"
+"""        
+## SET MINIMUM INPUTS:
+TEMPLATES = "/multiplex_wormhole/examples/Input_Templates.csv"#DNA templates & targets
 N_LOCI = 50 # target panel size (# sequences amplified)
+OUTDIR = "MW_TEST" # output name
+KEEPLIST_FA = None # FASTA containing previously designed primer set
 DELTAG = False #set to True if you want to use deltaG optimization algorithm
 
 
-## Step 0: Set up output directory structure & copy inputs to it
-# set up folder structure
+mw.multiplexWormhole(TEMPLATES,
+                     N_LOCI, 
+                     OUTDIR, 
+                     PREFIX="MW_TEST", #defaults to OUTDIR basename + timestamp
+                     KEEPLIST_FA=KEEPLIST_FA,
+                     N_RUNS=10,
+                     ITERATIONS=10000, 
+                     SIMPLE=5000, 
+                     deltaG=DELTAG,  #default: False
+                     VERBOSE=False)
+
+
+
+##-----------STEP-BY-STEP: OPTIMIZED PANEL DESIGN FOR MULTIPLEX PCR----------##
+##-----------This allows ultimate flexibility for exploration----------------##
+#### STEP 0: SETUP OUTDIR STRUCTURE
 os.makedirs(OUTDIR, exist_ok=True)
 INPUTDIR = os.path.join(OUTDIR, '0_Inputs')
 os.makedirs(INPUTDIR, exist_ok=True)
@@ -105,37 +112,40 @@ if KEEPLIST_FA is not None:
     shutil.copy2(KEEPLIST_FA, INPUTDIR)
 
     
-## Step 1: batch design of primers
+#### STEP 1: BATCH DESIGN PRIMERS
 # NOTE: This script includes all of the primer design settings!
-# These can be adjusted directly in the primer3_batch_design.py script
-# or by providing a dictionary to SETTINGS.
-# details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags 
-primer3BatchDesign(TEMPLATES, 
-                   os.path.join(OUTDIR1, "FilteredPrimers"), 
-                   Tm_LIMIT = 45,
-                   dG_HAIRPINS = -2,
-                   dG_END_LIMIT = -4, # lower 
-                   dG_MID_LIMIT = -8, # lower limit for deltaG of all other dimers
-                   KEEPLIST = KEEPLIST_FA, #FASTA for keeplist
-                   ENABLE_BROAD = False, #use broader settings if no primers for template?
-                   SETTINGS = None) #primer3 settings in dictionary {} format 
-# Outputs are 1_PrimerDesign folder and include a FASTA & CSV with primer details.
+# Setting defaults found here: https://mhallerud.github.io/multiplex_wormhole/primer-design
+# full settings are printed to the 1_PrimerDesign/{OUTPATH}.log file after running this function
+mw.primer3BatchDesign(TEMPLATES, 
+                      OUTPATH = os.path.join(OUTDIR1, "FilteredPrimers"), 
+                      Tm_LIMIT = 45, #upper threshold for dimer melting temperatures
+                      dG_HAIRPINS = -2, #lower threshold for hairpin structure deltaG
+                      dG_END_LIMIT = -4, #threshold for 3' end dimer deltaG
+                      dG_MID_LIMIT = -8, #threshold for non-end dimer deltaG
+                      KEEPLIST = KEEPLIST_FA, 
+                      ENABLE_BROAD = False, #use broader settings if no primers for template?
+                      SETTINGS = None) #primer3 settings in dictionary {} format, overrides defaults 
+## Outputs will be saved to the {OUTDIR}/1_PrimerDesign folder.
 
 
-## Step 2: Predict primer dimers using MFEprimer
+#### STEP 2: PREDICT DIMERS USING MFEprimer
 # Set input based on whether keeplist is provided or not
 if KEEPLIST_FA is None:
     INPUT = os.path.join(OUTDIR1, "FilteredPrimers.fa")
 else:
     INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
 
-# NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
-# PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
-# I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
 # set output paths
 ALL_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers.txt')
 END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
-# MFEprimer parameters:
+
+# check mfeprimer path
+if not os.path.exists(mw.MFEprimer_PATH):
+    mw.MFEprimer_PATH = mw.setup_mfeprimer()
+# if this fails, you will need to manually download MFEprimer & set the path
+# instructions here: https://mhallerud.github.io/multiplex_wormhole/#installation
+
+# run MFEprimer dimer function for dimer prediction
 # -i = input FASTA of primer sequences 
 # -o = output file
 # -d = maximum deltaG threshold to consider dimers (kcal/mol)
@@ -146,143 +156,145 @@ END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
 # --mono = concentration of monovalent cations (mM)
 # --dntp = concentration of dNTPs (mM)
 # --oligo = concentration of annealing oligos (nM) 
-subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
+subprocess.call(mw.MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 "+
           "--mono 50 --dntp 0.25 --oligo 50", shell=True)
-subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 "+
+subprocess.call(mw.MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -4 -s 3 -m 70 --diva 3.8 "+
           "--mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
+## Outputs will be saved to the {OUTDIR}/2_PredictedDimers folder.
+## NOTE: This step will be slow if there are a lot of candidate primer pairs!!
 
 
-
-## Step 3: Convert MFEprimer dimer report to table formats
-## NOTE: This is the most computationally intensive step. 
-## It will run substantially faster if you leave the 4th argument blank 
-## (which means pairwise interactions between individual primers won't be calculated)
-tabulateDimers(ALL_DIMERS, 
-               END_DIMERS, 
-               os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
-               "False",#os.path.join(OUTDIR3, 'RawPrimerInteractions'))#specify this parameter if you care about per-primer dimers (Rather than just sums per primer pair)
-               DELTAG)
-# Outputs are found under 2_PredictedDimers/PrimerPairInteractions*
-# names will depend on deltaG....
+#### STEP 3: CONVERT MFEprimer TEXT OUTPUT TO TABULAR FORMATS
+# If deltaG=False (default), outputs will be the count of dimers per pairwise interaction,
+# and summarized per primer pair as the sum across all other pairs.
+# If deltaG=True, outputs will be the minimum (i.e. worst) deltaG of dimers in each pairwise interaction,
+# and summarized per primer pair as the mean across all pairwise interactions.
+mw.tabulateDimers(ALL_DIMERS, 
+                  END_DIMERS, 
+                  OUTPATH = os.path.join(OUTDIR2, 'PrimerPairInteractions'), 
+                  OUTPRIMERPATH = "False",#specify a filepath here if you want to output individual primer interactions
+                  deltaG = DELTAG)
+## Outputs are saved to 2_PredictedDimers/PrimerPairInteractions*
+# names for next step will depend on whether you're using the deltaG algorithm or not...
 if DELTAG:
     DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_mean.csv')
 else:
     DIMER_TOTS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv')
 
 
-
-## Step 4: Explore temperature space for simulated annealing
-## There are two ways to run this script: one calculates temperatures and dimer loads based on the problem at hand, 
-## the other uses pre-specified temperatures and dimer loads.
-## I recommend first running using files from the problem, then using the values observed in the outputs to explore 
-## parameters around the defaults.
-plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
-                  PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS=DIMER_TOTS,
-                  DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
-                  N_LOCI=N_LOCI, #number of target loci in panel
-                  KEEPLIST=KEEPLIST_FA, 
-                  SEED=None, #this would be an output from optimizeMultiplex
-                  BURNIN=100,#number iterations with dimer loads used to sample cost space
-                  deltaG=DELTAG)
+#### STEP 4A (OPTIONAL): EXPLORE SIMULATED ANNEALING PARAMETER SETTINGS
+## There are two ways to run this script: 
+## 1. Calculate temperatures and dimer loads based on the problem at hand.
+## 2. Use pre-specified temperatures and dimer loads.
+## I recommend trying (1) first, then using this to inform (2) if you want to 
+## explore alternatives beyond the defaults.
+mw.plotASAtemps(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
+                PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                DIMER_SUMS=DIMER_TOTS,
+                DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                N_LOCI=N_LOCI, #number of target loci in panel
+                KEEPLIST=KEEPLIST_FA, 
+                SEED=None, #this would be an output from optimizeMultiplex
+                BURNIN=100,#number iterations with dimer loads used to sample cost space
+                deltaG=DELTAG)
 # decay rate closer to 1: 
-plotASAtemps.main(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
-                  # dimer counts to plot and calculate temps from (if not set)
-                  MIN_DIMER=1,
-                  MAX_DIMER=5, #update this value based on the max observed in the default plot!
-                  # parameter determining temperature decay in negative exponential
-                  DECAY_RATE=0.98, #default is 0.95
-                  # initial temperature to start from - higher=more risk accepted
-                  T_INIT=2, 
-                  # final temperature to stop at - 1=no risk, higher=more risk accepted
-                  T_FINAL=0, #DEFAULT: 0.1
-                  #proportion of max dimer load considered when setting temperature schedule
-                  #closer to 0 = accepts fewer errors
-                  DIMER_ADJ=0.1,
-                  # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
-                  PROB_ADJ=1)#DEFAULT=2
+mw.plotASAtemps(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
+                # dimer counts to plot and calculate temps from (if not set)
+                MIN_DIMER=1,
+                MAX_DIMER=5, #update based on the max observed in the default plot!
+                DECAY_RATE=0.98, # base for geometric functino of temperature decay
+                T_INIT=2, #initial A.S.A. temperature: higher=more risk accepted
+                T_FINAL=0, #final A.S.A. temp: 0=no risk, higher=accepting risk
+                #proportion of max dimer load considered when setting temperature schedule
+                #1=no adjustment, closer to 0 = less mistake-tolerant
+                DIMER_ADJ=0.1,
+                PROB_ADJ=2) #adjusts acceptance probability rate
 
 
-## Step 5: Design a set of multiplex primers by minimizing predicted dimer formation
-# N_LOCI here is the number of loci you want in the final panel (including keeplist loci)
-# To run once:
-optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                  DIMER_SUMS = DIMER_TOTS,
-                  DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
-                  OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
-                  N_LOCI = N_LOCI, 
-                  KEEPLIST = None, #KEEPLIST_FA,
-                  deltaG = DELTAG, #True for deltaG optimization, False for standard optimization
-                  VERBOSE=False,#set to true to print dimers at each change
-                  SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
-                  ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
-                  BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
-                  DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
-                      # closer to 1 - least conservative, explores more cost space at higher risk
-                      # closer to 0 - most conservative, explores less cost space at lower risk
-                      # recommendations: 0.90-0.98, higher with fewer iterations
-                  T_INIT=None, # starting temp for fixed SA schedule (default=0.1)
-                  T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                      # temperatures=0 is equivalent to simple iterative improvement, while 
-                      # higher temperatures explore more of the cost space at higher risk of accepting dimers
-                      # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
-                  PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
-                  DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
-                      # values closer to 1 will create a temp schedule with higher risk / more cost exploration
-                      # values closer to 0 will create a temp schedule with lower risk / less cost exploration
-                  PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
-                      # increase if too many dimers are being accepted during simulated annealing, 
-                      # decrease if local optima are not being overcome
-                  SEED=None,#primer set from previous optimization run to start with, in CSV format
-                  MAKEPLOT=False)#whether to run plotSAtemps within
-# Outputs are found under 3_OptimizedSets/* and include:
-# OUTPATH_primers.fa & _primers.csv: primers included in the optimized multiplex
-# OUTPATH_dimers.fa : dimer load of each primer pair within the optimized multiplex
-# OUTPATH_ASA_costs.csv : Recorded change in dimer load at each accepted swap in the multiplex.
-# OUTPATH_dimerload.png : Trace plot of cost function through algorithm progression
+#### STEP 5: OPTIMIZE A SET OF MULTIPLEX PRIMERS BY MINIMIZING DIMER LOAD
+# To run optimization once (simple problems only, multiple runs still recommended):
+mw.optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                     DIMER_SUMS = DIMER_TOTS,
+                     DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                     OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
+                     N_LOCI = N_LOCI, 
+                     KEEPLIST = KEEPLIST_FA, #KEEPLIST_FA,
+                     deltaG = DELTAG, #True for deltaG optimization, False for standard optimization
+                     VERBOSE = False,#set to true to print dimers at each change
+                     SIMPLE = 5000, # iterations for simple iterative improvement optimization (default=5000)
+                     ITERATIONS = 10000, # iterations for simulated annealing optimization (default=10000) 
+                     BURNIN = 100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                     DECAY_RATE = 0.95, # temperature decay parameter for SA temps (default=0.98)
+                          # closer to 1 - least conservative, explores more cost space at higher risk
+                          # closer to 0 - most conservative, explores less cost space at lower risk
+                          # recommendations: 0.90-0.98, higher with fewer iterations
+                     T_INIT = None, # starting temp for fixed SA schedule (default=0.1)
+                     T_FINAL = None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                          # temperatures=0 is equivalent to simple iterative improvement, while 
+                          # higher temperatures explore more of the cost space at higher risk of accepting dimers
+                          # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
+                     PARTITIONS = 1000, # number of times to change temperature schedule (default=1000)
+                     DIMER_ADJ = 0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
+                          # values closer to 1 will create a temp schedule with higher risk / more cost exploration
+                          # values closer to 0 will create a temp schedule with lower risk / less cost exploration
+                     PROB_ADJ = 2,# adjusts dimer acceptance probabilities (default=2)
+                          # increase if too many dimers are being accepted during simulated annealing, 
+                          # decrease if local optima are not being overcome
+                     SEED = None,#primer set from previous optimization run to start with, in CSV format
+                     MAKEPLOT = False)#whether to run plotSAtemps within
+# Outputs are found under {OUTDIR}/3_OptimizedMultiplexes/ and include:
+# {OUTPATH}_primers.csv: primers included in the optimized multiplex
+# OUTPATH_dimers.csv : pairwise dimer loads of primer pairs within the optimized multiplex
+# OUTPATH_costsTrace.csv : Recorded change in dimer load at each accepted swap in the multiplex.
+# OUTPATH_DimerLoad.png : Trace plot of cost function through algorithm progression
+
+# Convert output from single run to FASTA
+mw.CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_primers.csv"), 
+              OUT_FA = os.path.join(OUTDIR3, "OUTNAME_primers.fasta"))
 
 
 ## The above function just runs the optimization process once. I highly recommend
 ## multiplex runs and then using the best option, especially for complex problems
 ## where outputs will vary. 
 ## The multipleOptimizations function will run optimizeMultiplex N_RUNS times:
-multipleOptimizations(N_RUNS = 10, 
-                      PRIMER_FA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                      DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
-                      DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
-                      OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
-                      N_LOCI = 100, 
-                      deltaG = DELTAG,#False for standard optimization, True for deltaG optimization
-                      KEEPLIST = KEEPLIST_FA, 
-                      TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
-                      VERBOSE=False,#set to true to print dimers at each change
-                      SIMPLE=3000, # iterations for simple iterative improvement optimization (default=5000)
-                      ITERATIONS=5000, # iterations for simulated annealing optimization (default=10000) 
-                      BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
-                      DECAY_RATE=0.98, # temperature decay parameter for SA temps (default=0.98)
+mw.multipleOptimizations(N_RUNS = 10, #number of optimization runs
+                         PRIMER_FA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                         DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
+                         DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                         OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
+                         N_LOCI = N_LOCI,
+                         deltaG = DELTAG,#False for standard optimization, True for deltaG optimization
+                         KEEPLIST = KEEPLIST_FA, 
+                         TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
+                         VERBOSE=False,#set to true to print dimers at each change
+                         SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
+                         ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                         BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                         DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.98)
                           # closer to 1 - least conservative, explores more cost space at higher risk
                           # closer to 0 - most conservative, explores less cost space at lower risk
                           # recommendations: 0.90-0.98, higher with fewer iterations
-                      T_INIT=2, # starting temp for fixed SA schedule (default=0.1)
-                      T_FINAL=0.1, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                          # temperatures=0 is equivalent to simple iterative improvement, while 
-                          # higher temperatures explore more of the cost space at higher risk of accepting dimers
-                          # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
-                      PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
-                      DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
+                         T_INIT=None, # starting temp for fixed SA schedule- higher: more hill-climbing
+                         T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                         PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
+                         DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
                           # values closer to 1 will create a temp schedule with higher risk / more cost exploration
                           # values closer to 0 will create a temp schedule with lower risk / less cost exploration
-                      PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
+                         PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
-                      SEED=None)#primer set from previous optimization run to start with, in CSV format
-#OUTPUTS: 3_OptimizedSets/{OUTNAME}_RunSummary.csv = run summary
-#3_OptimizedSets/{OUTNAME}_RunSummary.csv = run summary
+                         SEED=None)#primer set from previous optimization run to start with, in CSV format
+# Outputs will be saved to {OUTDIR}/3_OptimizedMultiplexes, including:
+# - {OUTNAME}_RunSummary.csv : summarizes 
+# - Run{x}_{OUTNAME}_primers.fa : Multiplexes with minimum dimer load across all runs
+# - Final_Dimers: *_dimers.csv files for each run
+# - Final_Primers: *_primers.csv files for each run
+# - Plots_Dimer_Load: *_DimerLoad.png files for each run
+# - Trace_Dimer_Load: *costsTrace.csv files for each run
+
+## If you want to assess the output panel:
+mw.assessPanel(os.path.join(OUTDIR3, "Run01_OUTNAME.fa"))
 
 
-## STEP 6: Convert selected primer set to FASTA format for additional screening
-# CHANGE THESE TO THE "BEST" Run based on RunSummary.csv output!
-CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_primers.csv"), 
-           OUT_FA = os.path.join(OUTDIR3, "OUTNAME_50loci_Run1_primers.fasta"),
-           ID_FIELD = "PrimerID",  
-           SEQ_FIELD = "Sequence")
+### IMPORTANT! ADDITIONAL SPECIFICITY CHECKS SHOULD BE RUN ON THIS PANEL
+### (e.g., PRIMER-BLAST) BEFORE LAB TESTING!
