@@ -13,15 +13,15 @@ The [optimization process](7_OptimizationProcess.md) includes randomness and out
 import multiplex_wormhole as mw
 mw.multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
 	deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
-    SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98,
-    T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2)
+    SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100,
+    DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PROB_ADJ=2)
 ```
 
 ### Command line syntax
 ```
 cd ~/multiplex_wormhole #navigate to where mw scripts live
 
-python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] [-i ITER] [-b BURNIN] [-y DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-p PARTITIONS] [-w DIMER_ADJ] [-a PROB_ADJ] [-u TIMEOUT] [-g] [-v] [-m]
+python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN] [-y DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ] [-u TIMEOUT] [-g] [-v] [-m]
 ```
 
 ### Parameters
@@ -43,7 +43,9 @@ python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DI
 
 **SIMPLE (-s)** : Number of iterations to run simple iterative improvement optimization. [Default: 5000]
 
-**ITERATIONS (-i)** : Number of iterations to run simulated annealing algorithm, where all steps (accepted and rejected changes) are counted. [Default: 10000]
+**ITERATIONS (-i)** : Iterations per simulated annealing cycle, where all steps (accepted and rejected changes) are counted. [Default: 1000]
+
+**CYCLES (-c)** : Number of simulated annealing cycles to run. [Default: 10]
 
 **BURNIN (-b)** : Number of samples taken of increased dimer costs used to calculate simulated annealing temperature schedule. Only steps that cause increased cost are counted so that this number equals the number of 'mistakes' sampled. [Default: 100]
 
@@ -52,10 +54,6 @@ python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DI
 **T_INIT (-x)** : Initial temperature to use in fixed schedule simulated annealing. By default, T_INIT is adaptively set based on the problem at hand. Higher initial temperatures means that more of the cost optimization space is explored, but more "mistakes" will also be allowed in the process. (default: None) By default, T_FINAL is set adaptively based on the problem at hand where: `T_FINAL=MIN_DIMERS + DIMER_ADJ * (MAX_DIMERS - MIN_DIMERS)` with MAX_DIMERS and MIN_DIMERS calculated from changes observed during the BURNIN stage. [Default: None -calculated from data]
 
 **T_FINAL (-l)** : Final temperature to use in fixed schedule simulated annealing. As temperatures approach 0, simulated annealing allows fewer 'mistakes' and converges with simple iterative improvement. [Default: 0.1]
-
-**PARTITIONS (-p)** : Number of temperature changes occurring in the simulated annealing process, so that there are `ITERATIONS/PARTITIONS` iterations at each temperature step before proceeding to the next step in the temperature gradient. [Default: 1000]
-
-**DIMER_ADJ (-w)** : Multiplier used to adjust initial temperature value calculation. Values close to 1 result in very high initial temperatures that cause many mistakes to be allowed, while values close to zero result in initial temperatures close to final temperatures that explore little of the cost optimization space. [Default: 0.1]
 
 **PROB_ADJ (-a)** : Multiplier used to adjust dimer acceptance probabilities. Increased values result in lower dimer acceptance probabilities at the cost of exploring less of the cost optimization space. [Default: 2]
 
