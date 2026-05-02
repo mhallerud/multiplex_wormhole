@@ -24,8 +24,8 @@ mw.plotASAtemps(OUTPATH, MIN_DIMER, MAX_DIMER, DECAY_RATE=0.95, T_INIT=None, T_F
 mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False)
 
 # providing a dataset with user-defined paramers:
-mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False, 
-DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, DIMER_ADJ=0.1, PROB_ADJ=2)
+mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100,
+   deltaG=False, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1,PROB_ADJ=2)
 
 # providing a previous set of primers (e.g., from previous optimization) rather than new data, with all other defaults:
 mw.plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None)
@@ -36,7 +36,7 @@ mw.plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KE
 cd ~/multiplex_wormhole/src/multiplex_wormhole #move into directory holding scripts
 
 # provided parameters:
-python3 plot_ASA_temps.py -o OUTPATH [-i MIN_DIMERS] [-j MAX_DIMERS] [-r DECAY_RATE] [-t TEMP_INIT]  [-l TEMP_FINAL] [-a DIMER_ADJ] [-p PROB_ADJ] [-g]
+python3 plot_ASA_temps.py -o OUTPATH [-i MIN_DIMERS] [-j MAX_DIMERS] [-r DECAY_RATE] [-t TEMP_INIT]  [-l TEMP_FINAL] [-p PROB_ADJ] [-g]
 
 # providing datasets:
 python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-s DIMER_SUMS] [-d DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-z SEED] [-g] 
@@ -70,8 +70,6 @@ Adaptively calculated as `MIN_DIMER + DIMER_ADJ * (MAX_DIMER - MIN_DIMER)`
 **T_FINAL (-l)** : Final temperature where simulated annealing ends. If not provided, this value will be calculated from changes in dimer load. (Default: 0.1)
 
 **BURNIN (-b)** : Number of 'bad' swaps used to sample changes in dimer loads. (Default: 100)
-
-**DIMER_ADJ (-a)** : Value between 0 and 1 used as a multiplier in calculating T_INIT. Values closer to 1 result in high T_INIT and values closer to 0 result in T_INIT~T_FINAL. (Default: 0.1)
 
 **PROB_ADJ (-p)** : Multiplier to adjust dimer acceptance probability, where 1=no adjustment and higher values reduce dimer acceptance probability. (Default: 2) 
 The probability of accepting an increase in dimer load follows `e^(-PROB_ADJ*cost / temperature)`
