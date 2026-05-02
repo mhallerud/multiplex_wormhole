@@ -69,7 +69,7 @@ In multiplex_wormhole, an *adaptive* simulated annealing approach is used to set
 
 Here's a plot showing the functional form of `T_INIT` based on common `MEAN_DIMER` & `MAX_DIMER` values:
 
-[!Plot of T_INIT function](images/assets/T_INIT.png)
+![Plot of T_INIT function](assets/images/T_INIT.png)
 
 This plot shows the following key characteristics:
 * T_INIT increases as MAX_DIMER increases on a logarithmic scale, allowing for higher temperatures with higher observed maximum costs (i.e., higher probability of accepting large changes) but with this effect based on the order of magnitude of MAX_DIMER.
@@ -87,8 +87,7 @@ Each multiplex wormhole run will output a dimer trace plot, with the number of i
 * **Is further optimization warranted?** There should be less change in cost as the algorithm proceeds (i.e., the plot should start looking more and more like a flat line. If this is not the case, then more optimization is possible. You can run the output back through the optimization step using the `SEED` argument in both the multipleOptimizations and optimizeMultiplex functions.
 * **How did temperatures contribute to behavior?** If you load `_costsTrace.csv` into R and plot with (x=Iterations, y=TotalDimers, color=ASA_Temp), you can check which temperatures contributed to changes (good or bad). Example below (truncated to highlight simulated annealing portion): 
 
-[!Dimer Trace Plot](images/assets/TracePlot.png)
-
+![Dimer Trace Plot](assets/images/TracePlot.png)
 
 ## Additional Tips & Tricks
 * See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FINAL`, and `PROB_ADJ` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
