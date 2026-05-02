@@ -6,7 +6,7 @@ permalink: optimization-process
 
 # The Optimization Process
 
-[basic idea]
+*In silico* optimization of multiplex PCR primers is the foundation of multiplex wormhole. The basic optimization algorithm relies on an iterative process where an initial set is designed, then at each iteration, a primer pair is randomly swapped with an alternative. If the dimer load of the multiplex improves based on this swap, the change is kept for the next iteration, otherwise the change is discarded. The process is repeated until either 1) a dimer load of 0 is achieved, 2) all alternative changes are tested and shown to provide no further improvement, or 3) the maximum number of iterations (set by the user) is reached. 
 
 
 ## Cost Functions
@@ -20,41 +20,78 @@ For simple problems, both approaches will return a final predicted dimer load of
 
 
 ## Optimization Procedure
-## 1. Selecting an initial primer set: Pseudo-greedy algorithm
-1. The best primer pairs (i.e., the primer pairs with the lowest dimer load across all other candidate primer pairs) are identified for each template.
+## 1. Selecting an initial primer set: Greedy algorithm
+An initial set of primer pairs is selected by using a pseudo-greedy algorithm that considers one template at a time: 
 
-2. An initial set of `N_LOCI` primer pairs is then selected by choosing the best (i.e., lowest cumulative dimer load) templates from the template-specific "bests". If a keeplist is provided, the keeplist primer pairs are included in the initial set and `N_LOCI`-`N_KEEPLIST_PAIRS` is used to fill out the set.
+1. The "best" primer pairs are identified for each template based on having the lowest cumulative dimer load (sum of dimers or mean deltaG) across all candidate primer pairs.
+2. Next, the best per-template primer pairs are sorted from lowest to highest cumulative dimer load.
+3. Then, an initial set of `N_LOCI` primer pairs is selected by choosing the "best" from the above sorted list of "best" per-template primer pairs. If a keeplist is provided, the keeplist primer pairs are included in the initial set and `N_LOCI`-`N_KEEPLIST_PAIRS` "bests" are chosen.
 
 
-## 2. Exploring the optimization space: Simulated annealing algorithm
-*Simulated annealing* is an optimization procedure that allows the algorithm to make "mistakes" as it proceeds. Short-term "mistakes" (i.e., changes that result in a worst set) may make the primer set worst at first, but help to overcome local minima in the optimization space using "hill-climbing" behavior. Simulated annealing proceeds along a schedule where riskier decisions (i.e., decisions that result in worse outcomes from the previous iterations) are allowed in early iterations, but as the algorithm proceeds, riskier decisions are allowed with lower probability. 
+## 2. Minimizing dimer load: Simple iterative improvement algorithm
+The initial set is then used as input for a simple iterative improvement algorithm. At each iteration, the total and per-pair costs (i.e., dimer load) are calculated for the current multiplex. Then, the following steps are taken:
 
-At each iteration in the algorithm, a primer pair is randomly swapped with an alternative. The total dimer load (i.e., cost) of the new primer set is calculated and compared to the cost of the previous set. Based on the simulated annealing temperature and the calculated cost, the change will be accepted and the algorithm will use this primer set moving forward. All changes that improve the primer set (i.e., lower dimer cost) are accepted, while the probability of accepting a change that results in a worse set is governed by a temperature schedule. This process is repeated 1000s of times (based on `ITERATIONS`), and as the algorithm proceeds the primer set should steadily improve. More iterations will be needed for more challenging problems.
+1. The "worst" primer pair within the current set is identified and swapped with a random alternative. The total cost is calculated for this new set.
+2. If the new total cost is lower than the previous total cost, then the change is kept and the algorithm proceeds to the next iteration.
+3. If cost is not reduced, then the algorithm will test other alternatives to replace the current worst pair until either 1) an improvement is made or 2) alternatives are exhausted. If alternatives are exhausted, the algorithm will proceed to try to replace the "next worst" primer pair at the next step, and so on.
+4. When an alternative is found, the algorithm will proceed to the next iteration. Each iteration starts by trying to replace the "worst" primer pair.
+5. This process continues until either A) the primer set is fully optimized (0 dimers), B) no alternatives can improve the set further, or C) the user-defined number of iterations `SIMPLE` have been run.
 
-In multiplex_wormhole, an adaptive simulated annealing approach is used to set the temperature schedule. After sampling `BURNIN` "mistakes" where a random change resulted in a worse primer set, temperatures are set based on the least bad (`MIN_DIMERS`) and worst (`MAX_DIMERS`) changes observed. Specifically,
+This step is where the bulk of reduction in dimer load will occur.
 
-`T_INIT = MIN_DIMERS + DIMER_ADJ * (MAX_DIMERS - MIN_DIMERS)` with 0.1 as the default `DIMER_ADJ` parameter.
 
-`T_FINAL = 0.1`
+## 3.Overcoming local minima: Adaptive simulated annealing algorithm
+*Simulated annealing* is an optimization procedure that allows the algorithm to make "mistakes" as it proceeds. Short-term "mistakes" (i.e., changes that result in higher cost) enable the algorithm to overcome local minima in the optimization space using "hill-climbing" behavior. Simulated annealing proceeds along a schedule where riskier decisions (i.e., those resulting in increased cost) are allowed with higher probability in early iterations in order to explore the search space, and with decreasing probability as the algorithm proceeds. Simulated annealing takes the following steps:
 
-Higher temperatures correspond with allowing riskier decisions, and lower temperatures correspond with less risky decisions. A negative exponential function is used for the temperature gradient so that temperatures decline rapidly and most of the algorithm's time is spent in the "less risky" optimization space. The temperature schedule follows the function:
+### The Process
+1. Similar to simple iterative improvement, primer pairs are swapped at each iteration. However, in the simulated annealing algorithm, the primer pairs that are swapped are selected randomly.
+2. The total dimer load (i.e., cost) of the new primer set is calculated and compared to the cost of the previous set. All changes that improve the primer set (i.e., lower dimer cost) are accepted, while changes that increase cost will be accepted based on a probability function that is defined by the simulated annealing temperature schedule and the change in cost:
+      `p = e^(-_PROB_ADJ_ * delta_cost / T)`
+where `T` is the simulated annealing temperature at the current iteration, `delta_cost` is the new cost minus the previous cost, and `PROB_ADJ` is a scaling parameter set by the user (Default=2).
+3. The simulated annealing temperature is reduced before proceeding to the next iteration, so that increased costs are less likely to be accepted as the algorithm progresses. The temperature schedule within multiplex wormhole is defined by a geometric function:
+       `(T_INIT-T_FINAL)*_DECAY_RATE_**(i_scaled)+T_FINAL`
+where `T_INIT` is the initial temperature, `T_FINAL` is the final temperature, `i_scaled` is the percent of iterations run (i.e., i / (ITERATIONS/100)), and `_DECAY_RATE_` is the user-defined temperature decay rate (Default=0.95). See below for details on calculating `T_INIT` & `T_FINAL` for each cycle.
+4. Steps 1-3 are repeated until `ITERATIONS` is reached.
+5. The simulated annealing cycle ends when the number of iterations is reached. Then, the temperature schedule is restarted and recalculated (details below) and a new simulated annealing cycle is run until the number of `CYCLES` is reached (Default=10). 
 
-`Temperature = (T_INIT-T_FINAL) * 0.95^step + T_FINAL` with 0.95 as the default `DECAY_RATE` parameter.
+The default temperature schedule and acceptance probabilities are plotted on the [Exploring Optimization Parameters page](4A_ExploreOptimParams.md).
 
-Temperatures proceed to the next 'step' based on the `PARTITIONS` parameter which defines how many temperature changes will occur during simulated annealing. By default, with 1000 `PARTITIONS` and 5000 `ITERATIONS`, the temperature is reduced every 5 iterations.
+### Defining the Temperature Schedule
+In multiplex_wormhole, an *adaptive* simulated annealing approach is used to set the temperature schedule, where the initial temperature is set based on the cost space of the problem at hand. The initial temperature is recalculated for each simulated annealing cycle (i.e., to account for the change in cost space from the previous cycle) using the following steps:
 
-At each iteration, the probability of accepting a change that increases dimer load is governed by the formula:
+1. Random swaps (without accepting changes) are sampled for `BURNIN` iterations (default=200), and the change in cost `delta_cost` recorded.
+2. The `MEAN_DIMERS` (i.e., mean `delta_costs`) and `MAX_DIMERS` (i.e., max `delta_costs`) are recorded. 
+3. The initial temperature is calculated based on the ratio of these two values:
+     `T_INIT = -alpha * log10( MEAN_DIMER / MAX_DIMER ) + 2`
+`alpha` is hardcoded as `alpha=2` when `deltaG=False`, and `alpha=2.5` when `deltaG=True`. All values <0.3 are reset at 0.3 to ensure some hill-climbing ability even with complex problems.
+4. The final temperature is set as provided. By default, this value is nearly 0 so that the end of each cycle is running simple iterative improvement:
+    `T_FINAL = 0.01`
 
-`e^(-PROB_ADJ*cost / temperature)`
+Here's a plot showing the functional form of `T_INIT` based on common `MEAN_DIMER` & `MAX_DIMER` values:
 
-where PROB_ADJ is set by the user, temperature is the simulated annealing temperature at the current step, and cost is the increase in dimer load relative to the previous iteration. 
+[!Plot of T_INIT function](images/assets/T_INIT.png)
 
-## 3. Fine-tuning the optimized set: Simple iterative improvement algorithm
-The best set (lowest dimer load) from simulated annealing is used as input into an iterative improvement algorithm. In iterative improvement, the worst primer pair is identified and swapped with a random alternative. If the new primer pair has fewer dimers than the previous, then it is kept and the new primer set is used as the starting point for the next iteration. If not, all other alternatives for this worst primer pair are tried until either a better option is found or alternatives are exhausted. Then, the algorithm proceeds to the next worst primer pair. This process continues until either A) the primer set is fully optimized (0 dimers), B) no alternatives can improve the set anymore, or C) the user-defined number of iterations `SIMPLE` have passed.
+This plot shows the following key characteristics:
+* T_INIT increases as MAX_DIMER increases on a logarithmic scale, allowing for higher temperatures with higher observed maximum costs (i.e., higher probability of accepting large changes) but with this effect based on the order of magnitude of MAX_DIMER.
+* The T_INIT function shifts upwards with lower MEAN_DIMER, allowing higher acceptance of "mistakes" with mean cost space. This allows the algorithm to accept more "risk" as the cost space includes lower-cost changes and a higher proportion of changes that will reduce cost.
+* The minimum value is near 0-2, while the maximum value is <8. Based on testing, values >10 resulted in increased dimer loads as the algorithm progressed.
+* Temperatures are higher for the deltaG algorithm. This is OK because cost changes tend to be much less variable for mean deltaG than for total dimer count, so more risk can be accepted.
+
+Users may also choose to set a fixed temperature schedule using the `T_INIT` and `T_FINAL` arguments; these will be carried into all simulated annealing cycles. `T_INIT` between 2-3 seems to work well for most problems.
+
+
+## Understanding the Dimer Trace Plot
+Each multiplex wormhole run will output a dimer trace plot, with the number of iterations based on the total iterations passed (SIMPLE + ITERATIONS), which allows visualization of the contributions of each algorithm. This can also be plotted in R using the `_costTrace.csv` output. The trace plot can help troubleshoot simulated annealing parameterization:
+* **Were local optima overcome?** Are there small "hills" in the plot at the iterations corresponding to the start of each simulated annealing cycle? If so, hill-climbing is working. Otherwise, if there are no hills or the hills are small, try increasing `T_INIT` to allow higher hills to be climbed at the start of each cycle. To extend the hill-climbing period of each cycle, increase the `DECAY_RATE` (e.g., 0.98).
+* **Was hill-climbing excessive?** If the trace plot shows runaways cost increases as simulated annealing progresses, too many cost increases are being accepted. This can be rectified by reducing `T_INIT` or `PROB_ADJ` to reduce the probability of accepting large cost increases, or reducing the `DECAY_RATE` (e.g., 0.90) to make the hill-climbing period of each cycle shorter.
+* **Is further optimization warranted?** There should be less change in cost as the algorithm proceeds (i.e., the plot should start looking more and more like a flat line. If this is not the case, then more optimization is possible. You can run the output back through the optimization step using the `SEED` argument in both the multipleOptimizations and optimizeMultiplex functions.
+* **How did temperatures contribute to behavior?** If you load `_costsTrace.csv` into R and plot with (x=Iterations, y=TotalDimers, color=ASA_Temp), you can check which temperatures contributed to changes (good or bad). Example below (truncated to highlight simulated annealing portion): 
+
+[!Dimer Trace Plot](images/assets/TracePlot.png)
 
 
 ## Additional Tips & Tricks
-* See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FIXED`, `DIMER_ADJ`, and `PROB_ADJ` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
+* See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FINAL`, and `PROB_ADJ` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
 * The optimization process is inherently random and results will vary across runs. As such, it's recommended to run multiple times and select the "best" result. `multiple_run_optimization` provides an easy wrapper for running and summarizing across multiple runs with standard inputs. Variability in results will increase with problem complexity, and more runs are recommended for very complex problems.
 * For simple problems (e.g., selecting 50 primer pairs from 200 candidates), the iterative improvement is sufficient and more efficient. To run the simple iterative improvement algorithm, set `SIMPLE` high and `ITERATIONS=0` to bypass simulated annealing. 
 * For challenging problems (e.g., many options and/or many `N_LOCI`), you may consider successive optimization runs. The `SEED` argument in the `optimizeMultiplex` function is provided to allow an output from a previous run to be used as the "initial panel" for a new optimization run. This is not the same as just increasing the number of iterations because the simulated annealing temperature schedule will be recalculated for this set and simulated annealing will possibly allow local minima to be overcome.
