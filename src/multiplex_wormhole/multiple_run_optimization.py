@@ -22,7 +22,7 @@ from optimize_multiplex import main as optimizeMultiplex
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
-         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100, DECAY_RATE=0.95, 
+         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
          T_INIT=None, T_FINAL=None, PROB_ADJ=2):
     """
     N_RUNS : # optimization runs [int]
@@ -41,25 +41,13 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
     ITERATIONS : # iterations per simulated annealing optimization cycle [default=1000]
     CYCLES : # simulated annealing cycles to run [default: 10]
-    BURNIN : # iterations to sample dimer cost space [integer; default=100]
-    DECAY_RATE : parameter for temperature decay rate in negative exponential [proportion; default=0.98]
+    BURNIN : # iterations to sample dimer cost space [integer; default=200]
+    DECAY_RATE : parameter for temperature decay rate in negative exponential [proportion; default=0.95]
         -closer to 1: least conservative, explores more of cost space but adds more dimers
-        -closer to 0: most conservative, does not add dimers but also can't overcome local optima
-        -recommended to set lower with more iterations, higher with more:
-            # 1000 iterations - 0.98
-            # 10000 iterations - 0.90
-            # 5000 iterations - 0.95
     T_INIT : Starting temperature for simulated annealing (default: None, i.e. set adaptively)
-        -values closer to T_FINAL will reduce dimer acceptance probabilities
-    T_FINAL : Ending temperature for simulated annealing (default: 0.1)
-        -0 is equivalent to simple iterative improvement, higher values allow more costs
-    PARTITIONS : # partitions for temperature space [default=1000]
-        -fewer partitions means algorithm stays in each temperature space longer
-        -overriden if iterations < partitions
-    DIMER_ADJ : proportion of dimer load to consider when setting SA temperatures [proportion; default=0.1]
-        -values closer to 1 will allow many dimers to be accepted
-        -values closer to 0 will reject dimers but fail to overcome local optima
-    PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 1)
+        - values closer to 0 will reduce increasing costs
+    T_FINAL : Ending temperature for simulated annealing (default: 0.01)
+    PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 2)
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
     -------
     Outputs N_RUNS optimized multiplexes and a summary.
@@ -172,13 +160,12 @@ def parse_args():
     parser.add_argument("-k", "--keeplist", type=str, default=None)
     parser.add_argument("-e", "--seed", type=str, default=None)
     parser.add_argument("-s", "--simple", type=int, default=5000)
-    parser.add_argument("-i", "--iter", type=int, default=10000)
-    parser.add_argument("-b", "--burnin", type=int, default=100)
+    parser.add_argument("-i", "--iter", type=int, default=1000)
+    parser.add_argument("-c", "--cycles", type=int, default=10)
+    parser.add_argument("-b", "--burnin", type=int, default=200)
     parser.add_argument("-y", "--decay_rate", type=float, default=0.95)
     parser.add_argument("-x", "--temp_init", type=float, default=None)
-    parser.add_argument("-l", "--temp_final", type=float, default=0.1)
-    parser.add_argument("-p", "--partitions", type=int, default=1000)
-    parser.add_argument("-w", "--dimer_adj", type=float, default=0.1)
+    parser.add_argument("-l", "--temp_final", type=float, default=0.01)
     parser.add_argument("-a", "--prob_adj", type=float, default=2)
     parser.add_argument("-u", "--timeout", type=float, default=5)
     # add flags
@@ -206,10 +193,9 @@ if __name__=="__main__":
          SEED = args.seed,
          SIMPLE = args.simple, 
          ITERATIONS = args.iterations, 
+         CYCLES = args.cycles,
          BURNIN = args.burnin, 
          DECAY_RATE = args.decay_rate,
          T_INIT = args.temp_init, 
          T_FINAL = args.temp_final, 
-         PARTITIONS = args.partitions, 
-         DIMER_ADJ = args.dimer_adj, 
          PROB_ADJ = args.prob_adj)

@@ -239,10 +239,10 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     
     ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 steps
     # Define range of dimer loads to use in calculations
-    dimers = list(range(MIN_DIMER, MAX_DIMER+1))
+    dimers = list(range(round(MIN_DIMER), round(MAX_DIMER)+1))
     temps = [T_INIT]
     step=0
-    while i < 100:
+    while step < 100:
         step+=1
         new_temp = (T_INIT-T_FINAL)*DECAY_RATE**step+T_FINAL
         temps.append(new_temp)

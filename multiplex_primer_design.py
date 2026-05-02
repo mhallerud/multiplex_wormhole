@@ -225,16 +225,16 @@ mw.optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'),
                      SIMPLE = 5000, # iterations for simple iterative improvement optimization (default=5000)
                      ITERATIONS = 1000, # iterations per simulated annealing cycle (default=1000) 
                      CYCLES = 10, # number of simualted annealing iterations to run (default=10)
-                     BURNIN = 100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
-                     DECAY_RATE = 0.95, # temperature decay parameter for SA temps (default=0.98)
+                     BURNIN = 200, # iterations for sampling dimer cost space to adaptively set SA temps (default=200)
+                     DECAY_RATE = 0.95, # temperature decay parameter for SA temps (default=0.95)
                           # closer to 1 - least conservative, explores more cost space at higher risk
                           # closer to 0 - most conservative, explores less cost space at lower risk
                           # recommendations: 0.90-0.98, higher with fewer iterations
-                     T_INIT = None, # starting temp for fixed SA schedule (default=0.1)
-                     T_FINAL = 0.01, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                          # temperatures=0 is equivalent to simple iterative improvement, while 
+                     T_INIT = None, # starting temp for fixed SA schedule (default=None -i.e., set adaptively( set))
+                     T_FINAL = 0.01, # ending temp for fixed SA schedule (default=0.01, must be>0)
+                          # 0 is equivalent to simple iterative improvement
                           # higher temperatures explore more of the cost space at higher risk of accepting dimers
-                          # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
+                          # recommended initial fixed schedule is T_INIT~3 and T_FINAL=0.1
                      PROB_ADJ = 2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome

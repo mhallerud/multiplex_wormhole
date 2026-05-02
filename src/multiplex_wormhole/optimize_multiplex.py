@@ -34,7 +34,7 @@ from helpers.logging_setup import setup_logging
 
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
-         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=500, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, 
+         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, 
          PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
@@ -279,7 +279,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         #sum of dimers in count
         curr_total = sum(curr_dimer_totals.values())#total
         logger.info("     Initial dimer load: %s", str(curr_total))
-    costs = [["Iterations","SA_Temp", "TotalDimers"]]
+    costs = [["Iterations","ASA_Temp", "TotalDimers"]]
 
     if curr_total==0:
         logger.info("Initial primer set already has 0 predicted dimers! Skipping optimization process.")
@@ -501,14 +501,18 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         while cycle < CYCLES:
             logger.info("Running cycle %s", cycle+1)
             # set new t_init based on sampling cost space
-            if cycle==0:
-                Temp = T_init
+            if T_INIT is None:
+                if cycle==0:
+                    Temp = T_init
+                else:
+                    Temp, maxd, mind = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                                                primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                                                keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
+                                                deltaG, logger, BURNIN=200)
+            # always use set T_INIT if provided
             else:
-                Temp, maxd, mind = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
-                         primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
-                         keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
-                         deltaG, logger, BURNIN=200)
-                logger.info("     T_init used: %s", Temp)
+                Temp = T_INIT
+            logger.info("     T_init used: %s", Temp)
             # reset iterations for each cycle
             n_iter = 0
             while n_iter <= ITERATIONS:
@@ -719,7 +723,7 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
 def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
          primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
          keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
-         deltaG, logger, BURNIN=100):
+         deltaG, logger, BURNIN=200):
     logger.info("     Sampling cost space to set initial temp....")
     change = []
     while len(change) < BURNIN:
@@ -740,18 +744,19 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
     MAX_DIMER = max(neg_changes)
     MIN_DIMER = min(neg_changes)#almost always 1!
     logger.info("     Changes that increase cost: %s", 
-                str(round(len(neg_changes)/len(change),3))+"%")
+                str(round(len(neg_changes)/len(change),3)*100)+"%")
     logger.info("     Mean +cost change: %s", round(MEAN_DIMER,2))
     logger.info("     Max +cost observed: %s", round(MAX_DIMER,2))
     logger.info("     Min +cost observed: %s", round(MIN_DIMER,2))
-    #mean 27 -->3; dG: 8.9
-    #max 110 -->3; dG: 41
     # T_init should depend on p(accepting mistake) [based on mean mistake] & 
     # how bad that 'mistake' is
     if deltaG:
         T_INIT = -2*math.log10(MEAN_DIMER/MAX_DIMER)+2
     else:
         T_INIT = -2.5*math.log10(MEAN_DIMER/MAX_DIMER)+2
+    # correction if small
+    if T_INIT < 0.3: T_INIT = 0.3
+    
     return [T_INIT, MIN_DIMER, MAX_DIMER]
 
 
@@ -1067,7 +1072,7 @@ def parse_args():
     parser.add_argument("-s", "--simple", type=int, default=5000)
     parser.add_argument("-i", "--iter", type=int, default=1000)
     parser.add_argument("-c", "--cycles", type=int, default=10)
-    parser.add_argument("-b", "--burnin", type=int, default=100)
+    parser.add_argument("-b", "--burnin", type=int, default=200)
     parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
     parser.add_argument("-x", "--temp_init", type=float, default=None)
     parser.add_argument("-l", "--temp_final", type=float, default=0.1)

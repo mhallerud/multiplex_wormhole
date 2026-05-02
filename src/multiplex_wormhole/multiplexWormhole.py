@@ -198,7 +198,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                       N_LOCI=N_LOCI, #number of target loci in panel
                       KEEPLIST=KEEPLIST_FA, 
                       SEED=None, #this would be an output from optimizeMultiplex
-                      BURNIN=100,#number iterations with dimer loads used to sample cost space
+                      BURNIN=200,#number iterations with dimer loads used to sample cost space
                       DECAY_RATE=0.95, #temp decay rate
                       PROB_ADJ=2,#decay rate of acceptance probability
                       deltaG=deltaG)
@@ -238,7 +238,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 
                           CYCLES=CYCLES, #simulated annealing cycles to run (default=10)
-                          BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                          BURNIN=200, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                           DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.95)
                               # closer to 1 - least conservative, explores more cost space at higher risk
                               # closer to 0 - most conservative, explores less cost space at lower risk
