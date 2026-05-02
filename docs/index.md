@@ -136,21 +136,13 @@ For example, I use the following steps to prepare input data for applications fo
 # load module
 import multiplex_wormhole as mw
 
-# panel design
-mw.multiplexWormhole(TEMPLATES,
-                   N_LOCI,
-                   OUTDIR,
-                   KEEPLIST,
-                   N_RUNS,
-                   ITERATIONS,
-                   SIMPLE,
-                   deltaG,
-                   VERBOSE)
+# panel design (defaults shown)
+mw.multiplexWormhole(TEMPLATES, N_LOCI, OUTDIR, KEEPLIST_FA, N_RUNS,
+                     ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False,
+                     VERBOSE=False)
 
-# panel assessment
-mw.assessPanel(PRIMERFASTA, ALL_DIMERS_dG, END_DIMERS_dG, BAD_DIMERS_dG)
-# or
-mw.assessPanel(PRIMERCSV, ALL_DIMERS_dG, END_DIMERS_dG, BAD_DIMERS_dG)
+# panel assessment (defaults shown)
+mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 ```
 
 ### Command line usage
@@ -159,7 +151,7 @@ mw.assessPanel(PRIMERCSV, ALL_DIMERS_dG, END_DIMERS_dG, BAD_DIMERS_dG)
 cd ~/multiplex_wormhole/src/multiplex_wormhole 
 
 # panel design
-python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-s SIMPLE] [-d] [-v]
+python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES] [-s SIMPLE] [-d] [-v]
 
 # panel assessment
 python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e END_DIMERS_DG] [-b BAD_DIMERS_DG]
@@ -171,9 +163,10 @@ python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e EN
 **NLOCI (-n)** : Final panel size (i.e., # primer pairs & # templates amplified).
 **OUTDIR (-o)** : Filepath where output directory will be created and all outputs saved within a generated folder structure.
 **PREFIX (-p)** : Prefix for all outputs. [Defaults to a timestamp if None provided]
-**KEEPLIST (-k)** : Path to keeplist FASTA. [Default: None]
+**KEEPLIST_FA (-k)** : Path to keeplist FASTA. [Default: None]
 **N_RUNS (-r)** : Number of optimization runs. [Default: 10]
-**ITERATIONS (-i)** : Number of simulated annealing iterations per run. [Default: 10000]
+**ITERATIONS (-i)** : Number of simulated annealing iterations per cycle. [Default: 1000]
+**CYCLES (-c) ** : Number of simulated annealing cycles per run. [Default: 10]
 **SIMPLE (-s)** : Number of simple iterative improvement iterations per run. [Default: 5000]
 **deltaG (-d)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
 **VERBOSE (-v)** : Print all steps and swaps at the optimization step. [Default: False]
