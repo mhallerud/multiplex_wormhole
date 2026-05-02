@@ -9,19 +9,22 @@ has_children: true
 ![Multiplex wormhole logo with DNA entering black hole](assets/images/logo.png)
 
 # Contents
-1. [Installation](#installation)
-2. [Input File Format](#input-file-format)
-3. [Quick Start](#quick-start)
-4. [Multiplex Wormhole Functions](#multiplex-wormhole-functions)
-5. [Recommended Workflows](#recommended-workflows)
-6. [Handling Outputs](#handling-outputs)
-7. [Optimization Details](#optimization-details)
+1. [Description](#description)
+2. [Installation](#installation)
+3. [Input File Format](#input-file-format)
+4. [Quick Start](#quick-start)
+5. [Multiplex Wormhole Functions](#multiplex-wormhole-functions)
+6. [Recommended Workflows](#recommended-workflows)
+7. [Handling Outputs](#handling-outputs)
 8. [Contact](#problems-questions)
 9. [Success Stories](#success-stories)
 10. [Citations](#citations)
 
 
+## Description
 **multiplex wormhole is largely an automation of pre-existing protocols for noninvasive SNP panel development (Eriksson et al. 2020). All default parameters for primer design, PCR parameters, and dimer prediction are based on this protocol and assume that the two-step PCR with Illumina Nextera adapters is being used. We recommend that the indexing step use Illumina unique dual indexes to minimize error rates due to index hopping, which is likely to be especially problematic with low-quality samples.**
+
+The heart of multiplex wormhole's contribution to multiplex PCR primer design is its optimization algorithms. The multiplex wormhole `optimize_multiplex.py` function uses a combination of greedy, simple iterative improvement, and simulated annealing algorithms to minimize dimer load in the multiplex primer set. Dimer load can be measured by either: a) tallying pairwise dimers, or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates needed for designing larger panels. See [Optimization Details](7_OptimizationProcess.md) for a full descriptions of the optimization algorithms and parameter settings.
 
 
 ## Installation
@@ -238,10 +241,6 @@ Multiplex wormhole is an ***in silico*** design tool, and although it facilitate
 We recommend the protocol in Eriksson et al. (2020) for lab testing:
 1. Initial lab test in equimolar multiplex (0.2 uM per primer) on a range of sample qualities. Primer pairs that fail to amplify at this step and/or primers forming strong secondary structures that consume sequencing depth should be removed. Primer concentrations can also be adjusted to improve evenness of sequencing depth across targets.
 2. The second round of optimization should test specificity and genotyping error rates. These can be assessed using matched samples from the same individual (e.g., scat, hair, and tissue from the same animal) and testing on off-target species (e.g., diet items and closely related co-occurring species). Note that technical replicates are better than nothing, but are insufficient for assessing specificity and error issues specific to low-quality samples.
-
-
-## Optimization Details
-The multiplex wormhole `optimize_multiplex.py` function uses a combination of simple iterative improvement and simulated annealing algorithms to minimize dimer load in the multiplex primer set, where dimer load can be measured by a) tallying pairwise dimers or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates will be needed to design larger panels while keeping dimer load low. See [Optimization Algorithm](7_OptimizationProcess.md) for details. 
 
 
 ## Problems? Questions?
