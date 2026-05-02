@@ -45,7 +45,7 @@ python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DI
 
 **ITERATIONS (-i)** : Iterations per simulated annealing cycle, where all steps (accepted and rejected changes) are counted. [Default: 1000]
 
-**CYCLES (-c)** : Number of simulated annealing cycles to run. [Default: 10]
+**CYCLES (-c)** : Number of simulated annealing cycles per optimization run. [Default: 10]
 
 **BURNIN (-b)** : Number of samples taken of increased dimer costs used to calculate simulated annealing temperature schedule. Only steps that cause increased cost are counted so that this number equals the number of 'mistakes' sampled. [Default: 100]
 
