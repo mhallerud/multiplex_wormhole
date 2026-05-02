@@ -75,9 +75,8 @@ python3 optimize_multiplex.py -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OU
 1. **`OUTPATH`_dimers.csv** : Table with pairwise dimer loads of primer pairs in optimized multiplex.
 2. **`OUTPATH`_primers.csv** : Table with Primer IDs and (adapter-ligated) sequences. 
 3. **`OUTPATH`_costsTrace.csv** : Trace of dimer load cost, simulated annealing temperature, and iterations as the algorithm progressed. Only accepted changes are reported.
-4. **`OUTPATH`_DimerLoad.png** : Plot of dimer load trace across iterations. Example below.
+4. **`OUTPATH`_DimerLoad.png** : Plot of dimer load trace across iterations. See example and details [here](https://mhallerud.github.io/multiplex_wormhole/optimization-process#understanding-the-dimer-trace-plot).
 
-![SimulatedAnnealing_DimerLoadExample](assets/images/Example_DimerLoad.png)
 
 
 [Previous](4A_ExploreOptimParameters.md)
