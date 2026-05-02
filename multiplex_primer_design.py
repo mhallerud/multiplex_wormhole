@@ -81,15 +81,16 @@ KEEPLIST_FA = None # FASTA containing previously designed primer set
 DELTAG = False #set to True if you want to use deltaG optimization algorithm
 
 
-mw.multiplexWormhole(TEMPLATES,
-                     N_LOCI, 
-                     OUTDIR, 
-                     PREFIX="MW_TEST", #defaults to OUTDIR basename + timestamp
-                     KEEPLIST_FA=KEEPLIST_FA,
-                     N_RUNS=10,
-                     ITERATIONS=10000, 
-                     SIMPLE=5000, 
-                     deltaG=DELTAG,  #default: False
+mw.multiplexWormhole(TEMPLATES = TEMPLATES,
+                     N_LOCI = N_LOCI, 
+                     OUTDIR = OUTDIR, 
+                     PREFIX= "MW_test", 
+                     KEEPLIST_FA= KEEPLIST_FA, 
+                     N_RUNS=10, # number of full optimization runs
+                     ITERATIONS=1000, # iterations per simulated annealing cycle
+                     CYCLES=10, # number of simulated annealing cycles
+                     SIMPLE=5000, # iterations for simple iterative improvement
+                     deltaG=False, # minimize dimer count (False) or mean deltaG of dimers (True)
                      VERBOSE=False)
 
 
@@ -203,8 +204,8 @@ mw.plotASAtemps(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
                 MIN_DIMER=1,
                 MAX_DIMER=5, #update based on the max observed in the default plot!
                 DECAY_RATE=0.98, # base for geometric functino of temperature decay
-                T_INIT=2, #initial A.S.A. temperature: higher=more risk accepted
-                T_FINAL=0, #final A.S.A. temp: 0=no risk, higher=accepting risk
+                T_INIT=3, #initial A.S.A. temperature: higher=more risk accepted
+                T_FINAL=0.01, #final A.S.A. temp: 0=no risk, higher=accepting risk
                 #proportion of max dimer load considered when setting temperature schedule
                 #1=no adjustment, closer to 0 = less mistake-tolerant
                 DIMER_ADJ=0.1,
@@ -222,21 +223,18 @@ mw.optimizeMultiplex(PRIMER_FASTA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'),
                      deltaG = DELTAG, #True for deltaG optimization, False for standard optimization
                      VERBOSE = False,#set to true to print dimers at each change
                      SIMPLE = 5000, # iterations for simple iterative improvement optimization (default=5000)
-                     ITERATIONS = 10000, # iterations for simulated annealing optimization (default=10000) 
+                     ITERATIONS = 1000, # iterations per simulated annealing cycle (default=1000) 
+                     CYCLES = 10, # number of simualted annealing iterations to run (default=10)
                      BURNIN = 100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                      DECAY_RATE = 0.95, # temperature decay parameter for SA temps (default=0.98)
                           # closer to 1 - least conservative, explores more cost space at higher risk
                           # closer to 0 - most conservative, explores less cost space at lower risk
                           # recommendations: 0.90-0.98, higher with fewer iterations
                      T_INIT = None, # starting temp for fixed SA schedule (default=0.1)
-                     T_FINAL = None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                     T_FINAL = 0.01, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                           # temperatures=0 is equivalent to simple iterative improvement, while 
                           # higher temperatures explore more of the cost space at higher risk of accepting dimers
                           # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
-                     PARTITIONS = 1000, # number of times to change temperature schedule (default=1000)
-                     DIMER_ADJ = 0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
-                          # values closer to 1 will create a temp schedule with higher risk / more cost exploration
-                          # values closer to 0 will create a temp schedule with lower risk / less cost exploration
                      PROB_ADJ = 2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome
@@ -268,18 +266,15 @@ mw.multipleOptimizations(N_RUNS = 10, #number of optimization runs
                          TIMEOUT = 10,#time allowed per run- runs 10 minutes will break
                          VERBOSE=False,#set to true to print dimers at each change
                          SIMPLE=5000, # iterations for simple iterative improvement optimization (default=5000)
-                         ITERATIONS=10000, # iterations for simulated annealing optimization (default=10000) 
+                         ITERATIONS=1000, # iterations per simulated annealing cycle (default=1000) 
+                         CYCLES=10, # number of simulated annealing cycles to run (default=10)
                          BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                          DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.98)
                           # closer to 1 - least conservative, explores more cost space at higher risk
                           # closer to 0 - most conservative, explores less cost space at lower risk
                           # recommendations: 0.90-0.98, higher with fewer iterations
                          T_INIT=None, # starting temp for fixed SA schedule- higher: more hill-climbing
-                         T_FINAL=None, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                         PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
-                         DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
-                          # values closer to 1 will create a temp schedule with higher risk / more cost exploration
-                          # values closer to 0 will create a temp schedule with lower risk / less cost exploration
+                         T_FINAL=0.01, # ending temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                          PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                           # increase if too many dimers are being accepted during simulated annealing, 
                           # decrease if local optima are not being overcome

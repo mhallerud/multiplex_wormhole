@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Title: OPTIMIZE MULTIPLEX PRIMER SET
@@ -34,8 +34,8 @@ from helpers.logging_setup import setup_logging
 
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
-         SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PARTITIONS=1000, 
-         DIMER_ADJ=0.1, PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
+         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=500, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, 
+         PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
     DIMER_SUMS : Sum of interactions per primer pair (binary interactions recommended) [CSV]
@@ -47,10 +47,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
     SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
-    ITERATIONS : # iterations in simulated annealing optimization step [default=10000]
-        -increase iterations for complex problems
-        -set to 0 to skip simulated annealing step
-    BURNIN : # iterations to sample dimer cost space [integer; default=100]
+    ITERATIONS : # iterations per simulated annealing cycle [Default: 1000]
+    CYCLES : # Simulated annealing cycles to run [Default: 10]
+    BURNIN : # iterations to sample dimer cost space [integer; default=1000]
     DECAY_RATE : parameter for temperature decay rate in negative exponential [Default=0.95]
         -closer to 1: least conservative, explores more of cost space but adds more dimers
         -closer to 0: most conservative, does not add dimers but also can't overcome local optima
@@ -62,12 +61,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         -values closer to T_FINAL will reduce dimer acceptance probabilities
     T_FINAL : Ending temperature for simulated annealing [Default: 0.1]
         -0 is equivalent to simple iterative improvement, higher values allow more costs
-    PARTITIONS : # partitions for temperature space [Default=1000]
-        -fewer partitions means algorithm stays in each temperature space longer
-        -overriden if iterations < partitions
-    DIMER_ADJ : proportion of dimer load to consider when setting SA temperatures [Default=0.1]
-        -values closer to 1 will allow many dimers to be accepted
-        -values closer to 0 will reject dimers but fail to overcome local optima
     PROB_ADJ : Parameter used to adjust dimer acceptance probabilities [Default: 2]
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
     VERBOSE : Print progress? [Default: False]
@@ -98,12 +91,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("     VERBOSE: %s", VERBOSE)
     logger.info("     SIMPLE: %s", SIMPLE)
     logger.info("     ITERATIONS: %s", ITERATIONS)
+    logger.info("     CYCLES: %s", CYCLES)
     logger.info("     BURNIN: %s", BURNIN)
     logger.info("     DECAY_RATE: %s", DECAY_RATE)
     logger.info("     T_INIT: %s", T_INIT)
     logger.info("     T_FINAL: %s", T_FINAL)
-    logger.info("     PARTITIONS: %s", PARTITIONS)
-    logger.info("     DIMER_ADJ: %s", DIMER_ADJ)
     logger.info("     PROB_ADJ: %s", PROB_ADJ)
     logger.info("     MAKEPLOT: %s", MAKEPLOT)
     logger.info("     RNG: %s", RNG)
@@ -111,24 +103,21 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
     ## -----------------------STEP 0A: CHECK INPUT PARAMETERS -----------------------##
     CheckInputNumber(N_LOCI, "N_LOCI","--")
-    CheckInputNumber(ITERATIONS, "ITERATIONS", "2000")
-    CheckInputNumber(SIMPLE, "SIMPLE", "1000")
+    CheckInputNumber(ITERATIONS, "ITERATIONS", "1000")
+    CheckInputNumber(SIMPLE, "SIMPLE", "5000")
     
     if ITERATIONS>0:
-        CheckInputNumber(BURNIN, "BURNIN", "100")
-        CheckInputNumber(DECAY_RATE, "DECAY_RATE", "0.98")
+        CheckInputNumber(BURNIN, "BURNIN", "1000")
+        CheckInputNumber(DECAY_RATE, "DECAY_RATE", "0.95")
         CheckInputNumber(T_INIT, "T_INIT", "set adaptively, 2 recommended otherwise.")
-        CheckInputNumber(T_FINAL, "T_FINAL", "0.1")
-        CheckInputNumber(PARTITIONS,"PARTITIONS", "1000")
-        CheckInputNumber(DIMER_ADJ, "DIMER_ADJ", "0.1")
+        CheckInputNumber(T_FINAL, "T_FINAL", "0.01")
+        CheckInputNumber(CYCLES, "CYCLES", "10")
         CheckInputNumber(PROB_ADJ, "PROB_ADJ", "2")
         
         if T_INIT is None and T_FINAL is None and (BURNIN is None or BURNIN==0):
             raise InputError("Either BURNIN or (T_INIT and T_FINAL) need to be provided to run simulated annealing ITERATIONS.")
         if DECAY_RATE<0 or DECAY_RATE>1:
             raise InputError("DBECAY_RATE must be between 0 and 1.")
-        if DIMER_ADJ<0 or DIMER_ADJ>1:
-            raise InputError("DIMER_ADJ must be between 0 and 1.")
         if PROB_ADJ<0:
             raise InputError("PROB_ADJ must be positive.")
         if (T_INIT is not None and T_FINAL is not None) and T_INIT<T_FINAL:
@@ -294,7 +283,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
     if curr_total==0:
         logger.info("Initial primer set already has 0 predicted dimers! Skipping optimization process.")
-        BURNIN=0
         ITERATIONS=0
         SIMPLE=0
         
@@ -306,180 +294,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     min_nonset_dimers = nonset_dimers
     
         
-    ## -----------------------STEP 2: RUN SIMULATED ANNEALING OPTIMIZATION-----------------------##
-    ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
-    if ITERATIONS>0:
-        change = []
-        if (T_INIT is None) and BURNIN>0 and ITERATIONS>0:
-            logger.info("")
-            logger.info("SETTING TEMPERATURE SCHEDULE.....")
-            logger.info("Running burnin to sample dimer cost space:")
-            i = 0
-            while len(change) < BURNIN:
-                # make a new set by randomly swapping a primer pair
-                # newset: 1) replaced ID, 2) new ID, 3) current pair list
-                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
-                                                          primer_pairs, primer_loci, 
-                                                          OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
-                                                          random=True, keeplist=keeplist_pairs, RNG=12345+i)
-                # compare newSet to original set
-                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
-                    compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
-        
-                # if newSet is worse, make note of change value
-                if comparison > 0:
-                    change.append(comparison)
-                    # repeat
-                
-                # stop if 2000 swaps made
-                i += 1
-                if i>2000:
-                    logger.info("....Sampling stopped after 2000 swaps with %s costs>0", str(len(change)))
-                    if len(change)==0:
-                        logger.info(".....Defaults used since cost changes never increase")
-                        T_init = T_INIT = 2
-                    break
-            
-            # set temperatures based on burnin results
-            if T_INIT is None:
-                logger.info("     Max change observed: %s", str(round(max(change),2)))    
-                T_init = min(change) + DIMER_ADJ * (max(change) - min(change)) # adaptive simulated annealing
-
-        # use input temps, if provided
-        else:
-            if T_INIT is not None: 
-                logger.info("Using provided T_INIT")                
-                T_init = T_INIT
-            else:
-                logger.info("Using default T_INIT=2.0")
-                T_init = 2.0
-
-        if T_FINAL is not None:
-            logger.info("Using provided T_FINAL")                
-            T_final = T_FINAL
-        else:
-            logger.info("Using default T_FINAL=0.1")
-            T_final=0.1
-        logger.info("     Initial temp: %s", str(round(T_init,2)))
-        logger.info("     Final temp: %s", str(round(T_final,2)))
-        
-        ## ------------------STEP 2B: SET AND PLOT TEMPERATURE SCHEDULE----------------##
-        # partition iteration space across temp range
-        if ITERATIONS > PARTITIONS:
-            Tspace = (T_init - T_final)/PARTITIONS
-            T_iter = round(Tspace*ITERATIONS)
-        else:
-            logger.info("    NOTE: Fewer partitions provided than iterations, " +\
-                  "so the temperature schedule is set to change at each iteration.")
-            Tspace = (T_init - T_final)/ITERATIONS
-            T_iter = 1    
-        if len(change)==0:
-            MIN_DIMER=1
-            MAX_DIMER=10
-        else:
-            MIN_DIMER=min(change)
-            MAX_DIMER=max(change)
-        if MAKEPLOT:
-            logger.info("     Plotting temperature schedule...")
-            plotASAtemps.main(OUTPATH=OUTPATH,
-                              MIN_DIMER=MIN_DIMER,
-                              MAX_DIMER=MAX_DIMER,
-                              DECAY_RATE=DECAY_RATE,
-                              T_INIT=T_init, 
-                              T_FINAL=T_final, 
-                              DIMER_ADJ=DIMER_ADJ,
-                              PROB_ADJ=PROB_ADJ,
-                              BURNIN=0, 
-                              deltaG=deltaG)
-    
-        ## ------------------STEP 2C: RUN SIMULATED ANNEALING ITERATIONS----------------##
-        # C) run simulated annealing optimization
-        logger.info("")
-        logger.info("STARTING SIMULATED ANNEALING OPTIMIZATION.....")
-        # initialize
-        Temp = T_init
-        n_iter = 0
-        step = 0
-        min_dimers = curr_total
-        # start tracking costs
-        costs.append([n_iter, Temp, curr_total]) #log for cost values
-        # start iterating
-        while n_iter < ITERATIONS:
-            i = 1  # reset iterations for each temperature
-            while i <= T_iter:
-                # make a random change
-                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
-                                                          primer_pairs, primer_loci,
-                                                          OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
-                                                          random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
-                # if e^(-change/temp) < random number (0,1), accept the change
-                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
-                    compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
-                SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
-                if SAvalue > rand.uniform(0,1):
-                    update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
-                    current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
-                    allowed_pairs = UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs, new_id)
-                    # log updated cost only when changes are made
-                    costs.append([n_iter, Temp, curr_total])
-                    # keep track of set with minimum dimers
-                    # this allows the best set to be kept while the algorithm continues to explore more of the space
-                    if curr_total <= min_dimers:
-                        min_pairIDs = current_pairIDs
-                        min_dimers = curr_total
-                        min_dimer_totals = curr_dimer_totals
-                        min_primerset_dimers = primerset_dimers 
-                        min_nonset_dimers = nonset_dimers
-                    # STOP if 0 dimers in set
-                    if curr_total == 0:
-                        costs.append([n_iter, Temp, curr_total])
-                        break
-                # in simulated annealing, no need to keep track of what's been tested
-                # repeat until # iterations at this temp finishes
-                i+=1
-                if VERBOSE:
-                    logger.debug(curr_total)
-                # progress tracking
-                if (n_iter+i)%1000==0:
-                    logger.info("          finished %s iterations -- dimer load: %s", str(n_iter+i), str(curr_total))
-
-            # decrease the temp via exponential decay - this makes the algorithm spend less time in 
-            # 'risky' space and more time in productive optimization space
-            step+=1
-            Temp = (T_init-T_final)*DECAY_RATE**step+T_final
-            n_iter+=T_iter
-            #print("....."+str(int(n_iter))+" iterations")
-            if curr_total == 0:
-                costs.append([n_iter, Temp, curr_total])
-                logger.info("Solution with 0 dimers found!")
-                break
-        
-        # proceed with best set found during simulated annealing- which isn't necessarily the final set
-        current_pairIDs = min_pairIDs
-        curr_total = min_dimers
-        curr_dimer_totals = min_dimer_totals
-        primerset_dimers = min_primerset_dimers 
-        nonset_dimers = min_nonset_dimers
-        # grab locus IDs for current primer pairs
-        current_pairIDs = list(curr_dimer_totals.keys())
-        current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
-        # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
-        allowed_loci = [uniq_loci[i] for i in range(
-            len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
-        allowed_idx = list(
-            filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
-        allowed_pairs = [primer_pairs[i] for i in allowed_idx]
-        allowed_pairs = list(set(allowed_pairs))
-        
-        ## ------------------STEP 2D: SAVE SA OUTPUTS AS CHECKPOINT----------------##
-        # export the current dimers and their totals as CSV
-        #ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
-        #           primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
-    
-
-    ## ------------------STEP 3: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
+    ## ------------------STEP 2: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
     # i.e., swap loci only if dimer load is reduced
     # only attempt iterative improvement if no final solution found with simulated annealing
+    Temp = 0 #SII = SA w. T=0
     if SIMPLE>0:
         logger.info("")
         logger.info("STARTING SIMPLE ITERATIVE IMPROVEMENT.....")
@@ -493,9 +311,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         else:
             blockedlist = []
         while i < SIMPLE:
+            i+=1
             # if current total dimers = 0, STOP because we're optimized already
             if curr_total == 0:
-                costs.append([n_iter, Temp, curr_total])
+                costs.append([i, Temp, curr_total])
                 logger.info("Solution with 0 dimers found!")
                 break
     
@@ -503,8 +322,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blockedlist,
                                 primer_pairs, primer_loci, 
                                 OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                [], random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
-            i+=1
+                                [], random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i)
             if newSet is None:
                 comparison = False
             else:
@@ -519,7 +337,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
                 current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
                 UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs)
-                costs.append([n_iter+i, 0, curr_total])
+                costs.append([i, Temp, curr_total])
     
             # otherwise, loop through remaining replacement options
             # this avoids retesting the same options for this replacement
@@ -547,7 +365,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                             primer_pairs, primer_loci, 
                                             OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs,
-                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
+                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
                         if newSet is None:
                             if VERBOSE:
                                 logger.debug("     No new sets can be found for %s ! Removing from swap options.", swap_id)
@@ -581,6 +399,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
                             current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
                             allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
+                            costs.append([i, Temp, curr_total])
                             break  # exit this loop if a replacement was found
                         else:
                             try:
@@ -603,24 +422,169 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
             # stop iterating if no new sets can be made in the previous while loop
             if newSet is None:
-                costs.append([n_iter, Temp, curr_total])
+                costs.append([i, Temp, curr_total])
                 logger.info("No new sets can be made with the available primers!")
                 break
     
             # progress tracking
             if (i)%1000==0:
-                logger.info("          finished %s iterations -- dimer load: %s", str(n_iter+i), str(curr_total))
-            # update iteration #
-            i+=1
+                logger.info("          finished %s iterations -- dimer load: %s", str(i), str(curr_total))
             # progress tracking
             if i==SIMPLE:
-                costs.append([n_iter, Temp, curr_total])
+                costs.append([i, Temp, curr_total])
                 logger.info("STOPPED - MAX ITERATIONS REACHED!")
     
         # report the blockedlisted loci
         logger.info("The following loci could not be improved with available replacements. If primer loads are high, consider removing these from the input file and rerunning.")
         for b in range(len(blockedlist)):
             logger.info("\t\t %s", blockedlist[b])
+
+        logger.info("")
+        logger.info("Dimer load after simple iterative improvement %s", curr_total)
+    
+            
+    ## -----------------------STEP 3: RUN SIMULATED ANNEALING OPTIMIZATION-----------------------##
+    if ITERATIONS>0 and CYCLES>0:
+        logger.info("")
+        logger.info("STARTING ADAPTIVE SIMULATED ANNEALING OPTIMIZATION......")
+        logger.info("Setting up temperature schedule.....")
+        ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
+        if (T_INIT is None) and BURNIN>0 and ITERATIONS>0:
+            T_init, MIN_DIMER, MAX_DIMER = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                             primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                             keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=RNG, 
+                             curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
+                             deltaG=deltaG, logger=logger)
+        # use input temps, if provided
+        else:
+            MIN_DIMER=None; MAX_DIMER=None
+            if T_INIT is not None: 
+                logger.info("     Using provided T_INIT=%s", T_INIT)                
+                T_init = T_INIT
+            else:
+                logger.info("     Using default T_INIT=3.0")
+                T_init = 3.0
+        
+        T_final = T_FINAL
+        logger.info("     Initial temp: %s", str(round(T_init,2)))
+        logger.info("     Final temp: %s", str(round(T_final,2)))
+        
+        
+        ## ------------------STEP 2B: SET AND PLOT TEMPERATURE SCHEDULE----------------##
+        # partition iteration space across temp range
+        Tspace = ITERATIONS/100 # scaling s.t. temperature schedule is always 0-100
+
+        if MIN_DIMER is None: MIN_DIMER=1
+        if MAX_DIMER is None: MAX_DIMER=8
+        if MAKEPLOT:
+            logger.info("     Plotting temperature schedule...")
+            plotASAtemps.main(OUTPATH=OUTPATH+"_step0",
+                              MIN_DIMER=MIN_DIMER,
+                              MAX_DIMER=MAX_DIMER,
+                              DECAY_RATE=DECAY_RATE,
+                              T_INIT=T_init, 
+                              T_FINAL=T_final,
+                              PROB_ADJ=PROB_ADJ,
+                              BURNIN=0, 
+                              deltaG=deltaG)
+    
+        ## ------------------STEP 2C: RUN SIMULATED ANNEALING ITERATIONS----------------##
+        # C) run simulated annealing optimization
+        logger.info("")
+        logger.info("STARTING SIMULATED ANNEALING OPTIMIZATION.....")
+        # initialize
+        asa_costs = []
+        Temp = T_init
+        cycle = 0
+        min_dimers = curr_total
+        # start running cycles
+        while cycle < CYCLES:
+            logger.info("Running cycle %s", cycle+1)
+            # set new t_init based on sampling cost space
+            if cycle==0:
+                Temp = T_init
+            else:
+                Temp, maxd, mind = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                         primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                         keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
+                         deltaG, logger, BURNIN=200)
+                logger.info("     T_init used: %s", Temp)
+            # reset iterations for each cycle
+            n_iter = 0
+            while n_iter <= ITERATIONS:
+                i+=1
+                n_iter+=1
+                # make a random change
+                swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                                                          primer_pairs, primer_loci,
+                                                          OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
+                                                          random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
+                # log change
+                comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                    compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
+                asa_costs.append([i, Temp, curr_total])
+                # accept change with probability: e^(-change/temp)
+                SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
+                if SAvalue > rand.uniform(0,1):
+                    update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
+                    current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                    allowed_pairs = UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs, new_id)
+                    # log updated cost only when changes are made
+                    costs.append([i, Temp, curr_total])
+                    # keep track of set with minimum dimers
+                    # this allows the best set to be kept while the algorithm continues to explore more of the space
+                    if curr_total <= min_dimers:
+                        min_pairIDs = current_pairIDs
+                        min_dimers = curr_total
+                        min_dimer_totals = curr_dimer_totals
+                        min_primerset_dimers = primerset_dimers 
+                        min_nonset_dimers = nonset_dimers
+                    # STOP if 0 dimers in set
+                    if curr_total == 0:
+                        logger.info("Solution with 0 dimers found!")
+                        costs.append([n_iter, Temp, curr_total])
+                        break
+                # in simulated annealing, no need to keep track of what's been tested
+                # repeat until # iterations at this temp finishes
+                if VERBOSE:
+                    logger.debug(curr_total)
+                # progress tracking
+                if (n_iter)%1000==0:
+                    logger.info("     finished %s iterations -- dimer load: %s", str(n_iter), str(curr_total))
+
+                # decrease the temp via exponential decay - this makes the algorithm spend less time in 
+                # 'risky' space and more time in productive optimization space
+                Temp = (T_init-T_final)*DECAY_RATE**(n_iter/Tspace)+T_final
+                #print(str(i)+"   "+str(Temp)+"    "+str(comparison))
+                #print("....."+str(int(n_iter))+" iterations")
+                if curr_total == 0:
+                    costs.append([n_iter, Temp, curr_total])
+                    logger.info("Solution with 0 dimers found!")
+                    break
+            # Whenever T_iter is hit, move to the next cycle
+            cycle+=1
+    
+        # proceed with best set found during simulated annealing- which isn't necessarily the final set
+        current_pairIDs = min_pairIDs
+        curr_total = min_dimers
+        curr_dimer_totals = min_dimer_totals
+        primerset_dimers = min_primerset_dimers 
+        nonset_dimers = min_nonset_dimers
+        # grab locus IDs for current primer pairs
+        current_pairIDs = list(curr_dimer_totals.keys())
+        current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
+        # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
+        allowed_loci = [uniq_loci[i] for i in range(
+            len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
+        allowed_idx = list(
+            filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
+        allowed_pairs = [primer_pairs[i] for i in allowed_idx]
+        allowed_pairs = list(set(allowed_pairs))
+        
+        ## ------------------STEP 2D: SAVE SA OUTPUTS AS CHECKPOINT----------------##
+        # export the current dimers and their totals as CSV
+        #ExportCSVs(OUTPATH+"_SA", curr_dimer_totals, primer_pairs, current_pairIDs, 
+        #           primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs)
     
 
     ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
@@ -749,6 +713,47 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
     update_pairIDs.append(new_id)
     update_pairIDs.remove(swap)
     return swap, new_id, update_pairIDs
+
+
+
+def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+         primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+         keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
+         deltaG, logger, BURNIN=100):
+    logger.info("     Sampling cost space to set initial temp....")
+    change = []
+    while len(change) < BURNIN:
+        # make a new set by randomly swapping a primer pair
+        # newset: 1) replaced ID, 2) new ID, 3) current pair list
+        swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs, RNG=RNG+len(change))
+        # compare newSet to original set
+        comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+            compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
+        change.append(comparison)
+    
+    # set temperatures based on burnin results
+    neg_changes = [x for x in change if x>0]
+    if len(neg_changes)==0: neg_changes = [0.01]
+    MEAN_DIMER = np.mean(neg_changes)
+    MAX_DIMER = max(neg_changes)
+    MIN_DIMER = min(neg_changes)#almost always 1!
+    logger.info("     Changes that increase cost: %s", 
+                str(round(len(neg_changes)/len(change),3))+"%")
+    logger.info("     Mean +cost change: %s", round(MEAN_DIMER,2))
+    logger.info("     Max +cost observed: %s", round(MAX_DIMER,2))
+    logger.info("     Min +cost observed: %s", round(MIN_DIMER,2))
+    #mean 27 -->3; dG: 8.9
+    #max 110 -->3; dG: 41
+    # T_init should depend on p(accepting mistake) [based on mean mistake] & 
+    # how bad that 'mistake' is
+    if deltaG:
+        T_INIT = -2*math.log10(MEAN_DIMER/MAX_DIMER)+2
+    else:
+        T_INIT = -2.5*math.log10(MEAN_DIMER/MAX_DIMER)+2
+    return [T_INIT, MIN_DIMER, MAX_DIMER]
+
 
 
 def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_sums, deltaG):
@@ -1060,13 +1065,12 @@ def parse_args():
     parser.add_argument("-k", "--keeplist", type=str, default=None)
     parser.add_argument("-e", "--seed", type=str, default=None)
     parser.add_argument("-s", "--simple", type=int, default=5000)
-    parser.add_argument("-i", "--iter", type=int, default=10000)
+    parser.add_argument("-i", "--iter", type=int, default=1000)
+    parser.add_argument("-c", "--cycles", type=int, default=10)
     parser.add_argument("-b", "--burnin", type=int, default=100)
     parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
     parser.add_argument("-x", "--temp_init", type=float, default=None)
     parser.add_argument("-l", "--temp_final", type=float, default=0.1)
-    parser.add_argument("-p", "--partitions", type=int, default=1000)
-    parser.add_argument("-y", "--dimer_adj", type=float, default=0.1)
     parser.add_argument("-a", "--prob_adj", type=float, default=2)
     # add flags
     parser.add_argument("-g", "--deltaG", action="store_true")
@@ -1091,11 +1095,10 @@ if __name__=="__main__":
          VERBOSE = args.verbose,
          SIMPLE = args.simple, 
          ITERATIONS = args.iter, 
+         CYCLES = args.cycles,
          BURNIN = args.burnin, 
          DECAY_RATE = args.decay_rate, 
          T_INIT = args.temp_init, 
          T_FINAL = args.temp_final, 
-         PARTITIONS = args.partitions, 
-         DIMER_ADJ = args.dimer_adj, 
          PROB_ADJ = args.prob_adj, 
          MAKEPLOT = args.makeplot)

@@ -39,7 +39,7 @@ MFEprimer_PATH = setup_mfeprimer()
 
 
 def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, 
-         ITERATIONS=10000, SIMPLE=5000, deltaG=False, VERBOSE=False):
+         ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False):
     """
     ----------
     TEMPLATES : CSV containing DNA sequences, IDs, and target sin "startBP,lengthBP" format. [filepath]
@@ -48,7 +48,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     PREFIX : Prefix to use for optimization output files. [Default: timestamp]
     KEEPLIST_FA : FASTA of primers that MUST be included in final multiplex. [Default: None)
     N_RUNS : Number of optimization runs. [Default: 10]
-    ITERATIONS : Iterations to run simulated annealing optimization. [Default: 10000]
+    ITERATIONS : Iterations per simulated annealing cycle. [Default: 1000]
+    CYCLES : Number of simulated annealing cycles to run. [Default: 10]
     SIMPLE : Iterations to run simple iterative improvement optimization. [Default: 5000]
     deltaG : True (deltaG optimization) / False (standard optimization). [Default: False]
     VERBOSE : Print updates as function runs? (Default: False)
@@ -199,7 +200,6 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                       SEED=None, #this would be an output from optimizeMultiplex
                       BURNIN=100,#number iterations with dimer loads used to sample cost space
                       DECAY_RATE=0.95, #temp decay rate
-                      DIMER_ADJ=0.1, #adjustment of maximum dimer costs
                       PROB_ADJ=2,#decay rate of acceptance probability
                       deltaG=deltaG)
     # Alternative implementation where dimers and T_INIT/T_FINAL are specified:
@@ -212,10 +212,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     #             # initial temperature to start from - higher=more risk accepted
     #             T_INIT=2, #default=2
     #             # final temperature to stop at - 1=no risk, higher=more risk accepted
-    #             T_FINAL=0, #default=0.1
+    #             T_FINAL=0.01, 
     #             #proportion of max dimer load considered when setting temperature schedule
     #             #closer to 0 = accepts fewer errors
-    #             DIMER_ADJ=0.1, #default=1
     #             # adjustment for dimer acceptance probabilities- 1=no adjustment, higher values=lower dimer acceptance
     #             PROB_ADJ=1)#default=2
     
@@ -237,21 +236,18 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
                           VERBOSE=VERBOSE,#set to true to print dimers at each change
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
-                          ITERATIONS=ITERATIONS, # iterations for simulated annealing optimization (default=10000) 
+                          ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 
+                          CYCLES=CYCLES, #simulated annealing cycles to run (default=10)
                           BURNIN=100, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
                           DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.95)
                               # closer to 1 - least conservative, explores more cost space at higher risk
                               # closer to 0 - most conservative, explores less cost space at lower risk
                               # recommendations: 0.90-0.98, higher with fewer iterations
                           T_INIT=None, # starting temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                          T_FINAL=0.1, # ending temp for fixed SA schedule (default=0.1)
+                          T_FINAL=0.01, # ending temp for fixed SA schedule (default=0.1)
                               # temperatures=0 is equivalent to simple iterative improvement, while 
                               # higher temperatures explore more of the cost space at higher risk of accepting dimers
                               # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
-                          PARTITIONS=1000, # number of times to change temperature schedule (default=1000)
-                          DIMER_ADJ=0.1, # proportion of max observed dimer load to consider when setting SA temps (default=0.1)
-                              # values closer to 1 will create a temp schedule with higher risk / more cost exploration
-                              # values closer to 0 will create a temp schedule with lower risk / less cost exploration
                           PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
                               # increase if too many dimers are being accepted during simulated annealing, 
                               # decrease if local optima are not being overcome
@@ -294,11 +290,11 @@ def parse_args():
     parser.add_argument("-p", "--prefix", type=str, default="None")
     parser.add_argument("-k", "--keeplist", type=str, default=None)
     parser.add_argument("-r", "--runs", type=int, default=10)
-    parser.add_argument("-i", "--iter", type=int, default=10000)
+    parser.add_argument("-i", "--iter", type=int, default=1000)
+    parser.add_argument("-c", "--cycles", type=int, default=10)
     parser.add_argument("-s", "--simple", type=int, default=5000)
     parser.add_argument("-d", "--deltaG", action="store_true")#type=str, default=False)
     parser.add_argument("-v", "--verbose", action="store_true")#type=str, default=False)
-
     return parser.parse_args()
 
 
@@ -306,20 +302,6 @@ def parse_args():
 if __name__ == "__main__":
     # parse command-line arguments
     args = parse_args()
-    # print to standard out
-    print("TEMPLATES: "+args.templates)
-    print("NLOCI: "+str(args.nloci))
-    print("OUTDIR:"+args.outdir)
-    print("PREFIX: "+str(args.prefix))
-    if args.keeplist is not None:
-        print("KEEPLIST: "+args.keeplist)
-    else:
-        print("KEEPLIST: None")
-    print("RUNS: "+str(args.runs))
-    print("ITERATIONS: "+str(args.iter))
-    print("SIMPLE: "+str(args.simple))
-    print("VERBOSE: "+str(args.verbose))
-    print("DeltaG: "+str(args.deltaG))
     # run multiplex wormhole module
     main(TEMPLATES = args.templates,
          N_LOCI = args.nloci,
@@ -328,6 +310,7 @@ if __name__ == "__main__":
          KEEPLIST_FA = args.keeplist,
          N_RUNS = args.runs,
          ITERATIONS = args.iter,
+         CYCLES = args.cycles,
          SIMPLE = args.simple,
          deltaG = args.deltaG,
          VERBOSE = args.verbose)

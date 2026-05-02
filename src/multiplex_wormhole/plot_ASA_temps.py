@@ -35,7 +35,7 @@ from helpers.logging_setup import setup_logging
 
 
 def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=None, KEEPLIST=None, deltaG=False, SEED=None, 
-         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, BURNIN=100, DIMER_ADJ=0.1, PROB_ADJ=2):
+         MIN_DIMER=None, MAX_DIMER=None, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, BURNIN=100, PROB_ADJ=2):
     """
     PRIMER_FASTA : Primer sequences and IDs. [FASTA]
     DIMER_SUMS : Total dimer load per primer pair. [CSV]
@@ -51,7 +51,6 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     T_INIT : Starting simulated annealing temperature. [num>=0; Default: None]
     T_FINAL : Ending simulated annealing temperature. [num<T_INIT; Default: 0.1]
     BURNIN : Iterations used to sample cost space before calculating temperatures. [Default: 100]
-    DIMER_ADJ : Proportion of max dimer load to consider when setting T_INIT (high values = more 'bad' changes accepted). [Default: 0.1]
     PROB_ADJ : Adjustment for dimer acceptance probabilities in exponential function (higher = fewer 'bad' changes accepted). [Default: 2]
     -------
     Plots temperature schedule and dimer acceptance probabilities based on given simulated annealing parameters.
@@ -79,7 +78,6 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     logger.info("     BURNIN: %s", BURNIN)
     logger.info("     T_INIT: %s", T_INIT)
     logger.info("     T_FINAL: %s", T_FINAL)
-    logger.info("     DIMER_ADJ: %s", DIMER_ADJ)
     logger.info("     PROB_ADJ: %s", PROB_ADJ)
     logger.info("")
     
@@ -231,19 +229,22 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         logger.info("Setting temperature schedule...")
         if T_FINAL is None:
             # set initial and final temps
-            T_FINAL = 0
+            T_FINAL = 0.01
         if T_INIT is None:
-            # initial temp should accept most changes
-            T_INIT = MIN_DIMER + DIMER_ADJ * (MAX_DIMER)#assuming MIN_DIMER=0
+           T_INIT =  op.setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                                 primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                                 keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
+                                 curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
+                                 deltaG=deltaG, logger=logger)
     
-    ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 ITERATIONS
+    ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 steps
     # Define range of dimer loads to use in calculations
     dimers = list(range(MIN_DIMER, MAX_DIMER+1))
     temps = [T_INIT]
-    i=0
+    step=0
     while i < 100:
-        i+=1
-        new_temp = (T_INIT-T_FINAL)*DECAY_RATE**i+T_FINAL
+        step+=1
+        new_temp = (T_INIT-T_FINAL)*DECAY_RATE**step+T_FINAL
         temps.append(new_temp)
     logger.info(".....Initial temp for adaptive simulated annealing: %s", str(T_INIT))
     logger.info(".....Final temp for adaptive simulated annealing: %s", str(T_FINAL))
@@ -429,7 +430,6 @@ def parse_args():
     parser.add_argument("-t", "--temp_init", type=float, default=None)
     parser.add_argument("-l", "--temp_final", type=float, default=0.1)
     parser.add_argument("-b", "--burnin", type=int, default=100)
-    parser.add_argument("-a", "--dimer_adj", type=float, default=0.1)
     parser.add_argument("-p", "--prob_adj", type=float, default=2)
     # add flags
     parser.add_argument("-g", "--deltaG", action="store_true")
@@ -455,5 +455,4 @@ if __name__=="__main__":
          T_INIT = args.temp_init, 
          T_FINAL = args.temp_final, 
          BURNIN = args.burnin, 
-         DIMER_ADJ = args.dimer_adj,
          PROB_ADJ = args.prob_adj)

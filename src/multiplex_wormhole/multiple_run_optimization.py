@@ -22,8 +22,8 @@ from optimize_multiplex import main as optimizeMultiplex
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
-         SIMPLE=5000, ITERATIONS=10000, BURNIN=100, DECAY_RATE=0.98, 
-         T_INIT=None, T_FINAL=None, PARTITIONS=1000, DIMER_ADJ=0.1, PROB_ADJ=2):
+         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100, DECAY_RATE=0.95, 
+         T_INIT=None, T_FINAL=None, PROB_ADJ=2):
     """
     N_RUNS : # optimization runs [int]
     PRIMER_FA : Contains primer IDs and sequences [FASTA]
@@ -39,9 +39,8 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
     SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
-    ITERATIONS : # iterations in simulated annealing optimization step [default=10000]
-        -increase iterations for complex problems
-        -set to 0 to skip simulated annealing step
+    ITERATIONS : # iterations per simulated annealing optimization cycle [default=1000]
+    CYCLES : # simulated annealing cycles to run [default: 10]
     BURNIN : # iterations to sample dimer cost space [integer; default=100]
     DECAY_RATE : parameter for temperature decay rate in negative exponential [proportion; default=0.98]
         -closer to 1: least conservative, explores more of cost space but adds more dimers
@@ -77,24 +76,23 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         #start=time.time()
         #while time.time()-start <= TIMEOUT:
             try:
-                cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA,
+                cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA, 
                                          DIMER_SUMS=DIMER_SUMS, 
-                                         DIMER_TABLE=DIMER_TABLE,
-                                         OUTPATH=OUTPATH+"_Run"+str(run).zfill(2),
+                                         DIMER_TABLE=DIMER_TABLE, 
+                                         OUTPATH=OUTPATH+"_Run"+str(run).zfill(2), 
                                          N_LOCI=N_LOCI, 
-                                         KEEPLIST=KEEPLIST,
-                                         deltaG=deltaG,
-                                         SEED=None,
-                                         VERBOSE=False,
+                                         KEEPLIST=KEEPLIST, 
+                                         deltaG=deltaG, 
+                                         SEED=SEED, 
+                                         VERBOSE=VERBOSE,
                                          SIMPLE=SIMPLE, 
-                                         ITERATIONS=ITERATIONS,
-                                         BURNIN=BURNIN,
-                                         DECAY_RATE=DECAY_RATE,
-                                         T_INIT=T_INIT,
-                                         T_FINAL=T_FINAL,
-                                         PARTITIONS=PARTITIONS,
-                                         DIMER_ADJ=DIMER_ADJ,
-                                         PROB_ADJ=PROB_ADJ,
+                                         ITERATIONS=ITERATIONS, 
+                                         CYCLES=CYCLES, 
+                                         BURNIN=BURNIN, 
+                                         DECAY_RATE=DECAY_RATE, 
+                                         T_INIT=T_INIT, 
+                                         T_FINAL=T_FINAL, 
+                                         PROB_ADJ=PROB_ADJ, 
                                          MAKEPLOT=False,
                                          RNG=12345+run)
                 loads.append([str(run), str(cost)])
