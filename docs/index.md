@@ -198,6 +198,8 @@ For maximum flexibility, the full multiplex wormhole workflow is available at: [
 
 6. [Panel Assessment](6_AssessPanel.md) with `panel_assessment.py`
 
+7. [Specificity Check](8_PrimerTree_SpecificityChecks.md) with `primerTree_specificity_checks.R`
+
 Helper Functions:
 * [Convert CSV to FASTA](CSVtoFASTA.md) with `CSVtoFASTA.py`
 * [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `add_keeplist_to_fasta.py`
@@ -230,12 +232,10 @@ PRIMERS --> MFEprimer dimer --> tabulate_dimers.py --> multiple_run_optimization
 
 
 ## Handling Outputs
-Multiplex wormhole is an ***in silico*** design tool, and although it facilitates the primer design process, additional checks and lab optimization remain critical to panel success. Importantly, multiplex wormhole does not do specificity checking within the design process. The following steps should be taken prior to ordering primers.
+Multiplex wormhole is an ***in silico*** design tool, and although it facilitates the primer design process, additional checks and lab optimization remain critical to panel success. 
 
-### Specificity Checks
-1. *Specificity check against the target species*: [PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/) can be used to check each set of primers against the genome of the target species (or a closely related species) to ensure that targets only amplify one target in the genome. This is particularly important in noninvasive samples because sequence variation due to paralogs (i.e., regions present multiple times across the genome) is not differentiable from sequence dropout, which is the most common form of genotyping error. Paralogs in highly variable regions (e.g., mRNA transcript variants) can be particularly problematic because dropout may be linked to variation in the primer binding region which causes biased amplification failure. 
-2. *Specificity check against diet species / potential field contaminators*: Ensuring species specificity is critical to accuracy if the panel is to be applied to noninvasive samples. Specificity checking uses the same process as described above, but against genomes and GenBank for species present in the diet. 
-3. *Secondary dimer check*: Dimer prediction is an imperfect science, and primers should be checked for particularly bad dimers e.g.  by rerunning with MFEprimer v3 and/or other software such as [MFEprimer v4](https://m4.igenetech.com/dimer), [primer-dimer.com](www.primer-dimer.com), and/or [ThermoFisher's Multiple Primer Analyzer](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html).
+### Dimer Checks
+Dimer prediction is an imperfect science, and primers should be double-checked for particularly bad dimers e.g. by rerunning with MFEprimer v3 and/or other software such as [MFEprimer v4](https://m4.igenetech.com/dimer), [primer-dimer.com](www.primer-dimer.com), and/or [ThermoFisher's Multiple Primer Analyzer](https://www.thermofisher.com/us/en/home/brands/thermo-scientific/molecular-biology/molecular-biology-learning-center/molecular-biology-resource-library/thermo-scientific-web-tools/multiple-primer-analyzer.html).
 
 ### Lab Testing
 We recommend the protocol in Eriksson et al. (2020) for lab testing:
