@@ -5,7 +5,17 @@ url: specificity-check
 ----
 
 # Specificity Checking with PrimerTree
-Ensuring primer specificity is an important and oft-neglected step towards successful and accurate genotyping of low-quality samples. This is particularly important when genotyping predator scats which can contain DNA from closely related species. Multiplex wormhole does not include a specificity check within the Python package, however, we provide an R script for post-processing multiplex wormhole outputs that cross-walks with the PrimerTree R package, which provides automated calling of PRIMER-BLAST.
+Ensuring primer specificity is an important and oft-neglected step towards successful and accurate genotyping of low-quality samples. This is particularly important when genotyping predator scats which can contain DNA from closely related species. Multiplex wormhole does not include a specificity check within the Python package, however, I'm providing an R script for post-processing multiplex wormhole outputs that cross-walks with the PrimerTree R package, which provides automated calling of PRIMER-BLAST.
+
+## Recommendations
+* Run specificity checks against:
+  1. The target (i.e., by checking against the target species or a close relative) to ensure that only one target in the genome is amplified. This is particularly important in noninvasive samples because sequence variation due to paralogs (i.e., regions present multiple times across the genome) is not differentiable from sequence dropout (e.g., due to variable degradation among loci), which is the most common form of genotyping error. Paralogs in highly variable regions (e.g., mRNA transcript variants) can be particularly problematic because dropout can be caused by variation in the primer binding region, causing biased amplification failure. 
+  2. Diet items to ensure that primers don't amplify non-target DNA within scats, especially in predators who tend to consume prey within their same class. More closely related diet items are more likely to amplify.
+  3. Potential overmarkers or common visitors to the same device setup (e.g., cooccurring carnivores may visit the same hair snare). 
+  4. Check against Bacteria if analyzing scats, since bacterial DNA will be abundant in scat samples.
+  5. Check against human and other common lab contaminants.
+* GenBank is a growing resource, and not all off-target species have good representation. I recommend using less stringent searches (e.g., family-level) rather than species-level searches.
+* Off-target amplification can be ok (though never ideal) if the sequence is differentiable from the target amplicon (i.e. 2+ guaranteed differences). This is best assessed with follow-up lab testing.
 
 
 ## Description
