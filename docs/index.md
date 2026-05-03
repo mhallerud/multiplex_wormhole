@@ -198,7 +198,7 @@ For maximum flexibility, the full multiplex wormhole workflow is available at: [
 
 6. [Panel Assessment](6_AssessPanel.md) with `panel_assessment.py`
 
-7. [Specificity Check](8_PrimerTree_SpecificityChecks.md) with `primerTree_specificity_checks.R`
+7. [Specificity Check](8_PrimerTreeSpecificityChecks.md) with `primerTree_specificity_checks.R`
 
 Helper Functions:
 * [Convert CSV to FASTA](CSVtoFASTA.md) with `CSVtoFASTA.py`
