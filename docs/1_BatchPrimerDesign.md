@@ -50,7 +50,7 @@ The sequence target is in <POSITION,LENGTH> format. In the example, the target f
 
 **ENABLE_BROAD (-b)** : Try less conservative settings if primers could not be developed for a template under strict design settings? (Default: False)
 
-**SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
+**SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). If running from the command line, use the format `-s '{"PRIMER_ANNEALING_TEMP": "52.0"}'`. Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
 
 **(-h)**: Help for usage.
 
