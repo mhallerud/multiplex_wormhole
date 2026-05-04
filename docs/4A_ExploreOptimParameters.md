@@ -36,10 +36,10 @@ mw.plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KE
 cd ~/multiplex_wormhole/src/multiplex_wormhole #move into directory holding scripts
 
 # provided parameters:
-python3 plot_ASA_temps.py -o OUTPATH [-i MIN_DIMERS] [-j MAX_DIMERS] [-r DECAY_RATE] [-t TEMP_INIT]  [-l TEMP_FINAL] [-p PROB_ADJ] [-g]
+python3 plot_ASA_temps.py -o OUTPATH [-m MIN_DIMERS] [-a MAX_DIMERS] [-r DECAY_RATE] [-i TEMP_INIT]  [-f TEMP_FINAL] [-p PROB_ADJ] [-g]
 
 # providing datasets:
-python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-s DIMER_SUMS] [-d DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-z SEED] [-g] 
+python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS] [-t DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-z SEED] [-g] 
 ```
 
 ### Arguments
@@ -47,27 +47,27 @@ python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-s DIMER_SUMS] [-d DIMER
 
 **PRIMER_FASTA (-f)** : FASTA filepath containing primer sequences to test. *Important: PrimerIDs in this file must match primer pair IDs in DIMER_SUMS and DIMER_TABLE!* (Default: None)
 
-**DIMER_SUMS (-s)** : Filepath to CSV containing dimer loads per primer pair. (Default: None)
+**DIMER_SUMS (-d)** : Filepath to CSV containing dimer loads per primer pair. (Default: None)
 
-**DIMER_TABLE (-d)** : Filepath to CSV containing pairwise primer dimer loads. (Default: None)
+**DIMER_TABLE (-t)** : Filepath to CSV containing pairwise primer dimer loads. (Default: None)
 
 **N_LOCI (-n)** : Target panel size (includes keeplist loci), i.e. the number of unique targets and primer pairs in the optimized multiplex. (Default: None)
 
 **KEEPLIST (-k)** : Filepath to FASTA file containing primer sequences that are required to be included in final primer set. (Default: None)
 
-**SEED (-z)** : CSV to primer set used as initial loci, in format of multiplex_wormhole output *_primers.csv. This option overrides N_LOCI, so the number of loci in the SEED set will be the final number of loci in the primer set. (Default: None)
+**SEED (-e)** : CSV to primer set used as initial loci, in format of multiplex_wormhole output *_primers.csv. This option overrides N_LOCI, so the number of loci in the SEED set will be the final number of loci in the primer set. (Default: None)
 
-**MIN_DIMER (-i)** : Minimum 'bad' dimer change expected going from one iteration to the next. Generally MIN_DIMER=1. (Default: None - calculated from data)
+**MIN_DIMER (-m)** : Minimum 'bad' dimer change expected going from one iteration to the next. Generally MIN_DIMER=1. (Default: None - calculated from data)
 
 
-**MAX_DIMER (-j)** : Maximum 'bad' dimer change expected moving from one iteration to the next. (Default: None - calculate from data)
+**MAX_DIMER (-a)** : Maximum 'bad' dimer change expected moving from one iteration to the next. (Default: None - calculate from data)
 
 **DECAY_RATE (-r)** : Base value used in decay function for temperature. Values close to 1 lead to slow temperature decay while decreasing values lead to more rapid temperature decay. (Default: 0.95, limit: 0-1)
 
-**T_INIT (-t)** : Initial temperature where simulated annealing starts. If not provided, this value will be calculated from changes in dimer load. (Default: None- set adaptively)
+**T_INIT (-i)** : Initial temperature where simulated annealing starts. If not provided, this value will be calculated from changes in dimer load. (Default: None- set adaptively)
 Adaptively calculated as `MIN_DIMER + DIMER_ADJ * (MAX_DIMER - MIN_DIMER)`
 
-**T_FINAL (-l)** : Final temperature where simulated annealing ends. If not provided, this value will be calculated from changes in dimer load. (Default: 0.1)
+**T_FINAL (-f)** : Final temperature where simulated annealing ends. If not provided, this value will be calculated from changes in dimer load. (Default: 0.1)
 
 **BURNIN (-b)** : Number of 'bad' swaps used to sample changes in dimer loads. (Default: 100)
 
