@@ -67,7 +67,7 @@ python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS] [-t DIMER
 **T_INIT (-i)** : Initial temperature where simulated annealing starts. If not provided, this value will be calculated from changes in dimer load. (Default: None- set adaptively)
 Adaptively calculated as `MIN_DIMER + DIMER_ADJ * (MAX_DIMER - MIN_DIMER)`
 
-**T_FINAL (-f)** : Final temperature where simulated annealing ends. If not provided, this value will be calculated from changes in dimer load. (Default: 0.1)
+**T_FINAL (-j)** : Final temperature where simulated annealing ends. If not provided, this value will be calculated from changes in dimer load. (Default: 0.1)
 
 **BURNIN (-b)** : Number of 'bad' swaps used to sample changes in dimer loads. (Default: 100)
 
