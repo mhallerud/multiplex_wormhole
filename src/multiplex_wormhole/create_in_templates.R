@@ -1,24 +1,38 @@
 # load dependencies
-library(openPrimeR)
+#library(openPrimeR)
 library(vcfR)
 
 # set input variables
-fasta <- "../singletons_CENSORed.fa"
-invcf <- "../NCSO_BC_singletons.vcf"
+setwd("/Users/maggiehallerud/Desktop/Gray_Fox_SNPs/Input_SNPs/")
+fasta <- "MAF30All.CENSORed.fa"
+invcf <- "MAF30AllGrayFoxPops.Filtered.recode.vcf"
 type <- "refbased"
 #type <- "denovo"
-prefix <- "PEPE_" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
+prefix <- "" # prefix of FASTA headers that needs to be removed for locusIDs to match CHROM in VCF
 minflankbp <- 18 # minimum size of flanking regions (i.e., min primer binding site size)
-maxSNP <- 6 # maximum number of SNPs allowed in a template
+maxSNP <- 3 # maximum number of SNPs allowed in a template
 ## TODO: Consider adjusting this to a SNP density, e.g. for variable template lengths
 
 
 #### READ IN SEQUENCES & SNPs ####
-# load template sequences
-templates <- openPrimeR::read_templates(fasta) #input fasta file
+# load template sequences as openPrimerR format
+#templates <- openPrimeR::read_templates(fasta) #input fasta file
+faraw <- read.table(fasta)$V1
+templates <- data.frame(ID=faraw[startsWith(faraw,">")],
+                        Header=faraw[startsWith(faraw,">")],
+                        Sequence_Length=NA,
+                        Allowed_Start_fw=1,
+                        Allowed_End_fw=minflankbp,
+                        Allowed_Start_rev=NA,
+                        Allowed_End_rev=NA,
+                        Sequence=faraw[!startsWith(faraw,">")])
 templates$ID <- gsub(">","", templates$ID)
 templates$ID <- gsub(prefix,"", templates$ID)
-#View(as.data.frame(templates$Sequence))
+# set initial primer binding regions based on minimum flanking region
+templates$Sequence_Length <- nchar(templates$Sequence)
+templates$Allowed_Start_rev <- templates$Sequence_Length - minflankbp
+templates$Allowed_End_rev <- templates$Sequence_Length
+View(templates)#check
 
 # load VCF
 vcf <- vcfR::read.vcfR(invcf)
@@ -41,7 +55,11 @@ if(type=="refbased"){
   lociinfo$RangeBP <- unlist(lapply(lociinfo$ID, function(X) strsplit(X,':')[[1]][2]))
   lociinfo$StartBP <- as.numeric(lapply(lociinfo$RangeBP, function(X) strsplit(X,'-')[[1]][1]))
   lociinfo$EndBP <- as.numeric(lapply(lociinfo$RangeBP, function(X) strsplit(X,'-')[[1]][2]))
-  #head(lociinfo)
+  head(lociinfo)
+  
+  # CHECK!!
+  sum(!lociinfo$CHROM %in% fix$CHROM)
+  
   # for each site in the VCF, find the associated locus based on the chromosome and position
   newfixes <- data.frame(CHROM=c(),POS=c(),ID=c(), REF=c(), ALT=c())
   excluded <- newfixes
@@ -90,11 +108,24 @@ for (i in 1:nrow(templates)){
   }#if
   min_snp <- min(snps)
   max_snp <- max(snps)
-  if (min_snp==Inf) min_snp <- templates$Sequence_Length[i]
-  if (max_snp==-Inf) max_snp <- 1
-  templates$Allowed_End_fw[i] <- min_snp-1
-  templates$Allowed_Start_rev[i] <- max_snp+1
-  templates$Allowed_End_rev[i] <- templates$Sequence_Length[i]
+  # remove SNP from targets if too close to start/end of sequence
+  while (min_snp<templates$Allowed_End_fw[i]){
+    templates$Allowed_Start_fw[i] <- min_snp+1
+    snps <- snps[-which(snps==min_snp)]
+    ifelse(length(snps)>0,  
+           min_snp <- min(snps),
+           min_snp <- Inf)
+  }#while
+  while (max_snp>templates$Allowed_Start_rev[i]){
+    templates$Allowed_End_rev[i] <- max_snp-1
+    snps <- snps[-which(snps==max_snp)]
+    ifelse(length(snps)>0,
+           max_snp <- max(snps),
+           max_snp <- -Inf)
+  }#while
+  # define primer binding regions based on remaining snps
+  if (!is.infinite(min_snp)) templates$Allowed_End_fw[i] <- min_snp-2
+  if (!is.infinite(max_snp)) templates$Allowed_Start_rev[i] <- max_snp+2
 }#for i
 
 # raise warning if any sequences contained 0 SNPs
@@ -103,26 +134,23 @@ if(length(nosnps)>0){
 }#if
 
 
-# check all are populated correctly
-templates$Allowed_Start_fw #these should all be 1
-templates$Allowed_End_fw # these should be 1 bp before the first SNP in the locus
-templates$Allowed_Start_rev # these should be 1 bp after the last SNP in the locus
-templates$Allowed_End_rev # these should be the last bp in the locus
-
 # extract allowed primer binding regions
+templates$Allowed_fw <- NA
+templates$Allowed_rev <- NA
 for (i in 1:nrow(templates)){
   templates$Allowed_fw[i] <- substr(templates$Sequence[i], templates$Allowed_Start_fw[i], templates$Allowed_End_fw[i])
   templates$Allowed_rev[i] <- substr(templates$Sequence[i], templates$Allowed_Start_rev[i], templates$Allowed_End_rev[i])
 }#for i
 
 # check allowed binding regions
-head(templates$Allowed_fw)
-head(templates$Allowed_rev)
+sum(!nchar(templates$Allowed_fw)==(templates$Allowed_End_fw-templates$Allowed_Start_fw+1))#should be 0
+# check all are populated correctly
+View(templates)
 
 
 
 # check whether all templates have SNPs and vice versa
-unique(templates$ID[!templates$ID %in% fix$CHROM])
+unique(templates$ID[!templates$ID %in% fix$CHROM])#should be 0
 
 
 #### FILTERING TEMPLATES ####
@@ -142,7 +170,7 @@ if (length(counts)>0){
 }#iff
 
 # double check that there's only one line per locus
-nrow(templates)==length(unique(templates$Header))
+nrow(templates)==length(unique(templates$Header))#should be True
 
 
 ## 3. remove loci with high levels of correlation with other SNPs
@@ -181,22 +209,27 @@ View(templates)
 # extract microhaplotypes
 tbl <- table(fix$CHROM,fix$POS) #rows=CHROM,cols=POS
 counts <- apply(tbl, 1, function(X) sum(X>0)) #count SNPs (this accounts for possible duplicates at same POS)
-microhaps_seq <- templates[which(templates$ID %in% microhaps$CHROM),]
+microhaps <- names(counts[counts>1])
+microhaps_seq <- templates[which(templates$ID %in% microhaps),]
 nrow(microhaps_seq)
-#microhaps_seq <- microhaps_seq[which(nchar(microhaps_seq$Allowed_rev)>=18 | nchar(microhap_seq$Allowed_fw)>=18),]
-#write.csv(microhaps_seq$ID, 'microhaplotypes.csv', row.names=FALSE)
 # check that primer binding regions are correct for microhaps
-microhaps <- fix[fix$CHROM%in%names(counts)[counts>1],]
-microhaps[microhaps$CHROM==microhaps$CHROM[1],]
-templates[templates$ID==paste0(">",microhaps$CHROM[1]),]
-
-# remove any periods in template IDs- these will cause problems with multiplex wormhole
-templates$ID <- gsub("\\.","",templates$ID)
+#allowed_end_fw should be min POS-2, allowed_start_rev should be max POS+2
+microhapvcf <- fix[fix$CHROM%in%names(counts)[counts>1],]
+microhapvcf[microhapvcf$CHROM==microhapvcf$CHROM[1],]
+templates[templates$ID==paste0(microhapvcf$CHROM[1]),]
+# save microhaps separatel
+target_len <- nchar(substr(microhaps_seq$Sequence, microhaps_seq$Allowed_End_fw, microhaps_seq$Allowed_Start_rev))
+sum(target_len<1)
+targets <- paste0(as.character(microhaps_seq$Allowed_End_fw+1), ",", as.character(target_len))
+write.csv(data.frame(SEQUENCE_ID=microhaps_seq$ID,
+                     SEQUENCE_TEMPLATE=microhaps_seq$Sequence,
+                     SEQUENCE_TARGET=targets), 'Microhaplotype_templates.csv', row.names=FALSE)
 
 # export IDs, templates, and targets as CSV in primer3 format
 target_len <- templates$Allowed_Start_rev - templates$Allowed_End_fw + 1
+sum(target_len<1)#check!
 targets <- paste0(as.character(templates$Allowed_End_fw+1), ",", as.character(target_len))
-templates_csv <- data.frame(SEQUENCE_ID=gsub(">","",templates$ID,'>',''),
+templates_csv <- data.frame(SEQUENCE_ID=templates$ID,
                             SEQUENCE_TEMPLATE=templates$Sequence,
                             SEQUENCE_TARGET=targets)
-write.csv(templates_csv, "Fisher_microhap_primer3Templates.csv", row.names=FALSE)
+write.csv(templates_csv, "SingletonSNP_Templates.csv", row.names=FALSE)

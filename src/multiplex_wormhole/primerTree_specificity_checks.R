@@ -168,8 +168,8 @@ plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET", dG=0, dG_
     sub <- plyr::rbind.fill(sub, amp)
     if(nrow(sub)>1){
       # convert sequences to DNAstringset
-      dnaseqs <- tbl$Sequence
-      names(dnaseqs) <- paste(tbl$species, tbl$accession, tbl)
+      dnaseqs <- sub$Sequence
+      names(dnaseqs) <- paste(sub$species, sub$accession)
       dnas <- Biostrings::DNAStringSet(dnaseqs, use.names=TRUE)
       # align (unique) sequences
       align <- DECIPHER::AlignSeqs(unique(dnas))
