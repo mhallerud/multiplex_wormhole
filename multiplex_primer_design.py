@@ -148,6 +148,8 @@ if not os.path.exists(mw.MFEprimer_PATH):
 # instructions here: https://mhallerud.github.io/multiplex_wormhole/#installation
 
 # run MFEprimer dimer function for dimer prediction
+### NOTE! This is the slowest step of the pipeline! If you have access to a cluster, try
+### running there with multi-threading. This step only needs to be run once per dataset.
 # -i = input FASTA of primer sequences 
 # -o = output file
 # -d = maximum deltaG threshold to consider dimers (kcal/mol)
