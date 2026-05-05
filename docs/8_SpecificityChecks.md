@@ -1,8 +1,8 @@
-----
+---
 layout: page
 title: Specificity Checking with PrimerTree
 permalink: specificity-check
-----
+---
 
 # Specificity Checking with PrimerTree
 Ensuring primer specificity is an important and oft-neglected step towards successful and accurate genotyping of low-quality samples. This is particularly important when genotyping predator scats which can contain DNA from closely related species. Multiplex wormhole does not include a specificity check within the Python package, however, I'm providing an R script for post-processing multiplex wormhole outputs that cross-walks with the PrimerTree R package, which provides automated calling of PRIMER-BLAST.
@@ -15,11 +15,11 @@ Ensuring primer specificity is an important and oft-neglected step towards succe
   4. Check against Bacteria if analyzing scats, since bacterial DNA will be abundant in scat samples.
   5. Check against human and other common lab contaminants.
 * GenBank is a growing resource, and not all off-target species have good representation. I recommend using less stringent searches (e.g., family-level) rather than species-level searches.
-* Off-target amplification can be ok (though never ideal) if the sequence is differentiable from the target amplicon (i.e. 2+ guaranteed differences). This is best assessed with follow-up lab testing.
+* Off-target amplification can be ok (though never ideal), as long as the sequence is differentiable from the target amplicon (i.e. 2+ bp differences). Any off-target amplification within a 2-bp distance should be discarded because the resulting sequence variation in amplicons could be mistaken for SNPs.
 
 
 ## Description
-The [PrimerTree_specificity_checks.R](https://github.com/mhallerud/multiplex_wormhole/main/blob/src/multiplex_wormhole/primerTree_specificity_checks.R) script provides a cross-walk between multiplex wormhole outputs and the [PrimerTree R package](https://github.com/MVesuviusC/primerTree) (Cannon et al. 2016). PrimerTree enables automated calls to [NCBI's PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/), which runs BLAST local alignments of primer pairs against specified taxonomic groups. PRIMER-BLAST uses modified BLAST settings to return results associated with lower matches that may still be amplified within PCR, and additionally applies a global Needleman-Wunsch alignment to ensure specificity, filters returned sequences dynamically based on the position of mismatches within the primer-binding regions, and filters sequnces for amplicon size (Untergasser et al. 2012). The provided R script: 1) automates running PRIMER-BLAST on each primer pair for a list of target taxa and outputs a CSV table, 2) extracts amplicon sequences and primer information for the final multiplex from multiplex wormhole inputs/intermediates, and 3) combines outputs from 1 and 2 via a global alignment, and plots a phylogenetic reconstruction including both the target amplicon sequences and the off-target sequences for each primer pair, with the number of basepair mismatches overlaid (Example below).
+The [PrimerTree_specificity_checks.R](https://github.com/mhallerud/multiplex_wormhole/main/blob/src/multiplex_wormhole/primerTree_specificity_checks.R) script provides a cross-walk between multiplex wormhole outputs and the [PrimerTree R package](https://github.com/MVesuviusC/primerTree) (Cannon et al. 2016). PrimerTree enables automated calls to [NCBI's PRIMER-BLAST](https://www.ncbi.nlm.nih.gov/tools/primer-blast/), which runs BLAST local alignments of primer pairs against specified taxonomic groups. PRIMER-BLAST uses modified BLAST settings to return results associated with lower matches that may still be amplified within PCR, and additionally applies a global Needleman-Wunsch alignment to ensure specificity, filters returned sequences dynamically based on the position of mismatches within the primer-binding regions, and filters sequnces for amplicon size (Untergasser et al. 2012). The provided R script: 1) automates running PRIMER-BLAST on each primer pair for a list of target taxa and outputs a CSV table, 2) extracts amplicon sequences and primer information for the final multiplex from multiplex wormhole inputs/intermediates, and 3) combines outputs from 1 and 2 via a global alignment, and plots a phylogenetic reconstruction including both the target amplicon sequences and the off-target sequences for each primer pair, with the number of basepair mismatches overlaid (Example below). An additional Python sub-module, `offtarget_thermodynamics.py`, calculates deltaG and Tm between each primer and off-target primer-binding site predicted by Primer-BLAST. DeltaG from these results can be used to filter off-target sequences included in plotting.
 
 
 ## R Package Dependencies
@@ -37,7 +37,7 @@ Within R:
 ```
 load("~/multiplex_wormhole/primerTree_specificity_checks.R")
 ```
-### Check Specificity with `runPrimerTree`
+### 1. Check Specificity with `runPrimerTree` (in R)
 This function loops through each primer pair and organism combination and runs PRIMER-BLAST using primerTree::primer_search, merging results into a single dataframe. Taxonomy and sequences are then pulled from NCBI for each record using the primerTree::get_taxonomy and primerTree::get_sequence commands. The output is a dataframe containing the query primer pair (FWD & REV) and full PRIMER-BLAST outputs. [Details on full functionality of primerTree](https://cran.r-project.org/web/packages/primerTree/refman/primerTree.html).
 ```
 library(primerTree)
@@ -63,7 +63,23 @@ View(primerblast)
 **MAX_TARGET_SIZE** : Max amplicon size to return from PRIMER-BLAST.
 **...** : Additional arguments that will be passed to primerTree::primer_search. These may include: `num_aligns=500`: # alignments to keep, `.parallel=c(True,False)` to enable parallel processing with foreach, `.progress=c("none", "tk", "text")` to enable a progress bar, or the full scope of [PRIMER-BLAST options](#primer-blast-options).
 
-### Extract Target Amplicons and Primer Information with `extractTemplateInfo`
+
+### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
+This function uses primer3-py to calculate thermodynamic stability of full binding sites and end stability of binding sites. Binding sites are identified from PrimerTree/PRIMER-BLAST outputs.
+```
+mw.offtargetThermodynamics(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0.25, DNA_CONC=50)
+```
+#### Arguments
+**INFILE (-i)** : CSV containing PRIMER-BLAST outputs. Must contain 'forward_start', 'forward_stop', 'reverse_start', 'reverse_stop', 'Sequence', 'FWDseq', and 'REVseq' fields.
+**OUTFILE (-o)** : Filepath where CSV results will save.
+**ANNEAL_TEMP (-t)** : PCR annealing temp (Celsius). Default: 52
+**MV_CONC (-m)** : Monovalent salt concentration in PCR. Default: 50
+**DV_CONC (-d)** : Divalent salt concentration in PCR. Default: 3.8
+**DNTP_CONC (-p)** : Primer concentration in PCR. Default: 0.25
+**DNA_CONC (-c)** : DNA concentration in PCR. Default: 50
+
+
+### 3. Extract Target Amplicons and Primer Information with `extractTemplateInfo`
 This function extracts the amplicon sequence and primer information for an optimized multiplex based on the input, intermediate, and output files from multiplex wormhole. The output is a dataframe containing the primer information, template sequences and targets, and amplicon sequences and targets (i.e., the shifted target position relative to the full template).
 ```
 primerinfo <- extractPrimerInfo(templates, filtprimers, finalprimers, 
@@ -77,21 +93,23 @@ View(primerinfo)
 **fwd_adapter** & **rev_adapter** : FWD & REV primer adapter sequences (5'-->3'), default is Illumina Nextera i5 & i7. 
 
 
-### Align & Plot Specificity Check Results
-This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). This function infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair.
+### 4. Align & Plot Specificity Check Results
+This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). `TreeLine` infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair. Off-target sequences can be optionally filtered by delta G values from mw.offtargetThermodynamics results. To be conservative, the default is to plot all off-target sequences with deltaG<0 of the full binding site.
 ```
 library(DECIPHER)
 library(Biostrings)
 
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
-plotPrimerBlast(primerblast, primerinfo, species="TARGET")
+plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA)
 dev.off() #close PDF
 ```
 #### Arguments
 **primerblast** : Table output by runPrimerTree. May use other BLAST-like specificity check results as long as the table contains "FWD", "REV", "Sequence", "accession", and "species" fields, with sequences trimmed at the primer binding sites. 
 **primerinfo** : Table output by extractPrimerInfo. May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields.
 **species** : Prefix for amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots.
+**dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
+**dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
 
 #### Output
 ![phylogenetic reconstruction](assets/images/primerblast_phylogeny.png)
