@@ -7,7 +7,7 @@ on: #push
     description: "Publish new release"
     required: true
     default: 'staging'
-    version:
+    version: 1.0.0
     description: 'Version to deploy'
     required: true
 
