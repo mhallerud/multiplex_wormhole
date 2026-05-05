@@ -67,7 +67,7 @@ View(primerblast)
 
 **MAX_TARGET_SIZE** : Max amplicon size to return from PRIMER-BLAST.
 
-**...** : Additional arguments that will be passed to primerTree::primer_search. These may include: `num_aligns=500`: # alignments to keep, `.parallel=c(True,False)` to enable parallel processing with foreach, `.progress=c("none", "tk", "text")` to enable a progress bar, or the full scope of [PRIMER-BLAST options](#primer-blast-options).
+**...** : Additional arguments that will be passed to primerTree::primer_search. These may include: `num_aligns=500`: # alignments to keep, `.parallel=c(True,False)` to enable parallel processing with foreach, `.progress=c("none", "tk", "text")` to enable a progress bar, or the full scope of [PRIMER-BLAST options](#primer-blast-options). If >500 returns are provided for a given taxonomic group + primer pair combination, rerun with increased `num_aligns` argument.
 
 
 ### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
