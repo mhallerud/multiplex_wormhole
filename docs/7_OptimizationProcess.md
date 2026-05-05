@@ -62,10 +62,12 @@ In multiplex_wormhole, an *adaptive* simulated annealing approach is used to set
 1. Random swaps (without accepting changes) are sampled for `BURNIN` iterations (default=200), and the change in cost `delta_cost` recorded.
 2. The `MEAN_DIMERS` (i.e., mean `delta_costs`) and `MAX_DIMERS` (i.e., max `delta_costs`) are recorded. 
 3. The initial temperature is calculated based on the ratio of these two values:
-     `T_INIT = -alpha * log10( MEAN_DIMER / MAX_DIMER ) + 2`
-`alpha` is hardcoded as `alpha=2` when `deltaG=False`, and `alpha=2.5` when `deltaG=True`. All values <0.3 are reset at 0.3 to ensure some hill-climbing ability even with complex problems.
-4. The final temperature is set as provided. By default, this value is nearly 0 so that the end of each cycle is running simple iterative improvement:
-    `T_FINAL = 0.01`
+     For `deltaG=False` : `T_INIT = -2*log10( MEAN_DIMER / MAX_DIMER ) + 2`, `T_INIT<0.3 --> T_INIT=0.3`
+
+     For `deltaG=True` : `T_INIT = [-2*log10(MEAN_DIMER / MAX_DIMER) + 1] / 10`, `T_INIT<0.03 --> T_INIT=0.03`
+   Values are given these lower limits to allow some hill-climbing.
+5. The final temperature is set as provided. By default, this value is nearly 0 so that the end of each cycle is running simple iterative improvement:
+    `T_FINAL = 0.001`
 
 Here's a plot showing the functional form of `T_INIT` based on common `MEAN_DIMER` & `MAX_DIMER` values:
 
@@ -75,9 +77,9 @@ This plot shows the following key characteristics:
 * T_INIT increases as MAX_DIMER increases on a logarithmic scale, allowing for higher temperatures with higher observed maximum costs (i.e., higher probability of accepting large changes) but with this effect based on the order of magnitude of MAX_DIMER.
 * The T_INIT function shifts upwards with lower MEAN_DIMER, allowing higher acceptance of "mistakes" with mean cost space. This allows the algorithm to accept more "risk" as the cost space includes lower-cost changes and a higher proportion of changes that will reduce cost.
 * The minimum value is near 0-2, while the maximum value is <8. Based on testing, values >10 resulted in increased dimer loads as the algorithm progressed.
-* Temperatures are higher for the deltaG algorithm. This is OK because cost changes tend to be much less variable for mean deltaG than for total dimer count, so more risk can be accepted.
+* Temperatures are lower for the deltaG algorithm. The costs are calculated differently, and deltaG optimization has a more convex solution space which makes runaway hill-climbing more likely.
 
-Users may also choose to set a fixed temperature schedule using the `T_INIT` and `T_FINAL` arguments; these will be carried into all simulated annealing cycles. `T_INIT` between 2-3 seems to work well for most problems.
+Users may also choose to set a fixed temperature schedule using the `T_INIT` and `T_FINAL` arguments; these will be carried into all simulated annealing cycles. `T_INIT` between 2-3 (or 0.2-0.3 for deltaG=True) seems to work well for most problems.
 
 
 ## Understanding the Dimer Trace Plot
