@@ -50,7 +50,7 @@ pixi shell #enter virtual env
 
 ### Install multiplex wormhole
 ```
-pip install -i https://test.pypi.org/simple/ multiplex-wormhole
+pip install multiplex_wormhole
 ```
 Note: Pixi/conda can be finicky... Dependening on your system, you may run into dependency errors here. If that happens, `exit` your virtual env and install the missing dependencies following the instructions below.
 
