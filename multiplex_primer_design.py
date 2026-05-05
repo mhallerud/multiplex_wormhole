@@ -206,7 +206,7 @@ mw.plotASAtemps(OUTPATH = os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
                 MAX_DIMER = 5, #update based on the max observed in the default plot!
                 DECAY_RATE = 0.98, # base for geometric functino of temperature decay
                 T_INIT = 3, #initial A.S.A. temperature: higher=more risk accepted
-                T_FINAL = 0.01, #final A.S.A. temp: 0=no risk, higher=accepting risk
+                T_FINAL = 0.001, #final A.S.A. temp: 0=no risk, higher=accepting risk
                 #proportion of max dimer load considered when setting temperature schedule
                 #1=no adjustment, closer to 0 = less mistake-tolerant
                 PROB_ADJ = 2) #adjusts acceptance probability rate

@@ -34,7 +34,7 @@ from helpers.logging_setup import setup_logging
 
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
-         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, 
+         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.001, 
          PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
@@ -596,7 +596,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("")
     logger.info("EXPORTING OPTIMIZED PRIMER SET....")
     ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, 
-               primer_seqs, keeplist_IDs, keeplist_seqs, costs, ITERATIONS)
+               primer_seqs, keeplist_IDs, keeplist_seqs, costs, SIMPLE)
     
     logger.info("EXPORTING DIMER TABLES FOR PRIMER PAIRS....")
     final_dimers = SubsetDimerTable(current_pairIDs, dimer_table, return_complement=False)
@@ -757,11 +757,11 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
     # T_init should depend on p(accepting mistake) [based on mean mistake] & 
     # how bad that 'mistake' is
     if deltaG:
-        T_INIT = -2*math.log10(MEAN_DIMER/MAX_DIMER)+2
+        T_INIT = (-2*math.log10(MEAN_DIMER/MAX_DIMER)+1)/10
+        if T_INIT<0.03: T_INIT=0.03
     else:
-        T_INIT = -2.5*math.log10(MEAN_DIMER/MAX_DIMER)+2
-    # correction if small
-    if T_INIT < 0.3: T_INIT = 0.3
+        T_INIT = -2*math.log10(MEAN_DIMER/MAX_DIMER)+2
+        if T_INIT < 0.3: T_INIT = 0.3
     
     return [T_INIT, MIN_DIMER, MAX_DIMER]
 
@@ -777,6 +777,9 @@ def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_s
     else:
         new_total = sum(new_dimer_totals.values())
     comparison = new_total - curr_total  # difference between new set and old
+    # if deltaG, use coarse scaling (mean*#)
+    if deltaG:
+        comparison = comparison*len(new_pairIDs)
 
     return comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total
 

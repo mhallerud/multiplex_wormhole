@@ -14,16 +14,17 @@ import sys
 import glob
 import shutil
 import argparse
+from datetime import datetime
 
 sys.path.append(os.path.dirname(__file__))
 from optimize_multiplex import main as optimizeMultiplex
-
+from optimize_multiplex import CheckInputFile
 
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
          SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
-         T_INIT=None, T_FINAL=None, PROB_ADJ=2):
+         T_INIT=None, T_FINAL=0.001, PROB_ADJ=2):
     """
     N_RUNS : # optimization runs [int]
     PRIMER_FA : Contains primer IDs and sequences [FASTA]
@@ -46,13 +47,23 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         -closer to 1: least conservative, explores more of cost space but adds more dimers
     T_INIT : Starting temperature for simulated annealing (default: None, i.e. set adaptively)
         - values closer to 0 will reduce increasing costs
-    T_FINAL : Ending temperature for simulated annealing (default: 0.01)
+    T_FINAL : Ending temperature for simulated annealing (default: 0.001)
     PROB_ADJ : Parameter used to adjust dimer acceptance probabilities (default: 2)
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
     -------
     Outputs N_RUNS optimized multiplexes and a summary.
 
     """
+    # first check that files exist
+    CheckInputFile(PRIMER_FA, "PRIMER_FA", required=True)
+    CheckInputFile(DIMER_SUMS, "DIMER_SUMS", required=True)
+    CheckInputFile(DIMER_TABLE, "DIMER_TABLE", required=True)
+    CheckInputFile(KEEPLIST, "KEEPLIST", required=False)
+    CheckInputFile(SEED, "SEED", required=False)
+    
+    # set up output filename if None
+    if OUTPATH is None or OUTPATH=="None":
+        OUTPATH = datetime.now().strftime("%d-%m-%Y_%H%M")
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'TotalDimers']]
     
@@ -82,7 +93,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                          T_FINAL=T_FINAL, 
                                          PROB_ADJ=PROB_ADJ, 
                                          MAKEPLOT=False,
-                                         RNG=12345+run)
+                                         RNG=run*1000)
                 loads.append([str(run), str(cost)])
                 run+=1
                 print(" ")
@@ -133,6 +144,10 @@ def moveAllFiles(filegrep, dest):
 class OptimizationWarning(Exception):
     pass
         
+
+class InputError(Exception):
+    pass
+
 
 ### Set up timeout exception behavior
 class TimeoutException(Exception):   # Custom exception class
