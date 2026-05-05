@@ -56,6 +56,14 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
+    # check paths
+    if not os.path.exists(PRIMERS):
+        raise InputError("PRIMERS file could not be found!")
+    if not os.path.exists(MFEprimer_PATH):
+        raise InputError("Could not find MFEprimer!"+
+                         "Set path on line 44 of panel_assessment.py which can be found here: "+
+                         os.path.dirname(__file__))
+
     # setup logging
     logger = setup_logging(PRIMERS.split(".")[0]+".log", True, PRIMERS.split(".")[0])
     logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
@@ -67,17 +75,12 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     logger.info("      BAD_DIMERS_dG: %s", BAD_DIMERS_dG)
     logger.info("")
 
-    # check paths
-    if not os.path.exists(MFEprimer_PATH):
-        raise InputError("Could not find MFEprimer!"+
-                         "Set path on line 44 of panel_assessment.py which can be found here: "+
-                         os.path.dirname(__file__))
     # convert CSV primers to FASTA, if needed
     if(PRIMERS.endswith(".csv")):
         # check for requisite fields first...
         CSV = pandas.read_csv(PRIMERS)
         if 'PrimerID' not in list(CSV.columns) or 'Sequence' not in list(CSV.columns):
-            raise InputError("CSV is missing PrimerID or Sequence field- fix and try again.")
+            raise InputError("PRIMERS is missing PrimerID or Sequence field- fix and try again.")
         # convert CSV to FASTA
         FASTA = PRIMERS.replace(".csv", ".fasta")
         csv2fasta(PRIMERS, OUT_FA=FASTA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence")

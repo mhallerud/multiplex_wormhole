@@ -10,6 +10,7 @@ Created on Thu Dec 21 20:06:00 2023
 
 # load modules
 import sys
+import os
 import csv
 import argparse
 
@@ -26,7 +27,8 @@ def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence",
     -------
     Converts input sequences in CSV to FASTA format
     """
-    
+    if not os.path.exists(IN_CSV):
+        raise Exception("IN_CSV file could not be found!")
     
     # check that output ends with FASTA or FA
     if not (OUT_FA.endswith(".fa") or OUT_FA.endswith(".fasta")):

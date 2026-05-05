@@ -9,6 +9,7 @@ Created on Thu Mar 14 15:00:12 2024
 """
 
 # load dependencies
+import os
 import argparse
 
 
@@ -23,14 +24,20 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     -------
     Outputs combined FASTA, attempts to handle redundant IDs / sequences
     """
+    # check inputs
+    if not os.path.exists(MAIN_FA):
+        raise InputError("MAIN_FA file could not be found!")
+    if not os.path.exists(KEEPLIST_FA):
+        raise InputError("KEEPLIST_FA file could not be found!")
+    
     # set output filepath if not provided
     if OUTPATH==None:
     	OUTPATH= MAIN_FA.split('.fa')[0] + '_plusKeeplist.fa'
 
     # read in fastas
-    main_seqs, main_ids = readFasta(MAIN_FA)
+    main_primers, main_ids, main_seqids = readFasta(MAIN_FA)
     print(str(len(main_ids))+" MAIN sequences read.")
-    keeplist_seqs, keeplist_ids = readFasta(KEEPLIST_FA)
+    keeplist_primers, keeplist_ids, keeplist_seqids = readFasta(KEEPLIST_FA)
     print(str(len(keeplist_ids))+" KEEPLIST sequences read.")
    
     # check for duplicate ids in each file
@@ -39,20 +46,21 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
     if len(main_ids) != len(set(main_ids)):
         raise Exception("Non-unique primer IDs found in MAIN_FA! Sequence headers in FASTA must be unique.")
     
-    # if MAIN_FA contains primerIDs matching those in KEEPLIST_FA, remove from MAIN_FA to avoid duplicates
-    dup_ids = [keeplist_ids[x] for x in range(len(keeplist_ids)) if keeplist_ids[x] in main_ids]
-    if len(dup_ids)>0:
-        main_seqs = [main_seqs[x] for x in range(len(main_seqs)) if main_ids[x] not in dup_ids]
-        main_ids = [main_ids[x] for x in range(len(main_ids)) if main_ids[x] not in dup_ids]
-    
-    # if MAIN_FA contains sequences matching those in KEEPLIST_FA, remove from MAIN_FA to avoid duplicates
-    dup_seqs = [keeplist_seqs[x] for x in range(len(keeplist_seqs)) if keeplist_seqs[x] in main_seqs]
+    # if MAIN_FA contains pairIDs matching those in KEEPLIST_FA, remove from MAIN_FA to avoid duplicates
+    # identify duplicate ids, sequences
+    dup_ids = [main_seqids[x] for x in range(len(main_seqids)) if main_seqids[x] in keeplist_seqids]
+    dup_seqs = [main_primers[x] for x in range(len(main_primers)) if main_primers[x] in keeplist_primers]
     if len(dup_seqs)>0:
-        main_seqs = [main_seqs[x] for x in range(len(main_seqs)) if keeplist_seqs[x] in dup_seqs]
-        main_ids = [main_ids[x] for x in range(len(main_ids)) if keeplist_seqs[x] in dup_seqs]
+        dup_seqs = [main_seqids[x] for x in range(len(main_seqids)) if main_primers[x] in dup_seqs]
+        dup_ids.extend(dup_seqs)
+    # remove primers belonging to templates in keeplist from the main FA
+    if len(dup_ids)>0:
+        dup_seqids = [x.split(".")[0] for x in dup_ids]
+        main_primers = [main_primers[x] for x in range(len(main_primers)) if main_seqids[x] not in dup_seqids]
+        main_ids = [main_ids[x] for x in range(len(main_ids)) if main_seqids[x] not in dup_seqids]
     
     # combine fastas and write to file
-    combo_seqs = main_seqs + keeplist_seqs
+    combo_seqs = main_primers + keeplist_primers
     combo_ids = main_ids + keeplist_ids
     with open(OUTPATH, 'w') as file:
         for row in range(len(combo_seqs)):
@@ -64,7 +72,7 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
 
 def readFasta(FA):
     # empty array to hold ids & seqs
-    ids = []    
+    primerids = []    
     seqs = []
     # read in lines
     with open(FA, 'r') as file:
@@ -72,10 +80,17 @@ def readFasta(FA):
         # make list of ids and seqs
         for line in lines:
             if '>' in line:
-                ids.append(line)
+                primerids.append(line)
             else:
                 seqs.append(line)
-    return seqs, ids
+    # grab pair IDs
+    seqid = [x.split(".")[0] for x in primerids]
+    return seqs, primerids, seqid
+
+
+
+class InputError(Exception):
+    pass
 
 
 

@@ -35,6 +35,12 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     -------
     Converts MFEprimer text outputs into CSV tables of pairwise and total dimer load.
     """
+    # check that input files exist
+    if not os.path.exists(ALL_DIMERS):
+        raise InputError("ALL_DIMERS file not found!")
+    if not os.path.exists(END_DIMERS) and END_DIMERS is not None:
+        raise InputError("END_DIMERS file not found!")
+   
     # set up logging
     logger = setup_logging(OUTPATH+".log", True, OUTPATH)
     logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
@@ -50,22 +56,24 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     # read in files - convert each interaction to a single line in array
     logger.info("Reading in files............")
     all_dimers = ReadDimerTXT(ALL_DIMERS)
-    if END_DIMERS is None:
-        end_dimers = []
-    else:
+    if END_DIMERS is not None:
         end_dimers = ReadDimerTXT(END_DIMERS)
     
-    logger.info("Remove duplicate dimers..................")
     # combine dimers into dataframe
-    dimers_df = pd.concat([end_dimers, all_dimers])
+    if END_DIMERS is not None:
+        logger.info("Remove duplicate dimers..................")
+        dimers_df = pd.concat([end_dimers, all_dimers])
+    else:
+        dimers_df = all_dimers
     # get counts of each row
     counts = dimers_df.value_counts()
     # grab unique dimers between primers
-    dimers = pd.DataFrame(list(counts.keys()), 
+    dimers = pd.DataFrame(list(counts.keys()),
                           columns=['Primer1','Primer2','Pair1','Pair2','Score','DeltaG'])
     # grab unique sets of interacting primer pairs
     dimers_subset = pd.DataFrame(list(zip(dimers['Primer1'], dimers['Primer2'], dimers['Pair1'], dimers['Pair2'])),
                                  columns=['Primer1','Primer2', 'Pair1','Pair2'])
+    
     if deltaG:
         # extract minimum (i.e., worst/strongest) deltaG per primerxprimer interaction
         dimers['DeltaG'] = pd.to_numeric(dimers['DeltaG'])
@@ -126,7 +134,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
 
     
     # calculate interactions per primer
-    if OUTPRIMERPATH!="False":
+    if OUTPRIMERPATH!="False" and OUTPRIMERPATH is not None:
         logger.info("")
         logger.info("")
         logger.info("Calculating pairwise primer interactions..........")

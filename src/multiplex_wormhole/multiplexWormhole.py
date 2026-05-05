@@ -59,6 +59,13 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     2. Pairwise dimers predicted between all filtered primer pairs
     3. Optimized multiplex primer set for target N_LOCI
     """    
+    # check all inputs
+    if not os.path.exists(MFEprimer_PATH):
+        raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
+    if not os.path.exists(TEMPLATES):
+        raise InputError("TEMPLATES file not found!")
+    if not os.path.exists(KEEPLIST_FA) and KEEPLIST_FA is not None:
+        raise InputError("KEEPLIST_FA file not found!")
     # set suffix to current datetime if not given
     if PREFIX is None:
         PREFIX = str(datetime.now()).replace(" ","_").replace(".","_")
@@ -79,10 +86,6 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     mwlogger.info("     ITERATIONS: %s", ITERATIONS)
     mwlogger.info("     deltaG: %s", deltaG)
     mwlogger.info("     VERBOSE: %s", VERBOSE)
-
-    # check for MFEprimer path
-    if not os.path.exists(MFEprimer_PATH):
-        raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
     
     # set input types
     N_LOCI = int(N_LOCI)
@@ -136,6 +139,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
         INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
     mwlogger.info("")
     mwlogger.info("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
+    mwlogger.info("Note: This is the slowest step! Especially with large candidate sets. Use -t option for multithreading.")
    # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
     # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
     # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
@@ -153,6 +157,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     # --mono = concentration of monovalent cations (mM)
     # --dntp = concentration of dNTPs (mM)
     # --oligo = concentration of annealing oligos (nM)
+    if not os.path.exists(INPUT):
+        raise Exception(INPUT+" not found- did primer3BatchDesign step fail?")
     try:
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50",
                         shell=True)
@@ -256,19 +262,22 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     
     
     ## STEP 7: Convert selected primer set to FASTA format for additional screening
-    mwlogger.info("")
-    mwlogger.info("-----CONVERTING BEST PRIMER SETS INTO FASTAs FOR ADDITIONAL SCREENING-----")
     runs = pd.read_csv(os.path.join(OUTDIR3, PREFIX+"_RunSummary.csv"))
-    run = runs['Run']
-    run = [str(run[x]).zfill(2) for x in range(len(run))]
-    dimers = runs['TotalDimers']
-    mwlogger.info("The BEST multiplex had %s total predicted dimers.", str(min(dimers)))
-    for i in range(len(runs)):
-        mwlogger.info("Run %s had %s dimers.", str(run[i]), str(dimers[i]))
-        if dimers[i]==min(dimers):
-            mwlogger.info(".....Converting to FASTA for additional screening")
-            CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
-                       OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
+    if len(runs)>1:
+        mwlogger.info("")
+        mwlogger.info("-----CONVERTING BEST PRIMER SETS INTO FASTAs FOR ADDITIONAL SCREENING-----")
+        run = runs['Run']
+        run = [str(run[x]).zfill(2) for x in range(len(run))]
+        dimers = runs['TotalDimers']
+        mwlogger.info("The BEST multiplex had %s total predicted dimers.", str(min(dimers)))
+        for i in range(len(runs)):
+            mwlogger.info("Run %s had %s dimers.", str(run[i]), str(dimers[i]))
+            if dimers[i]==min(dimers):
+                mwlogger.info(".....Converting to FASTA for additional screening")
+                CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
+                           OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
+    else: 
+        "RunSummary not found- optimization step may have failed."
     
     # finish logging
     # end logging
@@ -277,6 +286,11 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     print("LOGGED TO: multiplex_wormhole_"+PREFIX+".log")
     logging.shutdown()
     
+
+
+class InputError(Exception):
+    pass
+
 
 
 def parse_args():

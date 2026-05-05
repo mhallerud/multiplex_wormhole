@@ -18,6 +18,7 @@ import logging
 import primer3 #primer design with primer3-py
 import pandas as pd
 import argparse
+import json
 from datetime import datetime
 
 # import additional sub-modules
@@ -45,10 +46,16 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     ------
     Outputs CSV and FASTA of filtered primer sequences
     """
+    # check inputs
+    if not os.path.exists(TEMPLATES):
+        raise InputError("TEMPLATES file could not be found!")
+    if SETTINGS is not None and type(SETTINGS) is not dict:
+        raise InputError("SETTINGS is not in dictionary format! Reformat as dictionary: {'setting': value}")
+    if KEEPLIST is not None and not os.path.exists(KEEPLIST):
+        raise InputError("KEEPLIST file could not be found!")
+
     # initialize logger
     logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)
-    # read in templates as pandas dictionary
-    templates = pd.read_csv(TEMPLATES)
     logger.info("START TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
     logger.info("")
     logger.info("batch primer design input: ")
@@ -61,19 +68,10 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     logger.info("      KEEPLIST: %s", KEEPLIST)
     logger.info("      ENABLE_BROAD: %s", ENABLE_BROAD)
     logger.info("")
-
-    if SETTINGS is not None:
-        logger.info("      SETTINGS: ")
-        try:
-            for k, v in SETTINGS:
-                logger.info("         %s : %s", k, v)
-        except Exception:
-            logger.info("          Failed to print settings")
-            pass
-    else:
-        logger.info("SETTINGS: None")
-        
-
+    
+    # read in templates as pandas dictionary
+    templates = pd.read_csv(TEMPLATES)
+    
     # Raise error if names aren't SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET
     if not all([x in templates.keys() for x in ['SEQUENCE_ID', 'SEQUENCE_TEMPLATE', 'SEQUENCE_TARGET']]):
         raise InputError("TEMPLATES must include fields named SEQUENCE_ID, SEQUENCE_TEMPLATE, & SEQUENCE TARGET.")
@@ -337,6 +335,9 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     'PRIMER_WT_TM_GT': 1.0,
     'PRIMER_WT_TM_LT': 1.0,
     'P3_PILE_FLAG': 1 }
+        
+    Ladapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_LEFT'].upper()
+    Radapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_RIGHT'].upper()
     
     if SETTINGS is not None:
         for k, v in SETTINGS.items():
@@ -373,10 +374,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         for k, v in BROAD_SETTINGS.items():
             logger.info("%s: %s", k, v)
     logger.info("")
-    
-    Ladapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_LEFT'].upper()
-    Radapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_RIGHT'].upper()
-    
+
     # set up empty tuple to hold filtered output
     filtered_primers = []
     filtered_primers.append(["PrimerID","LocusID","PrimerPair","Direction","Sequence",
@@ -514,7 +512,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                 tests = testStructure(enddimerLR, Tm_LIMIT, dG_END_LIMIT, tests)
                 # export info if all tests were passed
                 if tests == 10:
-                    ampSize = out['PRIMER_PAIR_'+N+'_PRODUCT_SIZE']
+                    ampSize = out['PRIMER_PAIR_'+N+'_PRODUCT_SIZE'] - len(Ladapt) - len(Radapt)
                     for DIR in ['LEFT','RIGHT']:
                         # extract useful info
                         pos = out['PRIMER_'+DIR+'_'+N]
@@ -625,7 +623,7 @@ def parse_args():
     parser.add_argument("-e", "--enddimers_dg", type=float, default=-4)
     parser.add_argument("-k", "--keeplist", type=str, default=None)
     parser.add_argument("-b", "--enable_broad", action="store_true")
-    parser.add_argument("-s", "--settings", type=dict, default=None)
+    parser.add_argument("-s", "--settings", type=json.loads, default=None)
     
     return parser.parse_args()
 

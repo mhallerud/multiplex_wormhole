@@ -55,6 +55,13 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     -------
     Plots temperature schedule and dimer acceptance probabilities based on given simulated annealing parameters.
     """
+    ## first check files exist....
+    CheckInput(PRIMER_FASTA, "PRIMER_FASTA")
+    CheckInput(DIMER_SUMS, "DIMER_SUMS")
+    CheckInput(DIMER_TABLE, "DIMER_TABLE")
+    CheckInput(KEEPLIST, "KEEPLIST")
+    CheckInput(SEED, "SEED")    
+    
     # initialize logging
     logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)    
     #print("Logging printed to: ")
@@ -91,7 +98,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         if MAX_DIMER is None and MIN_DIMER is None:
             # check for necessary files before proceeding...
             if not [PRIMER_FASTA is not None and DIMER_SUMS is not None and DIMER_TABLE is not None and N_LOCI is not None]:
-                raise Exception("InputError! If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
+                raise InputError("If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
                                 "DIMER_TABLE and N_LOCI must be provided. Please provide either A) MAX_DIMER and MIN_DIMER or B)"+
                                 " PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, and N_LOCI parameters.")
             else:
@@ -117,6 +124,13 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     keeplist_IDs = []
                     n_keeplist = 0
                 
+                # check for missing dimer info
+                missing_pairs = [keeplist_pairs[x] for x in range(len(keeplist_pairs)) if keeplist_pairs[x] not in dimer_table['Pair1'].to_numpy()]
+                if len(missing_pairs)>0:
+                    raise InputError("Dimer information is missing for keeplist pairs! Rerun MFEprimer dimer prediction after running AddKeeplist2FASTA")
+                primer_pairs, primer_loci, primer_seqs, primer_IDs = op.CheckPrimersInDimerTables(
+                    dimer_table, primer_pairs, primer_loci, primer_seqs, primer_IDs, logger)
+
                 if SEED is None:
                     ## A) Choose initial primer set based on pseudo-Greedy algorithm
                     # Choose initial set of loci based on loci with minimum dimer counts
@@ -231,11 +245,13 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
             # set initial and final temps
             T_FINAL = 0.01
         if T_INIT is None:
-           T_INIT =  op.setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+           T_INIT, MIN_DIMER, MAX_DIMERS =  op.setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                  keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
                                  curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
                                  deltaG=deltaG, logger=logger)
+        else:
+             T_INIT = float(T_INIT)
     
     ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 steps
     # Define range of dimer loads to use in calculations
@@ -412,6 +428,18 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
 
 
 
+def CheckInput(file, name, required=False):
+    if required or file is not None:
+        if not os.path.exists(file):
+            raise InputError(name+" file could not be found!")
+
+
+
+class InputError(Exception):
+    pass
+
+
+
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
@@ -419,16 +447,16 @@ def parse_args():
     parser.add_argument("-o", "--outpath", type=str, required=True)
     # add optional arguments
     parser.add_argument("-f", "--primer_fasta", type=str, default=None)
-    parser.add_argument("-s", "--dimer_sums", type=str, default=None)
-    parser.add_argument("-d", "--dimer_table", type=str, default=None)
+    parser.add_argument("-d", "--dimer_sums", type=str, default=None)
+    parser.add_argument("-t", "--dimer_table", type=str, default=None)
     parser.add_argument("-n", "--nloci", type=int, default=None)
     parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-z", "--seed", type=str, default=None)
-    parser.add_argument("-i", "--min_dimers", type=int, default=None)
-    parser.add_argument("-j", "--max_dimers", type=int, default=None)
+    parser.add_argument("-e", "--seed", type=str, default=None)
+    parser.add_argument("-m", "--min_dimers", type=int, default=None)
+    parser.add_argument("-a", "--max_dimers", type=int, default=None)
     parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
-    parser.add_argument("-t", "--temp_init", type=float, default=None)
-    parser.add_argument("-l", "--temp_final", type=float, default=0.1)
+    parser.add_argument("-i", "--temp_init", type=float, default=None)
+    parser.add_argument("-j", "--temp_final", type=float, default=0.1)
     parser.add_argument("-b", "--burnin", type=int, default=100)
     parser.add_argument("-p", "--prob_adj", type=float, default=2)
     # add flags

@@ -125,7 +125,8 @@ mw.primer3BatchDesign(TEMPLATES,
                       dG_MID_LIMIT = -8, #threshold for non-end dimer deltaG
                       KEEPLIST = KEEPLIST_FA, 
                       ENABLE_BROAD = False, #use broader settings if no primers for template?
-                      SETTINGS = None) #primer3 settings in dictionary {} format, overrides defaults 
+                      SETTINGS = None) #primer3 settings in dictionary format: {"setting": value}, 
+                                        #overrides defaults 
 ## Outputs will be saved to the {OUTDIR}/1_PrimerDesign folder.
 
 
@@ -142,7 +143,7 @@ END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
 
 # check mfeprimer path
 if not os.path.exists(mw.MFEprimer_PATH):
-    mw.MFEprimer_PATH = mw.setup_mfeprimer()
+    mw.MFEprimer_PATH = mw.setup_mfeprimer.main()
 # if this fails, you will need to manually download MFEprimer & set the path
 # instructions here: https://mhallerud.github.io/multiplex_wormhole/#installation
 
@@ -189,27 +190,26 @@ else:
 ## 2. Use pre-specified temperatures and dimer loads.
 ## I recommend trying (1) first, then using this to inform (2) if you want to 
 ## explore alternatives beyond the defaults.
-mw.plotASAtemps(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
-                PRIMER_FASTA=os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
-                DIMER_SUMS=DIMER_TOTS,
-                DIMER_TABLE=os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
-                N_LOCI=N_LOCI, #number of target loci in panel
-                KEEPLIST=KEEPLIST_FA, 
-                SEED=None, #this would be an output from optimizeMultiplex
-                BURNIN=100,#number iterations with dimer loads used to sample cost space
-                deltaG=DELTAG)
+mw.plotASAtemps(OUTPATH = os.path.join(OUTDIR3, 'TestingASAparams_defaults'),
+                PRIMER_FASTA = INPUT,
+                DIMER_SUMS = DIMER_TOTS,
+                DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
+                N_LOCI = N_LOCI, #number of target loci in panel
+                KEEPLIST = KEEPLIST_FA, 
+                SEED = None, #this would be an output from optimizeMultiplex
+                BURNIN = 100,#number iterations with dimer loads used to sample cost space
+                deltaG = DELTAG)
 # decay rate closer to 1: 
-mw.plotASAtemps(OUTPATH=os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
+mw.plotASAtemps(OUTPATH = os.path.join(OUTDIR3, 'TestingASAparams_decayRate98'),
                 # dimer counts to plot and calculate temps from (if not set)
-                MIN_DIMER=1,
-                MAX_DIMER=5, #update based on the max observed in the default plot!
-                DECAY_RATE=0.98, # base for geometric functino of temperature decay
-                T_INIT=3, #initial A.S.A. temperature: higher=more risk accepted
-                T_FINAL=0.01, #final A.S.A. temp: 0=no risk, higher=accepting risk
+                MIN_DIMER = 1,
+                MAX_DIMER = 5, #update based on the max observed in the default plot!
+                DECAY_RATE = 0.98, # base for geometric functino of temperature decay
+                T_INIT = 3, #initial A.S.A. temperature: higher=more risk accepted
+                T_FINAL = 0.01, #final A.S.A. temp: 0=no risk, higher=accepting risk
                 #proportion of max dimer load considered when setting temperature schedule
                 #1=no adjustment, closer to 0 = less mistake-tolerant
-                DIMER_ADJ=0.1,
-                PROB_ADJ=2) #adjusts acceptance probability rate
+                PROB_ADJ = 2) #adjusts acceptance probability rate
 
 
 #### STEP 5: OPTIMIZE A SET OF MULTIPLEX PRIMERS BY MINIMIZING DIMER LOAD
@@ -256,7 +256,7 @@ mw.CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3, "OUTNAME_primers.csv"),
 ## where outputs will vary. 
 ## The multipleOptimizations function will run optimizeMultiplex N_RUNS times:
 mw.multipleOptimizations(N_RUNS = 10, #number of optimization runs
-                         PRIMER_FA = os.path.join(OUTDIR1, 'FilteredPrimers.fa'), 
+                         PRIMER_FA = INPUT,
                          DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_sum.csv'), 
                          DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                          OUTPATH = os.path.join(OUTDIR3,"OUTNAME"), 
