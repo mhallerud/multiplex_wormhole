@@ -47,6 +47,8 @@ runPrimerTree <- function(primers, organisms,
               if (!is.null(hits)){
                 hits$FWD <- paste0(names[fwd], ".FWD")
                 hits$REV <- paste0(names[rev], ".REV")
+                hits$FWDseq <- paste0(forwards[fwd], ".FWD")
+                hits$REVseq <- paste0(reverses[rev], ".REV")
                 all_hits <- rbind(all_hits, hits)
               }#if
             }#for l
@@ -138,10 +140,19 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET"){
+plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA){
   # load dependencies
   library(DECIPHER)
   library(Biostrings)
+  print(paste("# Off-target sequences:", nrow(primerblast)))
+  # filter primerblast outputs based on thermodynamics
+  if(!is.na(dG)){
+    primerblast <- primerblast[which(primerblast$dG_FWD<dG & primerblast$dG_REV<dG),]
+  }#ifdG
+  if(!is.na(dG_end)){
+    primerblast <- primerblast[which(primerblast$dG_FWD_END<dG_end & primerblast$dG_REV_END<dG_end),]
+  }#ifdG_end
+  print(paste("# Off-target sequences after delta G filtering:", nrow(primerblast)))
   # configure plotting environment to allow space for labels
   par(mar=c(1,1,1,16))
   # run new tree for each primer pair combination
