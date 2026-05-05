@@ -2,10 +2,6 @@ name: Publish Python 🐍 distribution 📦 to PyPI
 
 on: #push
   workflow_dispatch:
-    required: true
-    default: 'staging'
-    version: 1.0.0
-    description: 'New version'
 
 jobs:
 # define the build for the distribution
