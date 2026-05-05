@@ -64,8 +64,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
         raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
     if not os.path.exists(TEMPLATES):
         raise InputError("TEMPLATES file not found!")
-    if not os.path.exists(KEEPLIST_FA) and KEEPLIST_FA is not None:
-        raise InputError("KEEPLIST_FA file not found!")
+    if KEEPLIST_FA is not None:
+        if not os.path.exists(KEEPLIST_FA):
+            raise InputError("KEEPLIST_FA file not found!")
     # set suffix to current datetime if not given
     if PREFIX is None:
         PREFIX = str(datetime.now()).replace(" ","_").replace(".","_")

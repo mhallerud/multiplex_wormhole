@@ -38,8 +38,9 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
     # check that input files exist
     if not os.path.exists(ALL_DIMERS):
         raise InputError("ALL_DIMERS file not found!")
-    if not os.path.exists(END_DIMERS) and END_DIMERS is not None:
-        raise InputError("END_DIMERS file not found!")
+    if END_DIMERS is not None:
+        if not os.path.exists(END_DIMERS):
+            raise InputError("END_DIMERS file not found!")
    
     # set up logging
     logger = setup_logging(OUTPATH+".log", True, OUTPATH)

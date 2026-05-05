@@ -49,10 +49,12 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     # check inputs
     if not os.path.exists(TEMPLATES):
         raise InputError("TEMPLATES file could not be found!")
-    if SETTINGS is not None and type(SETTINGS) is not dict:
-        raise InputError("SETTINGS is not in dictionary format! Reformat as dictionary: {'setting': value}")
-    if KEEPLIST is not None and not os.path.exists(KEEPLIST):
-        raise InputError("KEEPLIST file could not be found!")
+    if SETTINGS is not None:
+        if type(SETTINGS) is not dict:
+            raise InputError("SETTINGS is not in dictionary format! Reformat as dictionary: {'setting': value}")
+    if KEEPLIST is not None:
+        if not os.path.exists(KEEPLIST):
+            raise InputError("KEEPLIST file could not be found!")
 
     # initialize logger
     logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)
