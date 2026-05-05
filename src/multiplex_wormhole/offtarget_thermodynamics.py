@@ -72,16 +72,16 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
                 REV = inputs.REVseq[row]
             
             # calculate dG / Tm for each primer binding site
-            fwd_binding = primer3.calc_heterodimer(inputs.forward_binding[row], FWD,
+            fwd_binding = primer3.calc_heterodimer(FWD, inputs.forward_binding[row],
                                                    temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
                                                    dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            fwd_end = primer3.calc_end_stability(inputs.forward_binding[row], FWD,
+            fwd_end = primer3.calc_end_stability(FWD, inputs.forward_binding[row], 
                                                  temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
                                                  dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            rev_binding = primer3.calc_heterodimer(inputs.reverse_binding[row], REV,
+            rev_binding = primer3.calc_heterodimer(REV, inputs.reverse_binding[row], 
                                                    temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
                                                    dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            rev_end = primer3.calc_end_stability(inputs.reverse_binding[row], REV,
+            rev_end = primer3.calc_end_stability(REV, inputs.reverse_binding[row], 
                                                  temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
                                                  dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
             inputs.Tm_FWD[row] = fwd_binding.tm
