@@ -79,4 +79,4 @@ python3 optimize_multiplex.py -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OU
 
 
 
-[Previous](4A_ExploreOptimParameters.md)
+[Previous](4A_ExploreOptimParameters.md)  [Next](5_MultipleRunOptimization.md)
