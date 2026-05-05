@@ -14,10 +14,10 @@ has_children: true
 3. [Input File Format](#input-file-format)
 4. [Quick Start](#quick-start): Panel design with the `multiplexWormhole` wrapper function
 5. [Multiplex Wormhole Functions](#multiplex-wormhole-functions):
-   * Batch Design Primers with [batchPrimer3Design](1_BatchPrimerDesign.md)
-   * Tabulate Predicted Dimers with [tabulateDimers](3_TabulateDimers.md)
-   * Explore Optimization Parameters with [plotASAtemps](4A_ExploreOptimParameters.md)
-   * Optimize Multiplex PCR Primers with [optimizeMultiplex](4_OptimizeMultiplexPrimerSet.md)
+   * Batch design primers with [batchPrimer3Design](1_BatchPrimerDesign.md)
+   * Tabulate predicted dimers with [tabulateDimers](3_TabulateDimers.md)
+   * Explore optimization parameters with [plotASAtemps](4A_ExploreOptimParameters.md)
+   * Optimize multiplex PCR primers with [optimizeMultiplex](4_OptimizeMultiplexPrimerSet.md)
    * Run multiple optimizations with [multipleOptimizations](5_MultipleRunOptimization.md)
    * Check specificity with [primerTree_specificity_checks.R & offtargetThermodynamics](8_SpecificityChecks.md)
    * Panel assessment wrapper function: [assessPanel](6_AssessPanel.md)
