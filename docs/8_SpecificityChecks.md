@@ -131,6 +131,8 @@ dev.off() #close PDF
 **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
 
 #### Output
+This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon.
+
 ![phylogenetic reconstruction](assets/images/primerblast_phylogeny.png)
 
 
