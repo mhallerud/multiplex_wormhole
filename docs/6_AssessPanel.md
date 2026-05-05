@@ -35,9 +35,9 @@ All outputs take the basename of the input primer file.
 * `PREFIX`_PrimerPairDeltaG_ + mean.csv, wide.csv
 
 Prints out:
-* # primer pairs
+* number of primer pairs
 * total # pairwise dimers
-* # primer pairs involved in dimers
+* number of primer pairs involved in dimers
 * dimers per pair
 * mean deltaG of dimers
 * Number of pairwise interactions with "bad" dimers
