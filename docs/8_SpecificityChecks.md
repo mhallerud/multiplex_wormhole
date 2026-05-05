@@ -56,11 +56,17 @@ View(primerblast)
 ```
 #### Arguments
 **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
+
 **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
+
 **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
+
 **primer_specificity_database** : Search database (options="core_nt", "nt", "PRIMERDB/genome_selected_species", "refseq_mrna", "refseq_representative_genomes", "Custom"). If "Custom", provide sequences in FASTA format to the "CUSTOM_DB" option.
+
 **exclude_env** : Exclude NCBI sequences from environmental or uncultured samples?
+
 **MAX_TARGET_SIZE** : Max amplicon size to return from PRIMER-BLAST.
+
 **...** : Additional arguments that will be passed to primerTree::primer_search. These may include: `num_aligns=500`: # alignments to keep, `.parallel=c(True,False)` to enable parallel processing with foreach, `.progress=c("none", "tk", "text")` to enable a progress bar, or the full scope of [PRIMER-BLAST options](#primer-blast-options).
 
 
@@ -71,11 +77,17 @@ mw.offtargetThermodynamics(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CON
 ```
 #### Arguments
 **INFILE (-i)** : CSV containing PRIMER-BLAST outputs. Must contain 'forward_start', 'forward_stop', 'reverse_start', 'reverse_stop', 'Sequence', 'FWDseq', and 'REVseq' fields.
+
 **OUTFILE (-o)** : Filepath where CSV results will save.
+
 **ANNEAL_TEMP (-t)** : PCR annealing temp (Celsius). Default: 52
+
 **MV_CONC (-m)** : Monovalent salt concentration in PCR. Default: 50
+
 **DV_CONC (-d)** : Divalent salt concentration in PCR. Default: 3.8
+
 **DNTP_CONC (-p)** : Primer concentration in PCR. Default: 0.25
+
 **DNA_CONC (-c)** : DNA concentration in PCR. Default: 50
 
 
@@ -88,8 +100,11 @@ View(primerinfo)
 ```
 #### Arguments
 **templates** : Input CSV containing template DNA sequences and targets input to multiplex wormhole (e.g, 0_Inputs/*Templates.csv)
+
 **filtprimers** : CSV output by the [primer3BatchDesign](1_BatchPrimerDesign) of multiplex wormhole (e.g., 1_PrimerDesign/FilteredPrimers.csv)
+
 **finalprimers** : CSV of primers in optimized multiplex (e.g., 3_Optimized_Multiplexes/Final_Primers/{OUTNAME)_Run01_primers.csv)
+
 **fwd_adapter** & **rev_adapter** : FWD & REV primer adapter sequences (5'-->3'), default is Illumina Nextera i5 & i7. 
 
 
@@ -106,9 +121,13 @@ dev.off() #close PDF
 ```
 #### Arguments
 **primerblast** : Table output by runPrimerTree. May use other BLAST-like specificity check results as long as the table contains "FWD", "REV", "Sequence", "accession", and "species" fields, with sequences trimmed at the primer binding sites. 
+
 **primerinfo** : Table output by extractPrimerInfo. May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields.
+
 **species** : Prefix for amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots.
+
 **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
+
 **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
 
 #### Output
