@@ -41,3 +41,6 @@ Prints out:
 * dimers per pair
 * mean deltaG of dimers
 * Number of pairwise interactions with "bad" dimers
+
+
+[Previous](4_OptimizeMultiplexPrimerSet.md)      [Next](8_SpecificityChecks.md)
