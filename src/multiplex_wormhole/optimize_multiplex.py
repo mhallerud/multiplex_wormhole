@@ -785,15 +785,12 @@ def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_s
 
 
 def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total):
-        #if new_total < curr_total:
-        # TODO: if a primer pair has been tried, remove from current 'allowed' set (so that we don't go in circles...)
-        # maybe not necessary though because it all depends on what's still in the set...
-        # update all starting values to match this iteration's values
-        current_pairIDs = new_pairIDs.copy()
-        primerset_dimers, nonset_dimers = new_primerset_dimers, new_nonset_dimers
-        curr_dimer_totals = new_dimer_totals
-        curr_total = new_total
-        return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
+    # update all starting values to match this iteration's values
+    current_pairIDs = new_pairIDs.copy()
+    primerset_dimers, nonset_dimers = new_primerset_dimers, new_nonset_dimers
+    curr_dimer_totals = new_dimer_totals
+    curr_total = new_total
+    return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
 
 
 def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = None):
@@ -1018,6 +1015,7 @@ def CheckInputNumber(X, NAME, DEFAULT):
                 xfl = float(X)
             except ValueError:
                 raise Exception("CHECK INPUTS! "+NAME+" is not a number. [DEFAULT="+DEFAULT+"]")
+
 
 
 def ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, primer_seqs, 

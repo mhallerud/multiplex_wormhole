@@ -8,6 +8,7 @@ import batch_primer3_design
 import tabulate_dimers
 import optimize_multiplex 
 import multiple_run_optimization 
+import offtarget_thermodynamics
 from helpers import setup_mfeprimer
 from helpers import CSVtoFasta
 from helpers import add_keeplist_to_fasta
@@ -25,6 +26,7 @@ multipleOptimizations = multiple_run_optimization.main
 CSVtoFASTA = CSVtoFasta.main
 addKeeplist2FASTA = add_keeplist_to_fasta.main
 multiplexWormhole = multiplexWormhole.main
+offtargetThermodynamics = offtarget_thermodynamics.main
 
 
 # SET DEPENDENCY PATH FOR MFEPRIMER
@@ -32,5 +34,6 @@ MFEprimer_PATH = glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")[0]
 
 
 
-__all__ = ["multiplexWormhole", "panel_assessment", "setup_mfeprimer", "batch_primer3_design", "tabulate_dimers", "optimize_multiplex", "multiple_run_optimization", "CSVtoFasta", "add_keeplist_to_fasta", "plot_ASA_temps"]
-#, "assessPanel", "primer3BatchDesign", "tabulateDimers", "plotASAtemps", "optimizeMultiplex", "multipleOptimizations", "CSVtoFASTA", "addKeeplist2FASTA", "MFEprimer_PATH"]
+__all__ = ["multiplexWormhole", "panel_assessment", "setup_mfeprimer", "batch_primer3_design", 
+           "tabulate_dimers", "optimize_multiplex", "multiple_run_optimization", "CSVtoFasta", 
+           "add_keeplist_to_fasta", "plot_ASA_temps", "offtarget_thermodynamics"]
