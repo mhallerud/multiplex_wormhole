@@ -93,7 +93,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                          T_FINAL=T_FINAL, 
                                          PROB_ADJ=PROB_ADJ, 
                                          MAKEPLOT=False,
-                                         RNG=run*1000)
+                                         RNG=run*10)
                 loads.append([str(run), str(cost)])
                 run+=1
                 print(" ")

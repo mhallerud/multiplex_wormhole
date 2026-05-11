@@ -234,8 +234,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     mwlogger.info("Logged to %s",  os.path.join(OUTDIR3, PREFIX)+".log")
     multipleOptimizations(N_RUNS = N_RUNS, 
                           PRIMER_FA = os.path.join(OUTDIR1, "FilteredPrimers.fa"),
-                          DIMER_SUMS = os.path.join(OUTDIR2, 'PrimerPairInteractions_binary_sum.csv'), 
-                          DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_binary_wide.csv'), 
+                          DIMER_SUMS = DIMER_TOTS,
+                          DIMER_TABLE = os.path.join(OUTDIR2, 'PrimerPairInteractions_wide.csv'), 
                           OUTPATH = os.path.join(OUTDIR3, PREFIX),
                           N_LOCI = N_LOCI, 
                           deltaG = deltaG, #True: deltaG optimization, False=standard optimization
