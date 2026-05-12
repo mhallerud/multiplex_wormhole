@@ -78,7 +78,7 @@ git clone https://github.com/mhallerud/multiplex_wormhole/
 ```
 
 ### Configuring the MFE primer binary
-MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer v3.2.7 version that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
+MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer **v3.2.7** release that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). If you cloned the repository directly from GitHub, save MFEprimer to `multiplex_wormhole/src/multiplex_wormhole`. Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
 
 Now you are ready to run multiplex wormhole!
 

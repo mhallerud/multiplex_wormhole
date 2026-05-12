@@ -143,7 +143,8 @@ END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
 
 # check mfeprimer path
 if not os.path.exists(mw.MFEprimer_PATH):
-    mw.MFEprimer_PATH = mw.setup_mfeprimer.main()
+    mw.MFEprimer_PATH = mw.setup_mfeprimer()
+
 # if this fails, you will need to manually download MFEprimer & set the path
 # instructions here: https://mhallerud.github.io/multiplex_wormhole/#installation
 

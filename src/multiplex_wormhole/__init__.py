@@ -27,6 +27,7 @@ CSVtoFASTA = CSVtoFasta.main
 addKeeplist2FASTA = add_keeplist_to_fasta.main
 multiplexWormhole = multiplexWormhole.main
 offtargetThermodynamics = offtarget_thermodynamics.main
+setup_mfeprimer = setup_mfeprimer.main()
 
 
 # SET DEPENDENCY PATH FOR MFEPRIMER

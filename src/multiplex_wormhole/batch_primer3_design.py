@@ -76,7 +76,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     
     # Raise error if names aren't SEQUENCE_ID, SEQUENCE_TEMPLATE, SEQUENCE_TARGET
     if not all([x in templates.keys() for x in ['SEQUENCE_ID', 'SEQUENCE_TEMPLATE', 'SEQUENCE_TARGET']]):
-        raise InputError("TEMPLATES must include fields named SEQUENCE_ID, SEQUENCE_TEMPLATE, & SEQUENCE TARGET.")
+        raise InputError("TEMPLATES must include fields named 'SEQUENCE_ID', 'SEQUENCE_TEMPLATE', & 'SEQUENCE_TARGET'.")
     
     # Raise error if SEQUENCE_IDs aren't unique
     if len(set(templates['SEQUENCE_ID'])) != len(templates):
@@ -85,7 +85,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         logger.info("Templates include non-unique sequenceID values that need to be fixed:")
         for d in duplicates:
             logger.info("      %s", d)
-        raise InputError("TEMPLATES INCLUDE NON-UNIQUE SEQUENCEID VALUES!"+
+        raise InputError("TEMPLATES INCLUDE NON-UNIQUE SEQUENCE_ID VALUES!"+
                          "   (Non-unique values and counts printed above) ")
     
     # convert to dictionary

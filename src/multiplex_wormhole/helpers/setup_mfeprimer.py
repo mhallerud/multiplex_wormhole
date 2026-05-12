@@ -13,7 +13,7 @@ Created on Mon Apr 27 09:55:08 2026
 import sys
 import os
 import glob
-import urllib
+import urllib.request
 import gzip
 import shutil
 import subprocess
@@ -29,7 +29,7 @@ def main():
     outdir = os.path.dirname(os.path.dirname(__file__))
     path = glob.glob(outdir+"/*mfeprimer*")
     if len(path)==0:
-        path = install_mfeprimer()
+        path = install_mfeprimer(outdir)
     return path[0]
 
 

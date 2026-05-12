@@ -43,7 +43,6 @@ from helpers.logging_setup import setup_logging
 ## FIND PATH TO BINARY DEPENDENCIES
 ## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
 from helpers.setup_mfeprimer import main as setup_mfeprimer
-MFEprimer_PATH = setup_mfeprimer()
 
 
 
@@ -56,6 +55,8 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
+    # set up MFEprimer
+    MFEprimer_PATH = setup_mfeprimer()
     # check paths
     if not os.path.exists(PRIMERS):
         raise InputError("PRIMERS file could not be found!")

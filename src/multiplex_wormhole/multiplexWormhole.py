@@ -34,7 +34,6 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 ## FIND PATH TO BINARY DEPENDENCIES
 ## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
 from helpers.setup_mfeprimer import main as setup_mfeprimer
-MFEprimer_PATH = setup_mfeprimer()
 
 
 
@@ -59,6 +58,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     2. Pairwise dimers predicted between all filtered primer pairs
     3. Optimized multiplex primer set for target N_LOCI
     """    
+    # set up MFEprimer
+    MFEprimer_PATH = setup_mfeprimer()
+    
     # check all inputs
     if not os.path.exists(MFEprimer_PATH):
         raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
