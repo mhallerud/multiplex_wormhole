@@ -41,10 +41,11 @@ multiplex_wormhole was built and tested on MacOS with Python v3.9.13 in the Spyd
 conda create -n py39 python=3.9 #create new virtual env w/ python v3.9
 conda activate py39 #enter virtual env
 ```
-Some clusters used pixi instead of conda environments:
+The Oregon State University cluster uses pixi instead of conda for virtual environments:
 ```
 pixi init #initialize virtual env
 pixi add "python=3.9" #set python version
+pixi add pip
 pixi shell #enter virtual env
 ```
 
@@ -76,6 +77,30 @@ pip install matplotlib==3.5.2
 ```
 git clone https://github.com/mhallerud/multiplex_wormhole/
 ```
+
+3. To run functions from within Python:
+```
+# add path to multiplex wormhole source scripts to your PATH
+import sys, importlib
+sys.path.append("~/multiplex_wormhole/src/multiplex_wormhole")
+
+# load multiplex wormhole sub-modules
+from multiplexWormhole import main as multiplexWormhole
+from panel_assessment import main as assessPanel
+from batch_primer3_design import main as primer3BatchDesign
+from tabulate_dimers import main as tabulateDimers
+plot_ASA_temps = importlib.import_module("plot_ASA_temps")
+plotASAtemps = plot_ASA_temps.main
+from optimize_multiplex import main as optimizeMultiplex
+from multiple_run_optimization import main as multipleOptimizations 
+from offtarget_thermodynamics import main as offtargetThermodynamics
+from helpers.setup_mfeprimer import main as setup_mfeprimer
+from helpers.CSVtoFasta import main as CSVtoFASTA
+from helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+```
+
+Then these can be run as documented but without the `mw.` prefix (e.g., run `multiplexWormhole(...)` instead of `mw.multiplexWormhole(...)`).
+
 
 ### Configuring the MFE primer binary
 MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer **v3.2.7** release that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). If you cloned the repository directly from GitHub, save MFEprimer to `multiplex_wormhole/src/multiplex_wormhole`. Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
@@ -139,21 +164,7 @@ For example, I use the following steps to prepare input data for applications fo
 
 
 ## Quick Start
-**The multiplexWormhole function is a wrapper around all sub-modules and will optimize a panel using the defaults for all other functions. Check out the [full workflow](#multiplex-wormhole-functions) and settings within individual functions for ultimate flexibility.**m
-
-### Python usage
-```
-# load module
-import multiplex_wormhole as mw
-
-# panel design (defaults shown)
-mw.multiplexWormhole(TEMPLATES, N_LOCI, OUTDIR, KEEPLIST_FA, N_RUNS,
-                     ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False,
-                     VERBOSE=False)
-
-# panel assessment (defaults shown)
-mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
-```
+**The multiplexWormhole function is a wrapper around all sub-modules and will optimize a panel using the defaults for all other functions. Check out the [full workflow](#multiplex-wormhole-functions) and settings within individual functions for ultimate flexibility.**
 
 ### Command line usage
 ```
@@ -161,35 +172,56 @@ mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 cd ~/multiplex_wormhole/src/multiplex_wormhole 
 
 # panel design
-python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES] [-s SIMPLE] [-d] [-v]
+# usage: python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES] [-s SIMPLE] [-d] [-v]
+# example with all options / flags:
+python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa" -i 1000 -c 10 -s 5000 -d -v
 
 # panel assessment
-python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e END_DIMERS_DG] [-b BAD_DIMERS_DG]
+# usage: python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e END_DIMERS_DG] [-b BAD_DIMERS_DG]
+# example with all options/flags
+python3.9 panel_assessment.py -i "Primers.fasta" -a -8 -e -4 -b -10
+```
+
+### Python usage
+```
+# load module
+import multiplex_wormhole as mw
+
+# panel design example (with defaults)
+mw.multiplexWormhole(TEMPLATES="Input_Templates.csv", 
+                     N_LOCI=50, 
+                     OUTDIR="Test_MW", 
+                     PREFIX="Test_MW_default",
+                     KEEPLIST_FA="Keeplist.fa",
+                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)
+
+# panel assessment example (with defaults)
+mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 ```
 
 ### Arguments
 #### multiplexWormhole
-**TEMPLATES (-t)** : Path to templates CSV. 
-**NLOCI (-n)** : Final panel size (i.e., # primer pairs & # templates amplified).
-**OUTDIR (-o)** : Filepath where output directory will be created and all outputs saved within a generated folder structure.
-**PREFIX (-p)** : Prefix for all outputs. [Defaults to a timestamp if None provided]
-**KEEPLIST_FA (-k)** : Path to keeplist FASTA. [Default: None]
-**N_RUNS (-r)** : Number of optimization runs. [Default: 10]
-**ITERATIONS (-i)** : Number of simulated annealing iterations per cycle. [Default: 1000]
-**CYCLES (-c) ** : Number of simulated annealing cycles per run. [Default: 10]
-**SIMPLE (-s)** : Number of simple iterative improvement iterations per run. [Default: 5000]
-**deltaG (-d)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
-**VERBOSE (-v)** : Print all steps and swaps at the optimization step. [Default: False]
+**TEMPLATES (-t --templates)** : Path to templates CSV. 
+**NLOCI (-n --nloci)** : Final panel size (i.e., # primer pairs & # templates amplified).
+**OUTDIR (-o --outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure.
+**PREFIX (-p --prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided]
+**KEEPLIST_FA (-k --keeplist)** : Path to keeplist FASTA. [Default: None]
+**N_RUNS (-r --runs)** : Number of optimization runs. [Default: 10]
+**ITERATIONS (-i --iter)** : Number of simulated annealing iterations per cycle. [Default: 1000]
+**CYCLES (-c --cycles) ** : Number of simulated annealing cycles per run. [Default: 10]
+**SIMPLE (-s --simple)** : Number of simple iterative improvement iterations per run. [Default: 5000]
+**deltaG (-d --deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
+**VERBOSE (-v --verbose)** : Print all steps and swaps at the optimization step. [Default: False]
 
 #### assessPanel
-**PRIMERS (-i)** : FASTA or CSV of primers. Sequence names must match the format <SequenceID>.<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
-**ALL_DIMERS_dG (-a)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8]
-**END_DIMERS_dG (-e)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
-**BAD_DIMERS_dG (-b)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
+**PRIMERS (-i --input)** : FASTA or CSV of primers. Sequence names must match the format <SequenceID>.<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
+**ALL_DIMERS_dG (-a --alldimers_dg)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8]
+**END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
+**BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
 
 ## Multiplex Wormhole Functions
-For maximum flexibility, the full multiplex wormhole workflow is available at: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
+For maximum flexibility, the full multiplex wormhole workflow is available in an example script meant to be run line-by-line: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
 1. [Batch Primer Design](1_BatchPrimerDesign.md) with `batch_primer3_design.py`
    

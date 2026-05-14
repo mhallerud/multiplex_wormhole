@@ -43,6 +43,7 @@ import multiplex_wormhole as mw
 #---------------------PANEL ASSESSMENT WORKFLOW ------------------------#
 # INPUT: FASTA or CSV (PrimerID, Sequence) file with primers, PrimerIDs following rules
 # described below (e.g., "MACA1.FWD" & "MACA1.REV")
+## Change primers.fasta to existing panel or comment this out to run the full script!
 mw.assessPanel("Primers.fasta",
                ALL_DIMERS_dG=-8, #deltaG threshold used to predict non-end dimers
                END_DIMERS_dG=-4, #deltaG threshold used to predict 3' end dimers
