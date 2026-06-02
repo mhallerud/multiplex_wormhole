@@ -115,14 +115,21 @@ The primary input to multiplex wormhole is a CSV table containing information on
 Each DNA sequence in the CSV will be treated as a unique target for PCR amplification (i.e., sequences should be non-overlapping and unique). The file should include these three columns (exact capitalized field names required):
 * SEQUENCE_ID : Template names, without punctuation. All punctuation will be automatically removed. Names should also be unique. 
 * SEQUENCE_TEMPLATE : DNA template sequence in the 5'-->3' direction.
-* SEQUENCE_TARGET : identifies the base pairs targeted for PCR ampflication following primer3 format: <startBP,length>. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in this field. If there are 2 SNPs, for example at the 50th and 90th base pairs in the sequence, 50,40 would be the target. See the [example input CSV](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/Input_Templates.csv). 
+* SEQUENCE_TARGET : identifies the base pairs targeted for PCR ampflication following primer3 format: <startBP,length>. For example, a SNP at the 100th base pair in the sequence would be denoted as 100,1 in this field. 
 
+Example for defining the target field based on a DNA sequence with two target SNPs (red) at the 25th and 44th base pairs, respectively. The target length is the number of base pairs (inclusive) of both SNPs (i.e., the # of characters from 25 to 44 = 44-(25-1):
+
+![target field example](docs/assets/images/microhaplotype_targets.png)
+
+Example CSV format:
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
 | ------------- | -------------------- | ------------------ |
 | CLocus_704    | TCAGAGAC...          | 53,1               |
 | ...           | ...                  | ...                |
 
+
+See the [example input CSV](https://github.com/mhallerud/multiplex_wormhole/blob/main/examples/Input_Templates.csv). 
 
 The [create_in_templates](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/multiplex_wormhole/create_in_templates.R) R script can be used to create this CSV from VCF and FASTA inputs. R dependencies include vcfR for VCF handling and openPrimeR for defining primer binding regions. The R script handles two input types:
 
