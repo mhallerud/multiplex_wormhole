@@ -207,7 +207,7 @@ if __name__=="__main__":
          VERBOSE = args.verbose, 
          SEED = args.seed,
          SIMPLE = args.simple, 
-         ITERATIONS = args.iterations, 
+         ITERATIONS = args.iter, 
          CYCLES = args.cycles,
          BURNIN = args.burnin, 
          DECAY_RATE = args.decay_rate,
