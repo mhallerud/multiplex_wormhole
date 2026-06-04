@@ -119,7 +119,7 @@ Each DNA sequence in the CSV will be treated as a unique target for PCR amplific
 
 Example for defining the target field based on a DNA sequence with two target SNPs (red) at the 25th and 44th base pairs, respectively. The target length is the number of base pairs (inclusive) of both SNPs (i.e., the # of characters from 25 to 44 = 44-(25-1):
 
-![target field example](docs/assets/images/microhaplotype_targets.png)
+![target field example](assets/images/microhaplotype_targets.png)
 
 Example CSV format:
 
