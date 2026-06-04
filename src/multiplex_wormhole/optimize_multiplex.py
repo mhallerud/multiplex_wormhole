@@ -526,7 +526,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                         primer_pairs, primer_loci,
                                         OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
-                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
+                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=i)
                     if newSet is not None:
                         swap_id, new_id, new_pairIDs = newSet
                         # log change
@@ -535,6 +535,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         asa_costs.append([i, Temp, curr_total])
                         # accept change with probability: e^(-change/temp)
                         SAvalue = math.exp(-PROB_ADJ*comparison/Temp)
+                        rand.seed(RNG+i)
                         if SAvalue > rand.uniform(0,1):
                             update = updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
                             current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
