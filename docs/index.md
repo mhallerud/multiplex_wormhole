@@ -88,7 +88,7 @@ git clone https://github.com/mhallerud/multiplex_wormhole/
 
 3. To run functions from within Python: 
 
-```ruby annotate
+```ruby
 # add path to multiplex wormhole source scripts to your PATH
 import sys, importlib
 sys.path.append("~/multiplex_wormhole/src/multiplex_wormhole")
