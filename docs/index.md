@@ -37,12 +37,15 @@ The heart of multiplex wormhole's contribution to multiplex PCR primer design is
 ## Installation
 ### Set up a virtual environment
 multiplex_wormhole was built and tested on MacOS with Python v3.9.13 in the Spyder IDE managed under Anaconda-Navigator. For those new to Python or with existing python packages, [Anaconda](https://www.anaconda.com/products/navigator) is the recommended virtual environment manager. For a conda virtual environment within your working directory:
-```
+
+```ruby
 conda create -n py39 python=3.9 #create new virtual env w/ python v3.9
 conda activate py39 #enter virtual env
 ```
+
 The Oregon State University cluster uses pixi instead of conda for virtual environments:
-```
+
+```ruby
 pixi init #initialize virtual env
 pixi add "python=3.9" #set python version
 pixi add pip
@@ -50,15 +53,18 @@ pixi shell #enter virtual env
 ```
 
 ### Install multiplex wormhole
-```
+
+```ruby
 pip install multiplex_wormhole
 ```
+
 Note: Pixi/conda can be finicky... Dependening on your system, you may run into dependency errors here. If that happens, `exit` your virtual env and install the missing dependencies following the instructions below.
 
 ### Back-up installation option
 If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
 1. Install Python dependencies to your virtual environment (replace "pixi add" with "conda install" if using conda):
-```
+
+```ruby
 pixi add primer3-py
 pixi add pandas==1.4.4
 pixi add numpy==1.24.4
@@ -66,7 +72,8 @@ pixi add matplotlib==3.5.2
 ```
 
 Or, if not using a virtual environment:
-```
+
+```ruby
 pip install primer3-py==2.0.0
 pip install pandas==1.4.4
 pip install numpy==1.24.4
@@ -74,12 +81,14 @@ pip install matplotlib==3.5.2
 ```
 
 2. Download source code from GitHub:
-```
+
+```ruby
 git clone https://github.com/mhallerud/multiplex_wormhole/
 ```
 
-3. To run functions from within Python:
-```
+3. To run functions from within Python: 
+
+```ruby
 # add path to multiplex wormhole source scripts to your PATH
 import sys, importlib
 sys.path.append("~/multiplex_wormhole/src/multiplex_wormhole")
@@ -137,7 +146,7 @@ The [create_in_templates](https://github.com/mhallerud/multiplex_wormhole/blob/m
 
 * *reference-aligned: Assumes the FASTA sequence names are in the format `CHROM`:`startBP`-`endBP` where `CHROM` matches the reference sequence denoted as 'CHROM' field in the VCF, `startBP` is the position in the reference sequence where the FASTA sequence starts, and `endBP` is the position in the reference sequence where the FASTA sequence ends. SNPs will then be located within the FASTA sequences based on whether their position (`POS` in the VCF) is between startBP and endBP. This format can be extracted from reference-aligned SNP data in VCF format (e.g., output from Stacks, bcftools mpileup, etc.) using the following commands with REF.FASTA as the reference genome:
 
-```
+```ruby
 # NOTE: Flanking regions of 100-bp are used here as this is roughly the amplicon length targeted and provides good primer binding space on either side of the target SNP, but this can be adjusted if longer or shorter amplicons are desired. 
 # thin to 1 SNP per 100-bp to avoid overlapping template sequences
 # this step is not necessary if linkage disequilibrium pruning has already been performed on the input VCF
@@ -174,7 +183,7 @@ For example, I use the following steps to prepare input data for applications fo
 **The multiplexWormhole function is a wrapper around all sub-modules and will optimize a panel using the defaults for all other functions. Check out the [full workflow](#multiplex-wormhole-functions) and settings within individual functions for ultimate flexibility.**
 
 ### Command line usage
-```
+```ruby
 # move to path where scripts live
 cd ~/multiplex_wormhole/src/multiplex_wormhole 
 
