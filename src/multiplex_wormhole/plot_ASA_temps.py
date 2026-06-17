@@ -112,7 +112,9 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 #logger.info("Reading in primer dimer counts........")
                 dimer_table = pd.read_csv(DIMER_TABLE)
                 dimer_sums = pd.read_csv(DIMER_SUMS)
-            
+                dimer_table['Pair1'] = [str(x) for x in dimer_table['Pair1']]
+                dimer_sums['Pair1'] = [str(x) for x in dimer_sums['Pair1']]
+                
                 # read in keeplist info
                 if KEEPLIST is not None:
                     keeplist_loci, keeplist_seqs, keeplist_IDs, keeplist_pairs = op.LoadPrimers(KEEPLIST)
