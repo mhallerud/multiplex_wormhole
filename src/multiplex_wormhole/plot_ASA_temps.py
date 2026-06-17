@@ -125,7 +125,8 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                     n_keeplist = 0
                 
                 # check for missing dimer info
-                missing_pairs = [keeplist_pairs[x] for x in range(len(keeplist_pairs)) if keeplist_pairs[x] not in dimer_table['Pair1'].to_numpy()]
+                #missing_pairs = [keeplist_pairs[x] for x in range(len(keeplist_pairs)) if keeplist_pairs[x] not in dimer_table['Pair1'].to_numpy()]
+                missing_pairs = list(set(keeplist_pairs)-set(dimer_table['Pair1']))
                 if len(missing_pairs)>0:
                     raise InputError("Dimer information is missing for keeplist pairs! Rerun MFEprimer dimer prediction after running AddKeeplist2FASTA")
                 primer_pairs, primer_loci, primer_seqs, primer_IDs = op.CheckPrimersInDimerTables(
