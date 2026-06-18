@@ -527,7 +527,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                         primer_pairs, primer_loci,
                                         OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, [],
-                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=i)
+                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
                     if newSet is not None:
                         swap_id, new_id, new_pairIDs = newSet
                         # log change
@@ -735,7 +735,7 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                   primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
-                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs, RNG=i)
+                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs, RNG=RNG)
         if newSet is not None:
             swap_id, new_id, new_pairIDs = newSet
             # compare newSet to original set
