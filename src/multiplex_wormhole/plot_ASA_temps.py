@@ -21,6 +21,7 @@ from datetime import datetime
 import math
 import importlib
 import pandas as pd
+import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import random as rand
@@ -248,7 +249,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
             # set initial and final temps
             T_FINAL = 0.01
         if T_INIT is None:
-           T_INIT, MIN_DIMER, MAX_DIMERS =  op.setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+           T_INIT, MIN_DIMER, MAX_DIMERS =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                  keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
                                  curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
@@ -323,6 +324,52 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     logger.info("")
     logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
     logging.shutdown()
+
+
+
+def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+         primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+         keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
+         deltaG, logger, BURNIN=200):
+    logger.info("     Sampling cost space to set initial temp....")
+    change = []
+    while len(change) < BURNIN:
+        i = RNG+len(change)
+        # make a new set by randomly swapping a primer pair
+        # newset: 1) replaced ID, 2) new ID, 3) current pair list
+        newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs)
+        if newSet is not None:
+            swap_id, new_id, new_pairIDs = newSet
+            # compare newSet to original set
+            comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                op.compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
+            change.append(comparison)
+        else:
+            break
+    
+    # set temperatures based on burnin results
+    neg_changes = [x for x in change if x>0]
+    if len(neg_changes)==0: neg_changes = [0.01]
+    MEAN_DIMER = np.mean(neg_changes)
+    MAX_DIMER = max(neg_changes)
+    MIN_DIMER = min(neg_changes)#almost always 1!
+    logger.info("     Changes that increase cost: %s", 
+                str(round(len(neg_changes)/len(change),3)*100)+"%")
+    logger.info("     Mean +cost change: %s", round(MEAN_DIMER,2))
+    logger.info("     Max +cost observed: %s", round(MAX_DIMER,2))
+    logger.info("     Min +cost observed: %s", round(MIN_DIMER,2))
+    # T_init should depend on p(accepting mistake) [based on mean mistake] & 
+    # how bad that 'mistake' is
+    if deltaG:
+        T_INIT = (-2*math.log10(MEAN_DIMER/MAX_DIMER)+1)/10
+        if T_INIT<0.03: T_INIT=0.03
+    else:
+        T_INIT = -2*math.log10(MEAN_DIMER/MAX_DIMER)+2
+        if T_INIT < 0.3: T_INIT = 0.3
+    
+    return [T_INIT, MIN_DIMER, MAX_DIMER]
 
 
 
