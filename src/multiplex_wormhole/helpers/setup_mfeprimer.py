@@ -37,7 +37,6 @@ def main():
             "and place the (unzipped) binary in: " + outdir
         )
     return path[0]
-    return path[0]
 
 
 
@@ -56,6 +55,7 @@ def install_mfeprimer(outdir):
         mfeprimer = "https://github.com/quwubin/MFEprimer-3.0/releases/download/v3.2.7/mfeprimer-3.2.7-windows-4.0-amd64.exe.gz"
     else:
         print("An MFEprimer package distribution could not be found for platform: "+pf)
+        return None
         
     # attempt to download
     print("Downloading MFEprimer......")
