@@ -304,7 +304,7 @@ def parse_args():
     parser.add_argument("-n", "--nloci", type=int, required=True)
     parser.add_argument("-o", "--outdir", type=str, required=True)
     # add optional arguments
-    parser.add_argument("-p", "--prefix", type=str, default="None")
+    parser.add_argument("-p", "--prefix", type=str, default=None)
     parser.add_argument("-k", "--keeplist", type=str, default=None)
     parser.add_argument("-r", "--runs", type=int, default=10)
     parser.add_argument("-i", "--iter", type=int, default=1000)

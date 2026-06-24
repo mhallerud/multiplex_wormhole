@@ -72,7 +72,7 @@ def parse_args():
     parser.add_argument("-o", "--outfa", type=str, required=True)
     # add optional arguments
     parser.add_argument("-p", "--primeridfield", type=str, default="PrimerID")
-    parser.add_argument("-s", "--seqfield", type=str, default="Sequnce")
+    parser.add_argument("-s", "--seqfield", type=str, default="Sequence")
     parser.add_argument("-e", "--csv_encoding", type=str, default=sys.getfilesystemencoding())
     return parser.parse_args()
 
@@ -84,5 +84,5 @@ if __name__=="__main__":
     main(IN_CSV=args.incsv,
          OUT_FA=args.outfa, 
          ID_FIELD=args.primeridfield,
-         SEQ_FIELD=args.sequence,
+         SEQ_FIELD=args.seqfield,
          ENCODING=args.csv_encoding)

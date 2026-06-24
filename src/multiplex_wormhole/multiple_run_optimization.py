@@ -24,7 +24,7 @@ from optimize_multiplex import CheckInputFile
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
          SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
-         T_INIT=None, T_FINAL=0.001, PROB_ADJ=2):
+         T_INIT=None, T_FINAL=0.001, PROB_ADJ=2, MAKEPLOT=False):
     """
     N_RUNS : # optimization runs [int]
     PRIMER_FA : Contains primer IDs and sequences [FASTA]
@@ -92,7 +92,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                          T_INIT=T_INIT, 
                                          T_FINAL=T_FINAL, 
                                          PROB_ADJ=PROB_ADJ, 
-                                         MAKEPLOT=False,
+                                         MAKEPLOT=MAKEPLOT,
                                          RNG=run*10)
                 loads.append([str(run), str(cost)])
                 run+=1
@@ -213,4 +213,5 @@ if __name__=="__main__":
          DECAY_RATE = args.decay_rate,
          T_INIT = args.temp_init, 
          T_FINAL = args.temp_final, 
-         PROB_ADJ = args.prob_adj)
+         PROB_ADJ = args.prob_adj,
+         MAKEPLOT = args.makeplot)

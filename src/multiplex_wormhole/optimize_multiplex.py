@@ -1104,11 +1104,11 @@ def parse_args():
 
 if __name__=="__main__":
     # parse command line arguments
-    args = parse_args()
+    args = parse_args()                     
     # run main
     main(PRIMER_FASTA = args.primer_fasta, 
          DIMER_SUMS = args.dimer_sums, 
-         DIMER_TABLE = args.dimer_table, 
+         DIMER_TABLE = args.dimer_table,            
          OUTPATH = args.outpath, 
          N_LOCI = args.nloci, 
          KEEPLIST = args.keeplist, 
@@ -1120,7 +1120,7 @@ if __name__=="__main__":
          CYCLES = args.cycles,
          BURNIN = args.burnin, 
          DECAY_RATE = args.decay_rate, 
-         T_INIT = args.temp_init, 
+         T_INIT = args.temp_init,       
          T_FINAL = args.temp_final, 
          PROB_ADJ = args.prob_adj, 
          MAKEPLOT = args.makeplot)
