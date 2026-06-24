@@ -102,7 +102,7 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
                         " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
     except Exception as err:
         logger.info("MFEprimer failed! Full error message:")
-        logger.info(traceback.format_exc(err))
+        logger.info(traceback.format_exc())
     
     # tabulate dimers into pairwise dimer table
     logger.info("Tabulating dimers (standard)...")

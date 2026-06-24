@@ -596,7 +596,6 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         raise OutputError("NO PRIMER PAIRS PASSED FILTERING- STOPPING AT DESIGN/FILTER STEP!")
     
     # finish logging
-    templates = pd.read_csv(TEMPLATES)
     print("")
     logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
     logging.shutdown()

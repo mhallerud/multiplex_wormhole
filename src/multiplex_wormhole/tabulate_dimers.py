@@ -151,7 +151,7 @@ def main(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False):
         # calculate # interactions per primer
         logger.info("Calculating total interactions per primer............")
         primer_sums = primer_interactions.sum(axis=1) # total interactions       
-        primer_sums_bin = primer_interactions.sum(axis=1) # total primers interacted with
+        primer_sums_bin = primer_interactions_bin.sum(axis=1) # total primers interacted with
         
         logger.info("Saving primer output files!")
         # export pairwise interactions per primer (wide)

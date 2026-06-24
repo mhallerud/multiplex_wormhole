@@ -30,6 +30,13 @@ def main():
     path = glob.glob(outdir+"/*mfeprimer*")
     if len(path)==0:
         path = install_mfeprimer(outdir)
+    if not path:
+        raise RuntimeError(
+            "MFEprimer could not be found or installed. "
+            "Please install it manually from https://www.mfeprimer.com "
+            "and place the (unzipped) binary in: " + outdir
+        )
+    return path[0]
     return path[0]
 
 
