@@ -289,7 +289,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     'PRIMER_PAIR_WT_PRODUCT_TM_LT': 0.0,
     'PRIMER_PAIR_WT_PR_PENALTY': 1.0,
     'PRIMER_PAIR_WT_TEMPLATE_MISPRIMING': 0.0,
-    'PRIMER_PAIR_WT_TEMPLATE_MISPRING_TH': 0.0,
+    'PRIMER_PAIR_WT_TEMPLATE_MISPRIMING_TH': 0.0,
     'PRIMER_PICK_ANYWAY': 0,
     'PRIMER_PICK_INTERNAL_OLIGO': 0,
     'PRIMER_PICK_LEFT_PRIMER': 1,
@@ -440,8 +440,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         passed = 0 # track number pairs passed per template
         pairs = out['PRIMER_PAIR_NUM_RETURNED']
         if pairs > 0:
+            tot_pairs += pairs # count overall # primer pairs designed
             for N in range(pairs):
-                tot_pairs +=pairs # count overall # primer pairs designed
                 N = str(N)
                 # pull primer sequences for this pair
                 FWseq = out['PRIMER_LEFT_'+N+'_SEQUENCE']

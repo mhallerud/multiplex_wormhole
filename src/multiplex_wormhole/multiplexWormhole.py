@@ -280,7 +280,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                 CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
                            OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
     else: 
-        "RunSummary not found- optimization step may have failed."
+        mwlogger.warning("RunSummary not found- optimization step may have failed.")
     
     # finish logging
     # end logging
