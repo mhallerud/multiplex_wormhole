@@ -98,7 +98,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
         ## STEP 1: Calculate min and max observed dimer load changes (if not provided)
         if MAX_DIMER is None and MIN_DIMER is None:
             # check for necessary files before proceeding...
-            if not [PRIMER_FASTA is not None and DIMER_SUMS is not None and DIMER_TABLE is not None and N_LOCI is not None]:
+            if any(x is None for x in [PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI]):
                 raise InputError("If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
                                 "DIMER_TABLE and N_LOCI must be provided. Please provide either A) MAX_DIMER and MIN_DIMER or B)"+
                                 " PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, and N_LOCI parameters.")
@@ -172,11 +172,16 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 ## If a SEED file is provided, use this as the initial primer set....
                 else:
                     logger.info("Loading initial primer set from seed file........")
-                    initial_pairs = []
+                    seed_pairs = []
                     with open(SEED, 'r') as file:
                         lines = file.readlines()
-                        for line in lines:
-                            initial_pairs.append(lines[0])
+                        for line in lines[1:]: #skip header
+                            line = line.split(",")
+                            seed_pairs.append(line[0].replace(".FWD","").replace(".REV",""))
+                    seed_pairs = list(set(seed_pairs))
+                    initial_pairs = {dimer_sums['Pair1'][x]: dimer_sums['0'][x]
+                                     for x in range(len(dimer_sums['0'])) 
+                                     if dimer_sums['Pair1'][x] in seed_pairs}
             
                 # grab locus IDs for primer pairs
                 current_pairIDs = list(initial_pairs.keys())
@@ -249,7 +254,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
             # set initial and final temps
             T_FINAL = 0.01
         if T_INIT is None:
-           T_INIT, MIN_DIMER, MAX_DIMERS =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+           T_INIT, MIN_DIMER, MAX_DIMER =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                  keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
                                  curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
