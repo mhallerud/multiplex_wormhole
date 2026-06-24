@@ -93,7 +93,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         if T_INIT is None and T_FINAL is None and (BURNIN is None or BURNIN==0):
             raise InputError("Either BURNIN or (T_INIT and T_FINAL) need to be provided to run simulated annealing ITERATIONS.")
         if DECAY_RATE<0 or DECAY_RATE>1:
-            raise InputError("DBECAY_RATE must be between 0 and 1.")
+            raise InputError("DECAY_RATE must be between 0 and 1.")
         if PROB_ADJ<0:
             raise InputError("PROB_ADJ must be positive.")
         if (T_INIT is not None and T_FINAL is not None) and T_INIT<T_FINAL:

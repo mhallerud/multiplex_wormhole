@@ -346,7 +346,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
             if k in PRIMER3_SETTINGS:
                 # check type of setting
                 if type(PRIMER3_SETTINGS[k]) != type(SETTINGS[k]):
-                    logger.info("Primer3 setting %S could not be adjusted- Format should be %s", 
+                    logger.info("Primer3 setting %s could not be adjusted- Format should be %s", 
                                 str(k), str(type(PRIMER3_SETTINGS[k])))
                 # update otherwise.
                 else:                    
