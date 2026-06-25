@@ -15,6 +15,7 @@ import glob
 import shutil
 import argparse
 from datetime import datetime
+import csv
 
 sys.path.append(os.path.dirname(__file__))
 from optimize_multiplex import main as optimizeMultiplex
@@ -117,8 +118,9 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     
     # export dimer loads per run
     with open(OUTPATH+'_RunSummary.csv', 'w') as file:
+        writer = csv.writer(file)
         for row in loads:
-            file.write(row[0]+','+row[1]+"\n")
+            writer.writerow(row)
     
     # move outputs into separate folders for clarity
     OUTDIR=os.path.dirname(OUTPATH)
@@ -139,8 +141,9 @@ def moveAllFiles(filegrep, dest):
         os.makedirs(dest, exist_ok=True)
     filelist = glob.glob(filegrep)
     for f in filelist:
-        # try/except prevents errors and overwriting if same destname already exists
         try:
+            d = os.path.join(dest, os.path.basename(f))
+            if os.path.exists(d): os.remove(d)
             shutil.move(f, dest)
         except Exception:
             print("Failed to move "+f)
