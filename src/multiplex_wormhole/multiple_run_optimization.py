@@ -19,6 +19,8 @@ from datetime import datetime
 sys.path.append(os.path.dirname(__file__))
 from optimize_multiplex import main as optimizeMultiplex
 from optimize_multiplex import CheckInputFile
+from panel_assessment import main as assessPanel
+
 
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
@@ -65,7 +67,8 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     if OUTPATH is None or OUTPATH=="None":
         OUTPATH = datetime.now().strftime("%d-%m-%Y_%H%M")
     # set up empty array to hold overall dimer load 
-    loads = [['Run', 'TotalDimers']]
+    loads = [['Run', 'Filepath','N_Pairs','TotalDimers','PairsWithDimers','DimersPerPair',
+              'MeanDeltaG','N_BadDimers']]
     
     # while instead of for loop allows runs that timeout to restart
     run = 1
@@ -75,26 +78,29 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         #start=time.time()
         #while time.time()-start <= TIMEOUT:
             try:
-                cost = optimizeMultiplex(PRIMER_FASTA=PRIMER_FA, 
-                                         DIMER_SUMS=DIMER_SUMS, 
-                                         DIMER_TABLE=DIMER_TABLE, 
-                                         OUTPATH=OUTPATH+"_Run"+str(run).zfill(2), 
-                                         N_LOCI=N_LOCI, 
-                                         KEEPLIST=KEEPLIST, 
-                                         deltaG=deltaG, 
-                                         SEED=SEED, 
-                                         VERBOSE=VERBOSE,
-                                         SIMPLE=SIMPLE, 
-                                         ITERATIONS=ITERATIONS, 
-                                         CYCLES=CYCLES, 
-                                         BURNIN=BURNIN, 
-                                         DECAY_RATE=DECAY_RATE, 
-                                         T_INIT=T_INIT, 
-                                         T_FINAL=T_FINAL, 
-                                         PROB_ADJ=PROB_ADJ, 
-                                         MAKEPLOT=MAKEPLOT,
-                                         RNG=run*10)
-                loads.append([str(run), str(cost)])
+                OUT = OUTPATH+"_Run"+str(run).zfill(2)
+                optimizeMultiplex(PRIMER_FASTA = PRIMER_FA, 
+                                  DIMER_SUMS=DIMER_SUMS, 
+                                  DIMER_TABLE=DIMER_TABLE, 
+                                  OUTPATH = OUT, 
+                                  N_LOCI=N_LOCI, 
+                                  KEEPLIST=KEEPLIST, 
+                                  deltaG=deltaG, 
+                                  SEED=SEED, 
+                                  VERBOSE=VERBOSE,
+                                  SIMPLE=SIMPLE, 
+                                  ITERATIONS=ITERATIONS, 
+                                  CYCLES=CYCLES, 
+                                  BURNIN=BURNIN, 
+                                  DECAY_RATE=DECAY_RATE, 
+                                  T_INIT=T_INIT, 
+                                  T_FINAL=T_FINAL, 
+                                  PROB_ADJ=PROB_ADJ, 
+                                  MAKEPLOT=MAKEPLOT,
+                                  RNG = run*10)
+                cost = assessPanel(OUT+"_primers.csv")
+                cost.insert(0, "Run"+str(run).zfill(2))
+                loads.append(cost)
                 run+=1
                 print(" ")
             except Exception as e:
@@ -127,8 +133,8 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
 
 
 def moveAllFiles(filegrep, dest):
-    if os.path.exists(dest):
-        shutil.rmtree(dest)
+    #if os.path.exists(dest):
+    #    shutil.rmtree(dest)
     if not os.path.exists(dest):
         os.makedirs(dest, exist_ok=True)
     filelist = glob.glob(filegrep)

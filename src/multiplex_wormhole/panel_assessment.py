@@ -23,7 +23,7 @@ Input preparation:
 # load packages
 import os
 import sys
-import glob
+#import glob
 import logging
 import traceback
 from datetime import datetime
@@ -100,7 +100,7 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
                         " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
                         " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
-    except Exception as err:
+    except Exception:
         logger.info("MFEprimer failed! Full error message:")
         logger.info(traceback.format_exc())
     
@@ -123,11 +123,14 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
     # count dimers
     logger.info("")
     logger.info("---------PANEL ASSESSMENT---------")
-    countDimers(OUT_DIMERS+"_wide.csv", OUT_DELTAG+"_wide.csv", BAD_DIMERS_dG, logger)
+    counts = countDimers(OUT_DIMERS+"_wide.csv", OUT_DELTAG+"_wide.csv", BAD_DIMERS_dG, logger)
     
     # close out logger
     logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
     logging.shutdown()
+    
+    counts.insert(0, PRIMERS)
+    return(counts)
 
 
 
@@ -135,7 +138,8 @@ def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD, logger):
     ## SUMMARIZE DIMER COUNTS
     # read in pairwise dimer load CSV
     df = pandas.read_csv(DIMERS_WIDE)
-    logger.info("Number of primer pairs assessed: %s", str(len(df)))
+    n = len(df)
+    logger.info("Number of primer pairs assessed: %s", str(n))
     # take sum across upper triangle, including diagonal
     s = numpy.triu(df,1).sum()
     logger.info("Number of pairwise dimers: %s", str(s))
@@ -144,13 +148,15 @@ def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD, logger):
     # sum of sums>0
     p = (df>0).sum()
     logger.info("Number of primer pairs involved in dimer interactions: %s", str(p))
-    logger.info("Dimers per pair: "+str(round( s/len(df), 2)))
+    r = round( s/len(df), 2)
+    logger.info("Dimers per pair: "+str(r))
     
     ## SUMMARIZE DELTAG
     df = pandas.read_csv(DELTAG_WIDE)
     # take mean across upper triangle, including diagonal
-    s = numpy.triu(df,1).mean()
-    logger.info("Mean deltaG: "+str(round(s,2)))
+    m = numpy.triu(df,1).mean()
+    g = round(m,4)
+    logger.info("Mean deltaG: "+str(g))
     # convert to binary for primer pairs with dimers below a given deltaG threshold
     df.drop(df.columns[0], axis=1, inplace=True)
     df = df<dG_THRESHOLD
@@ -159,6 +165,7 @@ def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD, logger):
     b = numpy.triu(df,1).sum()
     logger.info("Number of pairwise interactions with 'bad' dimers: %s", str(b))
     logger.info("    (based on a deltaG threshold %s)", str(dG_THRESHOLD))
+    return [n, s, p, r, g, b]
 
 
 

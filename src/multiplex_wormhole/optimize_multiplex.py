@@ -166,7 +166,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         n_keeplist = len(set(keeplist_pairs))
     else:
         keeplist_pairs = []
-        keeplist_loci = []
+        #keeplist_loci = []
         keeplist_seqs = []
         keeplist_IDs = []
         n_keeplist = 0
@@ -190,7 +190,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     uniq_loci = list(set(primer_loci))# convert to list because new versions of random.sample won't be able to handle sets...
     # grab best primer pairs for each locus
     best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
-    nloci = len(uniq_loci)
+    #nloci = len(uniq_loci)
     if SEED is None:
         # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
         if len(keeplist_pairs) > 0:
@@ -266,13 +266,16 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     primerset_dimers, nonset_dimers = SubsetDimerTable(current_pairIDs, dimer_table, True)
     curr_dimer_totals = CalcTotalDimers(primerset_dimers, deltaG)  
     # totals for current primers
+    
     if deltaG:
         #mean deltaG of dimers in set (negative s.t. increase = worse dimers, then minimize for min value)
-        curr_total = np.array(list(curr_dimer_totals.values())).mean()
+        #curr_total = np.array(list(curr_dimer_totals.values())).mean()
+        curr_total = np.triu(primerset_dimers,1).mean()
         logger.info("     Initial mean deltaG: %s", str(-curr_total))
     else:
         #sum of dimers in count
-        curr_total = sum(curr_dimer_totals.values())#total
+        #curr_total = sum(curr_dimer_totals.values())#total
+        curr_total = np.triu(primerset_dimers,1).sum()
         logger.info("     Initial dimer load: %s", str(curr_total))
     costs = [["Iterations","ASA_Temp", "TotalDimers"]]
 
@@ -610,7 +613,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
     logging.shutdown()
     
-    return curr_total
+    #return curr_total
 
 
 
@@ -730,7 +733,7 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
     logger.info("     Sampling cost space to set initial temp....")
     change = []
     while len(change) < BURNIN:
-        i = RNG+len(change)
+        #i = RNG+len(change)
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
@@ -775,9 +778,11 @@ def compareSets(new_pairIDs, curr_total, swap, new_best_id, dimer_table, dimer_s
     new_dimer_totals = CalcTotalDimers(new_primerset_dimers, deltaG)
     if deltaG:
         # take mean for deltaG comparisons
-        new_total = np.array(list(new_dimer_totals.values())).mean()
+        #new_total = np.array(list(new_dimer_totals.values())).mean()
+        new_total =np.triu(new_primerset_dimers,1).mean()
     else:
-        new_total = sum(new_dimer_totals.values())
+        #new_total = sum(new_dimer_totals.values())
+        new_total = np.triu(new_primerset_dimers,1).sum()
     comparison = new_total - curr_total  # difference between new set and old
     # if deltaG, use coarse scaling (mean*#)
     if deltaG:
