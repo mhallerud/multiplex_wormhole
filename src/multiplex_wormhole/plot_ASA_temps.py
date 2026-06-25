@@ -89,178 +89,176 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     logger.info("     PROB_ADJ: %s", PROB_ADJ)
     logger.info("")
     
-    ## OPTION a: SIMULATED ANNEALING WITH FIXED SCHEDULE
-    if T_INIT is not None and T_FINAL is not None:
-        pass
-    
-    ## OPTION B: SIMULATED ANNEALING WITH ADAPTIVE SCHEDULE
-    else:
-        ## STEP 1: Calculate min and max observed dimer load changes (if not provided)
-        if MAX_DIMER is None and MIN_DIMER is None:
-            # check for necessary files before proceeding...
-            if any(x is None for x in [PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI]):
-                raise InputError("If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
-                                "DIMER_TABLE and N_LOCI must be provided. Please provide either A) MAX_DIMER and MIN_DIMER or B)"+
-                                " PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, and N_LOCI parameters.")
-            else:
-                ## Read in IDs and primers
-                logger.info("Reading in inputs..........")
-                # read in IDs and primers
-                primer_loci, primer_seqs, primer_IDs, primer_pairs = op.LoadPrimers(PRIMER_FASTA)
-
-            
-                # read in dimer info
-                #logger.info("Reading in primer dimer counts........")
-                dimer_table = pd.read_csv(DIMER_TABLE)
-                dimer_sums = pd.read_csv(DIMER_SUMS)
-                dimer_table['Pair1'] = [str(x) for x in dimer_table['Pair1']]
-                dimer_sums['Pair1'] = [str(x) for x in dimer_sums['Pair1']]
-                
-                # read in keeplist info
-                if KEEPLIST is not None:
-                    keeplist_loci, keeplist_seqs, keeplist_IDs, keeplist_pairs = op.LoadPrimers(KEEPLIST)
-                    n_keeplist = len(set(keeplist_pairs))
-                else:
-                    keeplist_pairs = []
-                    #keeplist_loci = []
-                    keeplist_seqs = []
-                    keeplist_IDs = []
-                    n_keeplist = 0
-                
-                # check for missing dimer info
-                #missing_pairs = [keeplist_pairs[x] for x in range(len(keeplist_pairs)) if keeplist_pairs[x] not in dimer_table['Pair1'].to_numpy()]
-                missing_pairs = list(set(keeplist_pairs)-set(dimer_table['Pair1']))
-                if len(missing_pairs)>0:
-                    raise InputError("Dimer information is missing for keeplist pairs! Rerun MFEprimer dimer prediction after running AddKeeplist2FASTA")
-                primer_pairs, primer_loci, primer_seqs, primer_IDs = op.CheckPrimersInDimerTables(
-                    dimer_table, primer_pairs, primer_loci, primer_seqs, primer_IDs, logger)
-
-                if SEED is None:
-                    ## A) Choose initial primer set based on pseudo-Greedy algorithm
-                    # Choose initial set of loci based on loci with minimum dimer counts
-                    # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
-                    logger.info("Generating initial primer set........")
-                    # make list of unique loci
-                    # convert to list because new versions of random.sample won't be able to handle sets...
-                    uniq_loci = list(set(primer_loci))
-                    nloci = len(uniq_loci)
-                    # grab best primer pairs for each locus
-                    best_primer_pairs = op.BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
-                    # if there are fewer loci than desired, use all of them
-                    if nloci < N_LOCI:
-                        logger.info("WARNING: Fewer loci passed filtering than desired in panel")
-                        logger.info("# loci used: %s", str(nloci))
-                        initial_pairs = best_primer_pairs
-                    else:
-                        # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
-                        if len(keeplist_pairs) > 0:
-                            # remove these options from best for each locus
-                            for k in list(best_primer_pairs.keys()):
-                                if k in set(keeplist_pairs):
-                                    best_primer_pairs.pop(k)
-                            # grab N primer pairs with min dimer count (accounting for space filled by keeplist pairs)
-                            initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_keeplist])
-                            # grab random subset of pairs
-                            #initial_keys = rand.sample(best_primer_pairs.items(), N_LOCI-n_keeplist)
-                            # append all keeplist pairs to initial pairs
-                            keeplist_dimers = {dimer_sums['Pair1'][x]: dimer_sums['0'][x] for x in range(len(dimer_sums['0'])) if dimer_sums['Pair1'][x] in set(keeplist_pairs)}
-                            initial_pairs.update(keeplist_dimers)
-                        # otherwise, with no keeplist, just select the N_LOCI "best" primer pairs to start with
-                        else:
-                            initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
-                
-                ## If a SEED file is provided, use this as the initial primer set....
-                else:
-                    logger.info("Loading initial primer set from seed file........")
-                    seed_pairs = []
-                    with open(SEED, 'r') as file:
-                        lines = file.readlines()
-                        for line in lines[1:]: #skip header
-                            line = line.split(",")
-                            seed_pairs.append(line[0].replace(".FWD","").replace(".REV",""))
-                    seed_pairs = list(set(seed_pairs))
-                    initial_pairs = {dimer_sums['Pair1'][x]: dimer_sums['0'][x]
-                                     for x in range(len(dimer_sums['0'])) 
-                                     if dimer_sums['Pair1'][x] in seed_pairs}
-            
-                # grab locus IDs for primer pairs
-                current_pairIDs = list(initial_pairs.keys())
-                current_pairIDs = [str(x) for x in current_pairIDs]
-                current_locusIDs = [op.GetLocusID(pair) for pair in current_pairIDs]
-                # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
-                allowed_loci = [uniq_loci[i] for i in range(
-                    len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
-                allowed_idx = list(
-                    filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
-                allowed_pairs = [primer_pairs[i] for i in allowed_idx]
-                allowed_pairs = list(set(allowed_pairs))
-                # calculate # primer dimers per pair for current set of primers
-                primerset_dimers, nonset_dimers = op.SubsetDimerTable(current_pairIDs, dimer_table, True)
-                curr_dimer_totals = op.CalcTotalDimers(primerset_dimers, deltaG)  
-                curr_total = sum(curr_dimer_totals.values())
-                
-                
-                ## B) Sample cost space
-                if nloci <= N_LOCI:
-                    logger.info("FEWER LOCI INPUT THAT DESIRED IN FINAL PANEL: "+
-                          "Proceeding to plot with default temps with 1-5 dimers, "+
-                          "but true optimization for this problem set would stop prior to the simulated annealing step.")
-                    T_INIT = 2
-                    T_FINAL = 0
-                    MIN_DIMER = 1
-                    MAX_DIMER = 5
-                else:
-                    logger.info("Sampling dimer load changes.......")
-                    # A) sample x iterations
-                    change = []
-                    i = 0
-                    while len(change) < BURNIN:
-                        # make a new set by randomly swapping a primer pair
-                        # newset: 1) replaced ID, 2) new ID, 3) current pair list
-                        swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
-                                                                  primer_pairs, primer_loci, 
-                                                                  OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
-                                                                  random=True, keeplist=keeplist_pairs)
-                        # compare newSet to original set
-                        comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, \
-                            new_total = op.compareSets(new_pairIDs, curr_total, swap_id, 
-                                                    new_id, dimer_table, dimer_sums, deltaG)
-                
-                        # if newSet is worse, make note of change value
-                        if comparison > 0:
-                            change.append(comparison)
-                            
-                        # stop if 2000 swaps made
-                        i += 1
-                        if i>2000:
-                            logger.info("....Sampling stopped after 2000 swaps with %s costs>0.", str(len(change)))
-                            if len(change)==0:
-                                logger.info(".....Defaults used since cost changes never increase")
-                                T_INIT = 2
-                                T_FINAL = 0
-                                MIN_DIMER=1
-                                MAX_DIMER=5
-                            break
-                    if len(change)>0:
-                        MIN_DIMER = min(change)
-                        MAX_DIMER = max(change)
-                        logger.info(".....Maximum dimer load observed %s", str(MAX_DIMER))
-                        logger.info(".....Minimum dimer load observed %s", str(MIN_DIMER))
-
-
-        ## STEP 2: Set adaptive temperature schedule based on cost calcs
-        logger.info("Setting temperature schedule...")
-        if T_FINAL is None:
-            # set initial and final temps
-            T_FINAL = 0.01
-        if T_INIT is None:
-           T_INIT, MIN_DIMER, MAX_DIMER =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
-                                 primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
-                                 keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
-                                 curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
-                                 deltaG=deltaG, logger=logger)
+    ## STEP 1: Calculate min and max observed dimer load changes (if not provided)
+    if MAX_DIMER is None or MIN_DIMER is None:
+        # check for necessary files before proceeding...
+        if any(x is None for x in [PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI]):
+            raise InputError("If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
+                            "DIMER_TABLE and N_LOCI must be provided. Please provide either A) MAX_DIMER and MIN_DIMER or B)"+
+                            " PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, and N_LOCI parameters.")
         else:
-             T_INIT = float(T_INIT)
+            ## Read in IDs and primers
+            logger.info("Reading in inputs..........")
+            # read in IDs and primers
+            primer_loci, primer_seqs, primer_IDs, primer_pairs = op.LoadPrimers(PRIMER_FASTA)
+
+        
+            # read in dimer info
+            #logger.info("Reading in primer dimer counts........")
+            dimer_table = pd.read_csv(DIMER_TABLE)
+            dimer_sums = pd.read_csv(DIMER_SUMS)
+            dimer_table['Pair1'] = [str(x) for x in dimer_table['Pair1']]
+            dimer_sums['Pair1'] = [str(x) for x in dimer_sums['Pair1']]
+            
+            # read in keeplist info
+            if KEEPLIST is not None:
+                keeplist_loci, keeplist_seqs, keeplist_IDs, keeplist_pairs = op.LoadPrimers(KEEPLIST)
+                n_keeplist = len(set(keeplist_pairs))
+            else:
+                keeplist_pairs = []
+                #keeplist_loci = []
+                keeplist_seqs = []
+                keeplist_IDs = []
+                n_keeplist = 0
+            
+            # check for missing dimer info
+            #missing_pairs = [keeplist_pairs[x] for x in range(len(keeplist_pairs)) if keeplist_pairs[x] not in dimer_table['Pair1'].to_numpy()]
+            missing_pairs = list(set(keeplist_pairs)-set(dimer_table['Pair1']))
+            if len(missing_pairs)>0:
+                raise InputError("Dimer information is missing for keeplist pairs! Rerun MFEprimer dimer prediction after running AddKeeplist2FASTA")
+            primer_pairs, primer_loci, primer_seqs, primer_IDs = op.CheckPrimersInDimerTables(
+                dimer_table, primer_pairs, primer_loci, primer_seqs, primer_IDs, logger)
+
+            # make list of unique loci
+            # convert to list because new versions of random.sample won't be able to handle sets...
+            uniq_loci = list(set(primer_loci))
+            nloci = len(uniq_loci)
+
+            if SEED is None:
+                ## A) Choose initial primer set based on pseudo-Greedy algorithm
+                # Choose initial set of loci based on loci with minimum dimer counts
+                # (Hopefully choosing an initial set this way, rather than randomly, will mean fewer iterations are needed)
+                logger.info("Generating initial primer set........")
+                # grab best primer pairs for each locus
+                best_primer_pairs = op.BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
+                # if there are fewer loci than desired, use all of them
+                if nloci < N_LOCI:
+                    logger.info("WARNING: Fewer loci passed filtering than desired in panel")
+                    logger.info("# loci used: %s", str(nloci))
+                    initial_pairs = best_primer_pairs
+                else:
+                    # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
+                    if len(keeplist_pairs) > 0:
+                        # remove these options from best for each locus
+                        for k in list(best_primer_pairs.keys()):
+                            if k in set(keeplist_pairs):
+                                best_primer_pairs.pop(k)
+                        # grab N primer pairs with min dimer count (accounting for space filled by keeplist pairs)
+                        initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI-n_keeplist])
+                        # grab random subset of pairs
+                        #initial_keys = rand.sample(best_primer_pairs.items(), N_LOCI-n_keeplist)
+                        # append all keeplist pairs to initial pairs
+                        keeplist_dimers = {dimer_sums['Pair1'][x]: dimer_sums['0'][x] for x in range(len(dimer_sums['0'])) if dimer_sums['Pair1'][x] in set(keeplist_pairs)}
+                        initial_pairs.update(keeplist_dimers)
+                    # otherwise, with no keeplist, just select the N_LOCI "best" primer pairs to start with
+                    else:
+                        initial_pairs = dict(sorted(best_primer_pairs.items(), key=lambda x: x[1])[:N_LOCI])
+            
+            ## If a SEED file is provided, use this as the initial primer set....
+            else:
+                logger.info("Loading initial primer set from seed file........")
+                seed_pairs = []
+                with open(SEED, 'r') as file:
+                    lines = file.readlines()
+                    for line in lines[1:]: #skip header
+                        line = line.split(",")
+                        seed_pairs.append(line[0].replace(".FWD","").replace(".REV",""))
+                seed_pairs = list(set(seed_pairs))
+                initial_pairs = {dimer_sums['Pair1'][x]: dimer_sums['0'][x]
+                                 for x in range(len(dimer_sums['0'])) 
+                                 if dimer_sums['Pair1'][x] in seed_pairs}
+        
+            # grab locus IDs for primer pairs
+            current_pairIDs = list(initial_pairs.keys())
+            current_pairIDs = [str(x) for x in current_pairIDs]
+            current_locusIDs = [op.GetLocusID(pair) for pair in current_pairIDs]
+            # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
+            allowed_loci = [uniq_loci[i] for i in range(
+                len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
+            allowed_idx = list(
+                filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
+            allowed_pairs = [primer_pairs[i] for i in allowed_idx]
+            allowed_pairs = list(set(allowed_pairs))
+            # calculate # primer dimers per pair for current set of primers
+            primerset_dimers, nonset_dimers = op.SubsetDimerTable(current_pairIDs, dimer_table, True)
+            curr_dimer_totals = op.CalcTotalDimers(primerset_dimers, deltaG)  
+            curr_total = sum(curr_dimer_totals.values())
+            
+            
+            ## B) Sample cost space
+            if nloci <= N_LOCI:
+                logger.info("FEWER LOCI INPUT THAT DESIRED IN FINAL PANEL: "+
+                      "Proceeding to plot with default temps with 1-5 dimers, "+
+                      "but true optimization for this problem set would stop prior to the simulated annealing step.")
+                T_INIT = 2
+                T_FINAL = 0
+                MIN_DIMER = 1
+                MAX_DIMER = 5
+            else:
+                logger.info("Sampling dimer load changes.......")
+                # A) sample x iterations
+                change = []
+                i = 0
+                while len(change) < BURNIN:
+                    # make a new set by randomly swapping a primer pair
+                    # newset: 1) replaced ID, 2) new ID, 3) current pair list
+                    swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                                                              primer_pairs, primer_loci, 
+                                                              OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
+                                                              random=True, keeplist=keeplist_pairs)
+                    # compare newSet to original set
+                    comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, \
+                        new_total = op.compareSets(new_pairIDs, curr_total, swap_id, 
+                                                new_id, dimer_table, dimer_sums, deltaG)
+            
+                    # if newSet is worse, make note of change value
+                    if comparison > 0:
+                        change.append(comparison)
+                        
+                    # stop if 2000 swaps made
+                    i += 1
+                    if i>2000:
+                        logger.info("....Sampling stopped after 2000 swaps with %s costs>0.", str(len(change)))
+                        if len(change)==0:
+                            logger.info(".....Defaults used since cost changes never increase")
+                            T_INIT = 2
+                            T_FINAL = 0
+                            MIN_DIMER=1
+                            MAX_DIMER=5
+                        break
+                if len(change)>0:
+                    if MIN_DIMER is None:
+                        MIN_DIMER = min(change)
+                    if MAX_DIMER is None:
+                        MAX_DIMER = max(change)
+                    logger.info(".....Maximum dimer load observed %s", str(MAX_DIMER))
+                    logger.info(".....Minimum dimer load observed %s", str(MIN_DIMER))
+
+
+    ## STEP 2: Set adaptive temperature schedule based on cost calcs
+    logger.info("Setting temperature schedule...")
+    if T_FINAL is None:
+        # set initial and final temps
+        T_FINAL = 0.01
+    if T_INIT is None:
+       T_INIT, MIN_DIMER, MAX_DIMER =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                             primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                             keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
+                             curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
+                             deltaG=deltaG, logger=logger)
+    else:
+        T_INIT = float(T_INIT)
+    
     
     ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 steps
     # Define range of dimer loads to use in calculations
@@ -339,7 +337,6 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
     logger.info("     Sampling cost space to set initial temp....")
     change = []
     while len(change) < BURNIN:
-        i = RNG+len(change)
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
