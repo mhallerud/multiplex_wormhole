@@ -64,8 +64,9 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     CheckInput(SEED, "SEED")    
     
     # check that MIN_DIMER < MAX_DIMER
-    if MIN_DIMER > MAX_DIMER:
-        raise InputError(f"MIN_DIMER ({MIN_DIMER}) must be less than or equal to MAX_DIMER ({MAX_DIMER}).")
+    if (MIN_DIMER is not None) and (MAX_DIMER is not None):
+        if MIN_DIMER > MAX_DIMER:
+            raise InputError(f"MIN_DIMER ({MIN_DIMER}) must be less than or equal to MAX_DIMER ({MAX_DIMER}).")
     # check that T_INIT > T_FINAL
     if (T_INIT is not None) and (T_FINAL is not None):
         if T_INIT < T_FINAL:
