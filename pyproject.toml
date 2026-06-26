@@ -24,6 +24,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
+
 # specify executable scripts (add project.gui-scripts for windows...)
 [project.scripts]
 multiplex-wormhole = "multiplex_wormhole.multiplexWormhole:main"
@@ -38,13 +42,15 @@ mw-csv2fasta = "multiplex_wormhole.helpers.CSVtoFasta:main"
 mw-add-keeplist = "multiplex_wormhole.helpers.add_keeplist_to_fasta:main"
 mw-setup-mfeprimer = "multiplex_wormhole.helpers.setup_mfeprimer:main"
 
+# add tests
+[project.optional-dependencies]
+dev = ["pytest"]
 
-license = "GPL-3.0-only"
-license-files = ["LICENSE"]
-keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
+# webpages
 [project.urls]
 Homepage = "https://github.com/mhallerud/multiplex_wormhole"
 Issues = "https://github.com/mhallerud/multiplex_wormhole/issues"
 Documentation = "https://mhallerud.github.io/multiplex_wormhole/"
-
