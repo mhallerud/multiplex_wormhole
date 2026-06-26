@@ -130,7 +130,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         os.remove(f)
 
     # move outputs into separate folders for clarity
-    OUTDIR=os.path.dirname(OUTPATH)
+    OUTDIR=os.path.dirname(OUTPATH) or "."
     #moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     #moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     moveAllFiles(OUTDIR+"/*_primers.csv", os.path.join(OUTDIR, "Final_Primers"))
