@@ -9,7 +9,7 @@ import tabulate_dimers
 import optimize_multiplex 
 import multiple_run_optimization 
 import offtarget_thermodynamics
-from helpers import setup_mfeprimer
+from helpers import _setup_mfeprimer
 from helpers import CSVtoFasta
 from helpers import add_keeplist_to_fasta
 plot_ASA_temps = importlib.import_module("plot_ASA_temps")
@@ -27,12 +27,12 @@ CSVtoFASTA = CSVtoFasta.main
 addKeeplist2FASTA = add_keeplist_to_fasta.main
 multiplexWormhole = multiplexWormhole.main
 offtargetThermodynamics = offtarget_thermodynamics.main
-setup_mfeprimer = setup_mfeprimer.main()
+setup_mfeprimer = _setup_mfeprimer.main()
 
 
 # SET DEPENDENCY PATH FOR MFEPRIMER
-_hits = glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")
-MFEprimer_PATH = _hits[0] if _hits else None
+#_hits = glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")
+#MFEprimer_PATH = _hits[0] if _hits else None
 
 
 
