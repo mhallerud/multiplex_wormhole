@@ -80,6 +80,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         #while time.time()-start <= TIMEOUT:
             try:
                 OUT = OUTPATH+"_Run"+str(run).zfill(2)
+                # run optimization
                 optimizeMultiplex(PRIMER_FASTA = PRIMER_FA, 
                                   DIMER_SUMS=DIMER_SUMS, 
                                   DIMER_TABLE=DIMER_TABLE, 
@@ -99,6 +100,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                   PROB_ADJ=PROB_ADJ, 
                                   MAKEPLOT=MAKEPLOT,
                                   RNG = run*10)
+                # run panel assessment
                 cost = assessPanel(OUT+"_primers.csv")
                 cost.insert(0, "Run"+str(run).zfill(2))
                 loads.append(cost)
@@ -121,7 +123,12 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
         writer = csv.writer(file)
         for row in loads:
             writer.writerow(row)
-    
+        
+    # remove panel assessment files
+    assess_files = glob.glob(OUTPATH+"_Run*_primers_*")
+    for f in assess_files:
+        os.remove(f)
+
     # move outputs into separate folders for clarity
     OUTDIR=os.path.dirname(OUTPATH)
     #moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))

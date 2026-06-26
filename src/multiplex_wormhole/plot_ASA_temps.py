@@ -63,6 +63,15 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     CheckInput(KEEPLIST, "KEEPLIST")
     CheckInput(SEED, "SEED")    
     
+    # check that MIN_DIMER < MAX_DIMER
+    if MIN_DIMER > MAX_DIMER:
+        raise InputError(f"MIN_DIMER ({MIN_DIMER}) must be less than or equal to MAX_DIMER ({MAX_DIMER}).")
+    # check that T_INIT > T_FINAL
+    if (T_INIT is not None) and (T_FINAL is not None):
+        if T_INIT < T_FINAL:
+            raise InputError(f"T_INIT ({T_INIT}) must be less than or equal to T_FINAL ({T_FINAL}).")
+    
+    
     # initialize logging
     logger = setup_logging(OUTPATH+".log", True, NAME=OUTPATH)    
     #print("Logging printed to: ")
@@ -90,7 +99,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
     logger.info("")
     
     ## STEP 1: Calculate min and max observed dimer load changes (if not provided)
-    if MAX_DIMER is None or MIN_DIMER is None:
+    if any(x is None for x in [MAX_DIMER, MIN_DIMER, T_INIT]):
         # check for necessary files before proceeding...
         if any(x is None for x in [PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI]):
             raise InputError("If MAX_DIMER and MIN_DIMER are not specified, paths to PRIMER_FASTA, DIMER_SUMS, "+
@@ -212,11 +221,16 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                 while len(change) < BURNIN:
                     # make a new set by randomly swapping a primer pair
                     # newset: 1) replaced ID, 2) new ID, 3) current pair list
-                    swap_id, new_id, new_pairIDs = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
+                    newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                               primer_pairs, primer_loci, 
                                                               OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, [], [],
                                                               random=True, keeplist=keeplist_pairs)
+                    # try again if newset fails
+                    i += 1
+                    if newSet is None:
+                        continue
                     # compare newSet to original set
+                    swap_id, new_id, new_pairIDs = newSet
                     comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, \
                         new_total = op.compareSets(new_pairIDs, curr_total, swap_id, 
                                                 new_id, dimer_table, dimer_sums, deltaG)
@@ -226,8 +240,7 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                         change.append(comparison)
                         
                     # stop if 2000 swaps made
-                    i += 1
-                    if i>2000:
+                    if i>(BURNIN+2000):
                         logger.info("....Sampling stopped after 2000 swaps with %s costs>0.", str(len(change)))
                         if len(change)==0:
                             logger.info(".....Defaults used since cost changes never increase")
@@ -243,21 +256,22 @@ def main(OUTPATH, PRIMER_FASTA=None, DIMER_SUMS=None, DIMER_TABLE=None, N_LOCI=N
                         MAX_DIMER = max(change)
                     logger.info(".....Maximum dimer load observed %s", str(MAX_DIMER))
                     logger.info(".....Minimum dimer load observed %s", str(MIN_DIMER))
+                    
 
+            ## STEP 2: Set adaptive temperature schedule based on cost calcs
+            logger.info("Setting temperature schedule...")
+            if T_INIT is None:
+               T_INIT, MIN_DIMER, MAX_DIMER =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                                     primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
+                                     keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
+                                     curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
+                                     deltaG=deltaG, logger=logger)
+            else:
+                T_INIT = float(T_INIT)
 
-    ## STEP 2: Set adaptive temperature schedule based on cost calcs
-    logger.info("Setting temperature schedule...")
     if T_FINAL is None:
         # set initial and final temps
         T_FINAL = 0.01
-    if T_INIT is None:
-       T_INIT, MIN_DIMER, MAX_DIMER =  setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
-                             primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
-                             keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=12345, 
-                             curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
-                             deltaG=deltaG, logger=logger)
-    else:
-        T_INIT = float(T_INIT)
     
     
     ## PLOT 1: GENERATE TEMPERATURE SCHEDULE ACROSS 100 steps
@@ -336,9 +350,11 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
          deltaG, logger, BURNIN=200):
     logger.info("     Sampling cost space to set initial temp....")
     change = []
+    i=1
     while len(change) < BURNIN:
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
+        i += 1
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                   primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                                   keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs)
@@ -349,6 +365,9 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
                 op.compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
             change.append(comparison)
         else:
+            continue
+        # stop after many iterations if BURNIN can't be reached
+        if i>(BURNIN+2000):
             break
     
     # set temperatures based on burnin results
