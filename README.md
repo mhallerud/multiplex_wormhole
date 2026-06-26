@@ -35,10 +35,10 @@ pixi add matplotlib==3.5.2
 
 Or, if not using a virtual environment:
 ```
-pip install primer3-py==2.0.0
-pip install pandas==1.4.4
-pip install numpy==1.24.4
-pip install matplotlib==3.5.2
+pip install primer3-py>=2.0.0
+pip install pandas>=1.4.4
+pip install numpy>=1.24.4
+pip install matplotlib>=3.5.2
 ```
 
 2. Download source code from GitHub:
