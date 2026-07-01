@@ -33,7 +33,7 @@ plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 ## FIND PATH TO BINARY DEPENDENCIES
 ## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
-from helpers.setup_mfeprimer import main as setup_mfeprimer
+from helpers._setup_mfeprimer import main as setup_mfeprimer
 
 
 
