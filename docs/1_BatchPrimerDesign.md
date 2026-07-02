@@ -15,15 +15,15 @@ Designs primers for each template sequence provided using primer3 (Untergasser e
 ### Dependencies
 Requires primer3-py Python module
 
-### Python syntax
-```
-mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
-```
-
 ### Command line syntax
 ```
-cd ~/multiplex_wormhole/src/multiplex_wormhole
-python3 batch_primer3_design.py -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
+mw-primer-design -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
+```
+
+### Python syntax
+```
+import multiplex_wormhole as mw
+mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
 ```
 
 ### Arguments
