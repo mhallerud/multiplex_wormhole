@@ -9,15 +9,15 @@ parent: index
 Converts text files output by MFEprimer dimer into tables of pairwise primer pair interactions and total secondary interactions per primer pair. For pairwise interactions, dimer load can be summarized as the count of dimers between two pairs (standard mode) or as the minimum (i.e., worst) delta G between two primer pairs (deltaG mode). For each primer pair, interactivity can be summarized as the total count of dimers across all primer pairs (standard mode) or as the mean delta G across all combinations (deltaG mode).
    
 ## Usage
-### Python syntax
-```
-mw.tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False)
-```
-
 ### Command line syntax
 ```
-cd ~/multiplex_wormhole/
-python3 tabulate_dimers.py -a ALL_DIMERS.txt -e END_DIMERS.txt -o OUTPATH [-p PRIMERS_OUTPATH] [-d]
+tabulate-dimers -a ALL_DIMERS.txt -e END_DIMERS.txt -o OUTPATH [-p PRIMERS_OUTPATH] [-d]
+```
+
+### Python syntax
+```
+import multiplex_wormhole as mw
+mw.tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG=False)
 ```
 
 ### Arguments
