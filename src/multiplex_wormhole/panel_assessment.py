@@ -12,10 +12,10 @@ dependency MFEprimer (available at https://www.mfeprimer.com/mfeprimer-3.1/#2-co
 
 Input preparation:
     PRIMERS: Input FASTA or CSV file containing primer sequences. 
-        Sequence identifiers must include a unique primer pair ID + 
-        the primer direction (.FWD/.REV or .FW/.RV) separated by a period,
+        Sequence identifiers must include a unique locus ID + pair number +
+        the primer direction (.FWD/.REV or .FW/.RV) separated by periods,
         with no other periods in the header. 
-        E.g. "MACA1.FW" and "MACA1.RV"
+        E.g. "MACA.1.FW" and "MACA.1.RV"
         
         If CSV format, must contain 'PrimerID' and 'Sequence' fields.
 """
