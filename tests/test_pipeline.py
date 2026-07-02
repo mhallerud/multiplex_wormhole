@@ -3,6 +3,8 @@ import os
 import sys
 import pandas as pd
 import pytest
+import shutil
+import glob
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src/multiplex_wormhole"))
 from multiplexWormhole import main as multiplexWormhole
@@ -11,9 +13,15 @@ from panel_assessment import main as assessPanel
 EXAMPLES = os.path.join(os.path.dirname(__file__), "../examples/Input_Templates.csv")
 FASTA = os.path.join(os.path.dirname(__file__), "../examples/example_keeplist.fasta")
 
-#import shutil
-#HAS_MFEPRIMER = shutil.which("mfeprimer") is not None
-HAS_MFEPRIMER = setup_mfeprimer.main() is not None
+
+def _has_mfeprimer():
+    if shutil.which("mfeprimer"):
+        return True
+    pkg_dir = os.path.join(os.path.dirname(__file__), "../src/multiplex_wormhole")
+    return len(glob.glob(os.path.join(pkg_dir, "*mfeprimer*"))) > 0
+
+
+HAS_MFEPRIMER = _has_mfeprimer() is not None
 
 
 
@@ -47,6 +55,7 @@ def test_multiplex_wormhole(tmp_path, templates=EXAMPLES):
     
 
 
+@pytest.mark.skipif(not HAS_MFEPRIMER, reason="MFEprimer binary not installed")
 def test_panel_assessment(fasta=FASTA):
     counts = assessPanel(PRIMERS=fasta)
     assert counts, "Panel assessment failed!"
