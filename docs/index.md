@@ -62,53 +62,27 @@ Note: Pixi/conda can be finicky... Dependening on your system, you may run into 
 
 ### Back-up installation option
 If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
-1. Install Python dependencies to your virtual environment (replace "pixi add" with "conda install" if using conda):
 
 ```ruby
-pixi add primer3-py
-pixi add pandas==1.4.4
-pixi add numpy==1.24.4
-pixi add matplotlib==3.5.2
-```
-
-Or, if not using a virtual environment:
-
-```ruby
-pip install primer3-py==2.0.0
-pip install pandas==1.4.4
-pip install numpy==1.24.4
-pip install matplotlib==3.5.2
-```
-
-2. Download source code from GitHub:
-
-```ruby
+# 1. Clone GitHub repository
 git clone https://github.com/mhallerud/multiplex_wormhole/
+
+# 2. Install python dependencies
+pip install -r multiplex_wormhole/requirements.txt
+
+#  3. Install multiplex_wormhole as python package
+pip install -e multiplex_wormhole
+
+# 4. Test install:
+multiplex-wormhole -h
 ```
 
-3. To run functions from within Python: 
+If the above steps fail, you can run the stand-alone scripts, e.g.:
 
 ```ruby
-# add path to multiplex wormhole source scripts to your PATH
-import sys, importlib
-sys.path.append("~/multiplex_wormhole/src/multiplex_wormhole")
-
-# load multiplex wormhole sub-modules
-from multiplexWormhole import main as multiplexWormhole
-from panel_assessment import main as assessPanel
-from batch_primer3_design import main as primer3BatchDesign
-from tabulate_dimers import main as tabulateDimers
-plot_ASA_temps = importlib.import_module("plot_ASA_temps")
-plotASAtemps = plot_ASA_temps.main
-from optimize_multiplex import main as optimizeMultiplex
-from multiple_run_optimization import main as multipleOptimizations 
-from offtarget_thermodynamics import main as offtargetThermodynamics
-from helpers.setup_mfeprimer import main as setup_mfeprimer
-from helpers.CSVtoFasta import main as CSVtoFASTA
-from helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+cd multiplex_wormhole/src/multiplex_wormhole
+python3.9 multiplexWormhole.py -h
 ```
-
-Then these can be run as documented but without the `mw.` prefix (e.g., run `multiplexWormhole(...)` instead of `mw.multiplexWormhole(...)`).
 
 
 ### Configuring the MFE primer binary
@@ -165,8 +139,8 @@ bedtools slop -b 100 -i Thinned100bp.bed -g chr_lengths.txt > Thinned100bp_Flank
 bedtools getfasta -fi <REF.FASTA> -bed Thinned100bp_Flanking100bp.bed -fo <OUT.FA>
 ```
 
-### Keeplist file (Optional)
-Users can also add a "keeplist" FASTA file of primers which must be included in the final multiplex, for example primers from a pre-existing panel or representing functionally important regions (e.g., sexing loci). This option can be invoked for augmenting existing panels. Importantly, primer design settings in the batch primer design step (details below) should be adjusted to match the PCR settings used to design the keeplist primers. Primer sequences and template names matching those in the KEEPLIST fasta will be removed from the TEMPLATES to avoid duplication, so make sure that sequence names match if there is any overlap between the two files. KEEPLIST primer names should follow the format <SequenceID>.<#>.FWD & <SequenceID>.<#>.REV, e.g., MACA01.0.FWD and MACA01.0.REV. 
+### Primer and Keeplist files
+Users can run multiplex wormhole steps with previously designed primers and can optionally include a "keeplist" FASTA file of primers which must be included in the final multiplex. In both files, primer names should follow the format <SequenceID>.<#>.FWD & <SequenceID>.<#>.REV, e.g., MACA01.0.FWD and MACA01.0.REV. Importantly, if using a keeplist, the primer design settings in the batch primer design step (details below) should be adjusted to match the PCR settings. 
 
 ### A Note on Candidate Loci
 Multiplex wormhole treats all candidates equally, it is therefore the responsibility of the user to select informative candidate DNA sequences based on their objectives. 
@@ -184,18 +158,17 @@ For example, I use the following steps to prepare input data for applications fo
 
 ### Command line usage
 ```ruby
-# move to path where scripts live
-cd ~/multiplex_wormhole/src/multiplex_wormhole 
+# PANEL DESIGN
+# usage: multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
+#                           [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
+#                           [-s SIMPLE] [-d] [-v]
+# example for standard optimization with defaults:
+python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa"
 
-# panel design
-# usage: python3.9 multiplexWormhole.py -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX] [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES] [-s SIMPLE] [-d] [-v]
-# example with all options / flags:
-python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa" -i 1000 -c 10 -s 5000 -d -v
-
-# panel assessment
-# usage: python3.9 panel_assessment.py -i PRIMERFASTA/PRIMERCSV [-a ALL_DIMERS_DG] [-e END_DIMERS_DG] [-b BAD_DIMERS_DG]
-# example with all options/flags
-python3.9 panel_assessment.py -i "Primers.fasta" -a -8 -e -4 -b -10
+# PANEL ASSESSMENT
+# usage: mw-assess-panel [-h] -i INPUT [-a ALLDIMERS_DG] [-e ENDDIMERS_DG] [-b BADDIMERS_DG]
+# example with defaults:
+mw-assess-panel -i "Primers.fasta" -a -8 -e -5 -b -10
 ```
 
 ### Python usage
@@ -203,16 +176,17 @@ python3.9 panel_assessment.py -i "Primers.fasta" -a -8 -e -4 -b -10
 # load module
 import multiplex_wormhole as mw
 
-# panel design example (with defaults)
+# panel design example (showing defaults)
 mw.multiplexWormhole(TEMPLATES="Input_Templates.csv", 
                      N_LOCI=50, 
                      OUTDIR="Test_MW", 
                      PREFIX="Test_MW_default",
                      KEEPLIST_FA="Keeplist.fa",
-                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)
+                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)#optional
 
-# panel assessment example (with defaults)
-mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
+# panel assessment example (showing defaults)
+mw.assessPanel(PRIMERS,
+               ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10) #optional
 ```
 
 ### Arguments
@@ -239,25 +213,25 @@ mw.assessPanel(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 ## Multiplex Wormhole Functions
 For maximum flexibility, the full multiplex wormhole workflow is available in an example script meant to be run line-by-line: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
-1. [Batch Primer Design](1_BatchPrimerDesign.md) with `batch_primer3_design.py`
+1. [Batch Primer Design](1_BatchPrimerDesign.md) with `mw-primer-design`
    
 2. [Dimer Prediction](2_DimerPrediction.md) with `MFEprimer dimer`
   
-3. [Tabulate Dimers](3_TabulateDimers.md) with `tabulate_dimers.py`
+3. [Tabulate Dimers](3_TabulateDimers.md) with `mw-tabulate-dimers`
 
-   (Optional): [Explore Optimization Parameters](4A_ExploreOptimParameters.md) with `plot_ASA_temps.py`
+   (Optional): [Explore Optimization Parameters](4A_ExploreOptimParameters.md) with `mw-plot-simanneal`
   
-4. [Optimize Multiplex Primers](4_OptimizeMultiplexPrimerSet.md) with `optimize_multiplex.py`
+4. [Optimize Multiplex Primers](4_OptimizeMultiplexPrimerSet.md) with `mw-optimize_multiplex`
 
-5. [Multiple Run Optimization](5_MultipleRunOptimization.md) with `multiple_run_optimization.py`
+5. [Multiple Run Optimization](5_MultipleRunOptimization.md) with `mw-mult_optimizations`
 
-6. [Panel Assessment](6_AssessPanel.md) with `panel_assessment.py`
+6. [Panel Assessment](6_AssessPanel.md) with `mw-assess-panel`
 
-7. [Specificity Checks](8_SpecificityChecks.md) with `primerTree_specificity_checks.R` & `offtarget_thermodynamics.py`
+7. [Specificity Checks](8_SpecificityChecks.md) with `primerTree_specificity_checks.R` & `mw-specificity`
 
 Helper Functions:
-* [Convert CSV to FASTA](CSVtoFASTA.md) with `CSVtoFASTA.py`
-* [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `add_keeplist_to_fasta.py`
+* [Convert CSV to FASTA](CSVtoFASTA.md) with `mw-csv2fasta`
+* [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `mw-add-keeplist`
 
 ![diagram showing mw workflow](assets/images/diagram.png)
 
@@ -268,22 +242,22 @@ Diagram for multiplex wormhole workflow, with black arrows showing the panel des
 ### Designing a Novel Panel
 This workflow will optimize a novel panel from data including the full template DNA sequences (i.e., target + flanking regions).
 
-TEMPLATES --> primer3_batch_design.py --> MFEprimer dimer --> tabulate_dimers.py --> multiple_run_optimization.py
+TEMPLATES --> multiplex-wormhole
 
 ### Augmenting an Existing Panel
 This workflow will optimally expand an existing multiplex primer set (KEEPLIST) using new DNA template data (TEMPLATES).
 
-TEMPLATES + KEEPLIST --> primer3_batch_design.py --> MFEprimer dimer --> tabulate_dimers.py --> multiple_run_optimization.py
+TEMPLATES + KEEPLIST --> multiplex-wormhole
 
 ### Assessing an Existing Panel
 This workflow assesses dimer load of an existing multiplex primer set (PRMERS).
 
-PRIMERS --> panel_assessment.py
+PRIMERS --> mw-assess-panel
 
 ### Re-designing an Existing Panel
 An existing panel can be redesigned, or multiple existing panels combined, but the approach will depend on whether only primer sequences available or the full templates are available. If template data are available, ensure that there is one template per target and use the "novel panel" or "augmented panel" (if unequal data availability) workflows. If only primer sequences are available, the only approach for optimization is to reduce panel size. To do so, use the following workflow with the original PRIMERS as the input fasta at the optimization step and set N_LOCI smaller than the current panel:
 
-PRIMERS --> MFEprimer dimer --> tabulate_dimers.py --> multiple_run_optimization.py
+PRIMERS --> MFEprimer dimer --> mw-tabulate-dimers --> mw-mult-optimizations
 
 
 ## Handling Outputs
