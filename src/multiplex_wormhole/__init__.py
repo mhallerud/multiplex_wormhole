@@ -12,7 +12,8 @@ from . import offtarget_thermodynamics
 from .helpers import _setup_mfeprimer
 from .helpers import CSVtoFasta
 from .helpers import add_keeplist_to_fasta
-plot_ASA_temps = importlib.import_module("./plot_ASA_temps")
+from . import plot_ASA_temps as plot_ASA_temps
+#plot_ASA_temps = importlib.import_module("./plot_ASA_temps")
 
 
 
