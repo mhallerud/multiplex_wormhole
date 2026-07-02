@@ -20,7 +20,15 @@ import logging
 from datetime import datetime
 #from operator import truth # converts anything>=1 to True and =0 to False
 #import multiprocessing
-from helpers.logging_setup import setup_logging
+
+
+# load mw sub-modules
+try:
+    from .helpers.logging_setup import setup_logging
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(__file__))
+    from helpers.logging_setup import setup_logging
 
 
 

@@ -17,10 +17,15 @@ import argparse
 from datetime import datetime
 import csv
 
-sys.path.append(os.path.dirname(__file__))
-from optimize_multiplex import main as optimizeMultiplex
-from optimize_multiplex import CheckInputFile
-from panel_assessment import main as assessPanel
+try:
+    from .optimize_multiplex import main as optimizeMultiplex
+    from .optimize_multiplex import CheckInputFile
+    from .panel_assessment import main as assessPanel
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    from optimize_multiplex import main as optimizeMultiplex
+    from optimize_multiplex import CheckInputFile
+    from panel_assessment import main as assessPanel
 
 
 

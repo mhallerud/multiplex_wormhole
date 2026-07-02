@@ -26,10 +26,14 @@ import math
 import matplotlib.pyplot as plt
 import argparse
 
-# import plot simulated annealing temps module
-sys.path.append(os.path.dirname(__file__))
-plotASAtemps = importlib.import_module("plot_ASA_temps")
-from helpers.logging_setup import setup_logging
+# import mw sub-modules
+try:
+    from .helpers.logging_setup import setup_logging
+    from . import plot_ASA_temps as plotASAtemps
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    plotASAtemps = importlib.import_module("plot_ASA_temps")
+    from helpers.logging_setup import setup_logging
 
 
 

@@ -22,18 +22,27 @@ import pandas as pd
 import subprocess
 import argparse
 
-# load multiplex wormhole functions
-sys.path.append(os.path.dirname(__file__))
-from batch_primer3_design import main as primer3BatchDesign
-from tabulate_dimers import main as tabulateDimers
-from multiple_run_optimization import main as multipleOptimizations
-from helpers.CSVtoFasta import main as CSVtoFASTA
-from helpers.logging_setup import setup_logging
-plotASAtemps = importlib.import_module("plot_ASA_temps")
 
-## FIND PATH TO BINARY DEPENDENCIES
-## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
-from helpers._setup_mfeprimer import main as setup_mfeprimer
+# load multiplex wormhole functions
+# load within module
+try:
+    from .batch_primer3_design import main as primer3BatchDesign
+    from .tabulate_dimers import main as tabulateDimers
+    from .multiple_run_optimization import main as multipleOptimizations
+    from .helpers.CSVtoFasta import main as CSVtoFASTA
+    from .helpers.logging_setup import setup_logging
+    from .helpers._setup_mfeprimer import main as setup_mfeprimer
+    from . import plot_ASA_temps as plotASAtemps
+# load using standalone script
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    from batch_primer3_design import main as primer3BatchDesign
+    from tabulate_dimers import main as tabulateDimers
+    from multiple_run_optimization import main as multipleOptimizations
+    from helpers.CSVtoFasta import main as CSVtoFASTA
+    from helpers.logging_setup import setup_logging
+    from helpers._setup_mfeprimer import main as setup_mfeprimer
+    plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
 

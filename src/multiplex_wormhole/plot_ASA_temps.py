@@ -29,9 +29,13 @@ import argparse
 
 
 # load functions from optimize_primers module
-sys.path.append(os.path.dirname(__file__))
-op = importlib.import_module("optimize_multiplex")
-from helpers.logging_setup import setup_logging
+try:
+    from .helpers.logging_setup import setup_logging
+    from . import optimize_multiplex as op
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    op = importlib.import_module("optimize_multiplex")
+    from helpers.logging_setup import setup_logging
 
 
 

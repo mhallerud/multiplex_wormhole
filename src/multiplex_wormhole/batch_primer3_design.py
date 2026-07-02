@@ -21,11 +21,17 @@ import argparse
 import json
 from datetime import datetime
 
+
 # import additional sub-modules
-sys.path.append(os.path.dirname(__file__))
-from helpers.CSVtoFasta import main as CSV2FASTA
-from helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
-from helpers.logging_setup import setup_logging
+try:
+    from .helpers.CSVtoFasta import main as CSV2FASTA
+    from .helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+    from .helpers.logging_setup import setup_logging
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    from helpers.CSVtoFasta import main as CSV2FASTA
+    from helpers.add_keeplist_to_fasta import main as AddKeeplist2FASTA
+    from helpers.logging_setup import setup_logging
 
 
 

@@ -40,7 +40,7 @@ mw-assess-panel = "multiplex_wormhole.panel_assessment:cli"
 mw-specificity = "multiplex_wormhole.offtarget_thermodynamics:cli"
 mw-csv2fasta = "multiplex_wormhole.helpers.CSVtoFasta:cli"
 mw-add-keeplist = "multiplex_wormhole.helpers.add_keeplist_to_fasta:cli"
-mw-setup-mfeprimer = "multiplex_wormhole.helpers.setup_mfeprimer:main"
+mw-setup-mfeprimer = "multiplex_wormhole.helpers._setup_mfeprimer:main"
 
 # add tests
 [project.optional-dependencies]

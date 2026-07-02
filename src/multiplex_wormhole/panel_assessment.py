@@ -34,15 +34,17 @@ import subprocess
 
 
 # load multiplex wormhole scripts
-#sys.path.append('/Users/maggiehallerud/Desktop/multiplex_wormhole')#change to YOUR multiplex_wormhole path
-sys.path.append(os.path.dirname(__file__))
-from tabulate_dimers import main as tabulateDimers
-from helpers.CSVtoFasta import main as csv2fasta
-from helpers.logging_setup import setup_logging
-
-## FIND PATH TO BINARY DEPENDENCIES
-## NO SPACES ALLOWED IN PATHS- OTHERWISE CALLING FUNCTIONS WILL BREAK!
-from helpers._setup_mfeprimer import main as setup_mfeprimer
+try:
+    from .tabulate_dimers import main as tabulateDimers
+    from .helpers.CSVtoFasta import main as csv2fasta
+    from .helpers.logging_setup import setup_logging
+    from .helpers._setup_mfeprimer import main as setup_mfeprimer
+except ImportError:
+    sys.path.append(os.path.dirname(__file__))
+    from tabulate_dimers import main as tabulateDimers
+    from helpers.CSVtoFasta import main as csv2fasta
+    from helpers.logging_setup import setup_logging
+    from helpers._setup_mfeprimer import main as setup_mfeprimer
 
 
 

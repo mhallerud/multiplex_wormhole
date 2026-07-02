@@ -2,17 +2,17 @@
 import sys, os, importlib, glob
 sys.path.append(os.path.dirname(__file__))
 
-import multiplexWormhole
-import panel_assessment
-import batch_primer3_design
-import tabulate_dimers
-import optimize_multiplex 
-import multiple_run_optimization 
-import offtarget_thermodynamics
-from helpers import _setup_mfeprimer
-from helpers import CSVtoFasta
-from helpers import add_keeplist_to_fasta
-plot_ASA_temps = importlib.import_module("plot_ASA_temps")
+from . import multiplexWormhole
+from . import panel_assessment
+from . import batch_primer3_design
+from . import tabulate_dimers
+from . import optimize_multiplex 
+from . import multiple_run_optimization 
+from . import offtarget_thermodynamics
+from .helpers import _setup_mfeprimer
+from .helpers import CSVtoFasta
+from .helpers import add_keeplist_to_fasta
+plot_ASA_temps = importlib.import_module("./plot_ASA_temps")
 
 
 
