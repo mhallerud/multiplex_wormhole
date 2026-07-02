@@ -21,7 +21,7 @@ def _has_mfeprimer():
     return len(glob.glob(os.path.join(pkg_dir, "*mfeprimer*"))) > 0
 
 
-HAS_MFEPRIMER = _has_mfeprimer() is not None
+HAS_MFEPRIMER = _has_mfeprimer()
 
 
 
