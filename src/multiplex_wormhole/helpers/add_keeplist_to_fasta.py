@@ -76,7 +76,8 @@ def readFasta(FA):
     seqs = []
     # read in lines
     with open(FA, 'r') as file:
-        lines = file.readlines()
+        # read any non-blank lines
+        lines = [l for l in file.readlines() if l.strip() != ""]
         # make list of ids and seqs
         for line in lines:
             if '>' in line:

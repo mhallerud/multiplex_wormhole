@@ -68,17 +68,21 @@ runPrimerTree <- function(primers, organisms,
   
   #--------PULL TAXONOMY INFORMATION FOR ALL HITS--------------#
   print("Pulling taxonomy information from NCBI.....")
-  taxa <- primerTree::get_taxonomy(all_hits$accession)
-  all_hits <- merge(all_hits, taxa, by="accession")
+  try({
+    taxa <- primerTree::get_taxonomy(all_hits$accession)
+    all_hits <- merge(all_hits, taxa, by="accession")
+  })#try
   
   #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
   print("Retrieving sequences from NCBI.....")
   all_hits$Sequence <- NA
   for (row in 1:nrow(all_hits)){
-    seq <- orimerTree::get_sequence(accession = all_hits$accession[row],
+    try({
+      seq <- primerTree::get_sequence(accession = all_hits$accession[row],
                         start = all_hits$product_start[row],
                         stop = all_hits$product_stop[row])
-    all_hits$Sequence[row] <- paste(unlist(as.character(seq)), collapse="")
+      all_hits$Sequence[row] <- paste(unlist(as.character(seq)), collapse="")
+    })#try
   }#for
   return(all_hits)
 }#runPrimerTree
