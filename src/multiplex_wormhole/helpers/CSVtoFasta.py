@@ -78,11 +78,16 @@ def parse_args():
 
 
          
-# set up to run via command line
-if __name__=="__main__":
+def cli():
+    # set up to run via command line
     args = parse_args()
     main(IN_CSV=args.incsv,
          OUT_FA=args.outfa, 
          ID_FIELD=args.primeridfield,
          SEQ_FIELD=args.seqfield,
          ENCODING=args.csv_encoding)
+
+
+
+if __name__=="__main__":
+    cli()

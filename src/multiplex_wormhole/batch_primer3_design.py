@@ -640,7 +640,7 @@ def parse_args():
 
 
 
-if __name__=="__main__":
+def cli():
     # parse command line arguments
     args = parse_args()
     # run main
@@ -653,3 +653,8 @@ if __name__=="__main__":
          KEEPLIST=args.keeplist, 
          ENABLE_BROAD=args.enable_broad, 
          SETTINGS=args.settings)
+
+
+
+if __name__=="__main__":
+    cli()

@@ -129,7 +129,7 @@ def parse_args():
 
 
 
-if __name__=="__main__":
+def cli():
     args = parse_args()
     main(INFILE=args.infile,
          OUTFILE=args.outfile,
@@ -138,3 +138,8 @@ if __name__=="__main__":
          DV_CONC=args.dv_conc,
          DNTP_CONC=args.dntp_conc,
          DNA_CONC=args.dna_conc)
+
+
+
+if __name__=="__main__":
+    cli()

@@ -30,17 +30,17 @@ keywords = ["multiplex PCR", "bioinformatics", "SNP panel"]
 
 # specify executable scripts (add project.gui-scripts for windows...)
 [project.scripts]
-multiplex-wormhole = "multiplex_wormhole.multiplexWormhole"
-mw-primer-design = "multiplex_wormhole.batch_primer3_design"
-mw-tabulate-dimers = "multiplex_wormhole.tabulate_dimers"
-mw-plot-simannel = "multiplex_wormhole.plot_ASA_temps"
-mw-optimize-multiplex = "multiplex_wormhole.optimize_multiplex"
-mw-mult-optimizations = "multiplex_wormhole.multiple_run_optimization"
-mw-assess-panel = "multiplex_wormhole.panel_assessment"
-mw-specificity = "multiplex_wormhole.offtarget_thermodynamics"
-mw-csv2fasta = "multiplex_wormhole.helpers.CSVtoFasta"
-mw-add-keeplist = "multiplex_wormhole.helpers.add_keeplist_to_fasta"
-mw-setup-mfeprimer = "multiplex_wormhole.helpers.setup_mfeprimer"
+multiplex-wormhole = "multiplex_wormhole.multiplexWormhole:cli"
+mw-primer-design = "multiplex_wormhole.batch_primer3_design:cli"
+mw-tabulate-dimers = "multiplex_wormhole.tabulate_dimers:cli"
+mw-plot-simannel = "multiplex_wormhole.plot_ASA_temps:cli"
+mw-optimize-multiplex = "multiplex_wormhole.optimize_multiplex:cli"
+mw-mult-optimizations = "multiplex_wormhole.multiple_run_optimization:cli"
+mw-assess-panel = "multiplex_wormhole.panel_assessment:cli"
+mw-specificity = "multiplex_wormhole.offtarget_thermodynamics:cli"
+mw-csv2fasta = "multiplex_wormhole.helpers.CSVtoFasta:cli"
+mw-add-keeplist = "multiplex_wormhole.helpers.add_keeplist_to_fasta:cli"
+mw-setup-mfeprimer = "multiplex_wormhole.helpers.setup_mfeprimer:main"
 
 # add tests
 [project.optional-dependencies]

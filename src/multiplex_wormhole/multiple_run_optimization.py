@@ -207,7 +207,7 @@ def parse_args():
 
 
 
-if __name__=="__main__":
+def cli():
     # parse command line arguments
     args = parse_args()
     # run main
@@ -231,3 +231,8 @@ if __name__=="__main__":
          T_FINAL = args.temp_final, 
          PROB_ADJ = args.prob_adj,
          MAKEPLOT = args.makeplot)
+
+
+
+if __name__=="__main__":
+    cli()

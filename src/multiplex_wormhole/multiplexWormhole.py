@@ -316,7 +316,7 @@ def parse_args():
 
 
 
-if __name__ == "__main__":
+def cli():
     # parse command-line arguments
     args = parse_args()
     # run multiplex wormhole module
@@ -331,3 +331,8 @@ if __name__ == "__main__":
          SIMPLE = args.simple,
          deltaG = args.deltaG,
          VERBOSE = args.verbose)
+
+
+
+if __name__ == "__main__":
+    cli()

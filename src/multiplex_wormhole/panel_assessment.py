@@ -187,7 +187,7 @@ def parse_args():
 
 
 
-if __name__ == "__main__":
+def cli():
     # parse command-line arguments
     args = parse_args()
     # run panel assessment
@@ -195,3 +195,8 @@ if __name__ == "__main__":
          args.alldimers_dg,
          args.enddimers_dg,
          args.baddimers_dg)
+
+
+
+if __name__ == "__main__":
+    cli()

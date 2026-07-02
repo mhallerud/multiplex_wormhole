@@ -537,7 +537,7 @@ def parse_args():
 
 
 
-if __name__=="__main__":
+def cli():
     # parse command line arguments
     args = parse_args()
     # run main
@@ -556,3 +556,8 @@ if __name__=="__main__":
          T_FINAL = args.temp_final, 
          BURNIN = args.burnin, 
          PROB_ADJ = args.prob_adj)
+
+
+
+if __name__=="__main__":
+    cli()

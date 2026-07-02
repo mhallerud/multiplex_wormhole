@@ -298,7 +298,7 @@ class InputError(Exception):
 
 
 
-if __name__=="__main__":
+def cli():
     # parse command line arguments
     args = parse_args()
     # run main
@@ -307,3 +307,7 @@ if __name__=="__main__":
          OUTPATH=args.outpath, 
          OUTPRIMERPATH=args.outpath_primers, 
          deltaG=args.deltaG)
+
+
+if __name__=="__main__":
+    cli()

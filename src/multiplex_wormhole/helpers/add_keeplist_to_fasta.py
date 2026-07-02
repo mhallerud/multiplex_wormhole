@@ -107,8 +107,13 @@ def parse_args():
 
 
 
-if __name__=="__main__":
+def cli():
     args = parse_args()
     main(MAIN_FA=args.input, 
          KEEPLIST_FA=args.keeplist, 
          OUTPATH=args.outpath)
+
+
+
+if __name__=="__main__":
+    cli()
