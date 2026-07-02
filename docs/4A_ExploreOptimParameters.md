@@ -14,32 +14,29 @@ The optimization process relies on a simulated annealing algorithm which allows 
 ## Usage
 The plot_ASA_temps.py function is setup to accept two different sets of inputs: 1) Provided simulated annealing parameters, or 2) Provided datasets used to calculate simulated annealing parameters (the default used in optimize_multiplex.py). Inputs are shown for both options. Provided datasets are ignored if MAX_DIMER and MIN_DIMER are provided.
 
+### Command line syntax
+```
+# usage:
+mw-plot-simannel [-h] -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS]
+                        [-t DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-e SEED]
+                        [-m MIN_DIMERS] [-a MAX_DIMERS] [-r DECAY_RATE]
+                        [-i TEMP_INIT] [-j TEMP_FINAL] [-b BURNIN]
+                        [-p PROB_ADJ] [-g]
+
+# example with user-defined parameters:
+mw-plot-simanneal -o OUTPATH [-m MIN_DIMERS] [-a MAX_DIMERS] [-r DECAY_RATE] [-i TEMP_INIT] [-f TEMP_FINAL] [-p PROB_ADJ]
+
+# example for calculating and visualizing parameters from data:
+mw-plot-simanneal -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS] [-t DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-g] 
+
+# example using a previous optimization run to calculate parameters:
+mw-plot-simanneal -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS] [-t DIMER_TABLE] [-n NLOCI] [-k KEEPLIST]
+```
+
 ### Python syntax
 ```
 import multiplex_wormhole as mw
-# provided parameters (with defaults shown):
-mw.plotASAtemps(OUTPATH, MIN_DIMER, MAX_DIMER, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1, DIMER_ADJ=0.1, PROB_ADJ=2):
-
-# provided datasets using default parameters:
-mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100, deltaG=False)
-
-# providing a dataset with user-defined paramers:
-mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, SEED=None, BURNIN=100,
-   deltaG=False, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.1,PROB_ADJ=2)
-
-# providing a previous set of primers (e.g., from previous optimization) rather than new data, with all other defaults:
-mw.plotASAtemps(OUTPATH, PRIMER_FASTA, SEED, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None)
-```
-
-### Command line syntax
-```
-cd ~/multiplex_wormhole/src/multiplex_wormhole #move into directory holding scripts
-
-# provided parameters:
-python3 plot_ASA_temps.py -o OUTPATH [-m MIN_DIMERS] [-a MAX_DIMERS] [-r DECAY_RATE] [-i TEMP_INIT]  [-f TEMP_FINAL] [-p PROB_ADJ] [-g]
-
-# providing datasets:
-python3 plot_ASA_temps.py -o OUTPATH [-f PRIMER_FASTA] [-d DIMER_SUMS] [-t DIMER_TABLE] [-n NLOCI] [-k KEEPLIST] [-b BURNIN] [-z SEED] [-g] 
+mw.plotASAtemps(OUTPATH, PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, N_LOCI, KEEPLIST=None, ...)
 ```
 
 ### Arguments
