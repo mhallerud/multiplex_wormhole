@@ -52,6 +52,7 @@ mw.multiplexWormhole(TEMPLATES="Input_Templates.csv",
 
 ## Outputs
 `multiplex-wormhole` sets up a directory structure in the designated `OUTDIR`, which contains the following outputs:
+
 OUTDIR
 - 0_Inputs
   - TEMPLATES
