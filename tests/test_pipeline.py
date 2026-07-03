@@ -8,8 +8,8 @@ import glob
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src/multiplex_wormhole"))
 from multiplexWormhole import main as multiplexWormhole
-from helpers import setup_mfeprimer
 from panel_assessment import main as assessPanel
+from helpers._setup_mfeprimer import main as setup_mfeprimer
 EXAMPLES = os.path.join(os.path.dirname(__file__), "../examples/Input_Templates.csv")
 FASTA = os.path.join(os.path.dirname(__file__), "../examples/example_keeplist.fasta")
 
@@ -22,6 +22,16 @@ def _has_mfeprimer():
 
 
 HAS_MFEPRIMER = _has_mfeprimer()
+
+
+
+def test_mfeprimer(mfeprimer=HAS_MFEPRIMER):
+   if not mfeprimer:
+       setup_mfeprimer()
+       path = _has_mfeprimer()
+   else:
+       path = mfeprimer
+   assert os.path.exists(path), "MFEprimer binary not found and couldn't be installed!"
 
 
 
