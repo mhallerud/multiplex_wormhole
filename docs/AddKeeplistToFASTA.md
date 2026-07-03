@@ -21,5 +21,7 @@ python3 add_keeplist_to_fasta.py -i MAIN_FA -k KEEPLIST_FA [-o OUTPATH]
 
 ### Arguments
 **MAIN_FA (-i)** : FASTA of new primers that keeplist will be merged into. Any overlapping sequence names will be removed from this file.
+
 **KEEPLIST_FA (-k)** : FASTA of keeplist primers.
+
 **OUTPATH (-o)** : Filepath to output FASTA. [Default: MAIN_FA prefix + "_plusKeeplist.fa"]
