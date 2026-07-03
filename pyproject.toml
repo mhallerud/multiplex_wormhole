@@ -1,6 +1,6 @@
 [project]
 name = "multiplex_wormhole"
-version = "1.0.5"
+version = "1.0.25"
 authors = [
 	{ name="Maggie Hallerud", email="hallerum@oregonstate.edu" }
 ]
