@@ -209,9 +209,12 @@ mw.assessPanel(PRIMERS,
 **END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
 **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
+`multiplex-wormhole` is a wrapper around the steps described below and uses their defaults. See the [multiplex_wormhole page](multiplex_wormhole.md) to understand the pipeline steps and output structure. 
+
 
 ## Multiplex Wormhole Functions
-For maximum flexibility, the full multiplex wormhole workflow is available in an example script meant to be run line-by-line: [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py). Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
+
+Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
 1. [Batch Primer Design](1_BatchPrimerDesign.md) with `mw-primer-design`
    
@@ -232,6 +235,8 @@ For maximum flexibility, the full multiplex wormhole workflow is available in an
 Helper Functions:
 * [Convert CSV to FASTA](CSVtoFASTA.md) with `mw-csv2fasta`
 * [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `mw-add-keeplist`
+
+See [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py) for a full line-by-line workflow (equivalent to the multiplex-wormhole wrapper function). 
 
 ![diagram showing mw workflow](assets/images/diagram.png)
 
