@@ -73,6 +73,11 @@ View(primerblast)
 ### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
 This function uses primer3-py to calculate thermodynamic stability of full binding sites and end stability of binding sites. Binding sites are identified from PrimerTree/PRIMER-BLAST outputs.
 ```
+mw-specificity -i INFILE -o OUTFILE [-t ANNEAL_TEMP] [-m MV_CONC]
+                      [-d DV_CONC] [-p DNTP_CONC] [-c DNA_CONC]
+```
+
+```
 mw.offtargetThermodynamics(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0.25, DNA_CONC=50)
 ```
 #### Arguments
