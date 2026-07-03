@@ -12,23 +12,20 @@ A panel that amplifies "N" target loci is selected by minimizing off-target inte
 
 
 ## Usage
+### Command line syntax
+```
+mw-optimize-multiplex -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST]
+                      [-e SEED] [-s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN]
+                      [-r DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ]
+                      [-g] [-v] [-m]
+```
+
 ### Python syntax
 ```
 import multiplex_wormhole as mw
 
-# with minimal inputs:
+# example with minimal inputs:
 mw.optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, deltaG=False)
-
-# with all parameters & their defaults:
-mw.optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, #data args
-SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100, DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PROB_ADJ=2, MAKEPLOT=False,  VERBOSE=False, RNG=12345) #sim anneal params
-```
-
-### Command line syntax
-```
-cd ~/multiplex_wormhole #navigate to scripts
-python3 optimize_multiplex.py -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] /
-[-i ITER] [-c CYCLES] [-b BURNIN] [-r DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ] [-g] [-v] [-m]
 ```
 
 ### Parameters
