@@ -17,7 +17,8 @@ Requires primer3-py Python module
 
 ### Command line syntax
 ```
-mw-primer-design -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG] [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
+mw-primer-design -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG]
+                [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
 ```
 
 ### Python syntax
