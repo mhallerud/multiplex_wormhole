@@ -53,24 +53,39 @@ mw.multiplexWormhole(TEMPLATES="Input_Templates.csv",
 ## Outputs
 `multiplex-wormhole` sets up a directory structure in the designated `OUTDIR`, which contains the following outputs:
 
+```
 OUTDIR
-- 0_Inputs
-  - TEMPLATES
-  - KEEPLIST_FA
-- 1_PrimerDesign
-  - 
-  - File 2
-  - Folder B
-    - File 3
-- 2_PredictedDimers
-  - File 4
-- 3_OptimizedMultiplexes
-  - Logfiles
-  - Plots_Dimer_Load
-  - Trace_Dimer_Load
-  - Final_Dimers
-  - Final_Primers
-
+├── 0_Inputs
+│   ├── TEMPLATES
+│   ├── KEEPLIST_FA
+├── 1_PrimerDesign
+│   ├── FilteredPrimers.csv
+│   ├── FilteredPrimers.fa
+│   ├── FilteredPrimers.log
+│   ├── FilteredPrimers_plusKeeplist.fa
+├── 2_PredictedDimers
+│   ├── MFEprimerDimers.txt
+│   ├── MFEprimerDimers_ends.txt
+│   ├── PrimerPairInteractions_wide.csv
+│   ├── PrimerPairInteractions_mean.csv
+│   ├── PrimerPairInteractions_sum.csv
+│   ├── PrimerPairInteractions_binary_sum.csv
+│   ├── PrimerPairInteractions_binary_wide.csv
+│   ├── PrimerPairInteractions.log
+├── 3_OptimizedMultiplexes
+    ├── PREFIX_RunSummary.csv
+    ├── PREFIX_Runx_primers.fasta
+    ├── Plots_Dimer_Load
+    │   ├── PREFIX_Runx_DimerLoad.png
+    ├── Final_Primers
+    │   ├── PREFIX_Runx_primers.csv
+    ├── Final_Dimers
+    │   ├── PREFIX_Runx_dimers.csv
+    ├── Trace_Dimer_Load
+    │   ├── PREFIX_Runx_costsTrace.csv
+    ├── Logfiles
+        ├── PREFIX_Runx.log
+```
 
 
 [Next](1_BatchPrimerDesign.md)
