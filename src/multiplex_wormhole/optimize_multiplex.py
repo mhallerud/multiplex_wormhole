@@ -736,13 +736,14 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
          deltaG, logger, BURNIN=200):
     logger.info("     Sampling cost space to set initial temp....")
     change = []
+    i = 0
     while len(change) < BURNIN:
-        #i = RNG+len(change)
+        i =i+1
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                                   primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
-                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs, RNG=RNG)
+                                                  keeplist_seqs, [], [], random=True, keeplist=keeplist_pairs, RNG=RNG+i)
         if newSet is not None:
             swap_id, new_id, new_pairIDs = newSet
             # compare newSet to original set
