@@ -5,61 +5,70 @@ parent: index
 permalink: /multiplex-wormhole
 ---
 
-# Batch Primer Design
-Designs primers for each template sequence provided using primer3 (Untergasser et al. 2012). Filters for secondary structure formation within pairs based on primer3 output, where primer pairs are removed if the melting temperature AND deltaG thresholds are not met for hairpins, homodimers, and heterodimers. Outputs primer sequences and details to a table and FASTA file(s)- at this stage, keeplist primers are added to the FASTA.
+# Multiplex Wormhole Pipeline
+`multiplex-wormhole` is a wrapper function that performs the following submodules using defaults:
 
-**Important: By default, primers are designed with the Illumina Nextera i5 and i7 adapters attached. If other adapter sequences are desired, use SETTINGS={'SEQUENCE_OVERHANG_LEFT': "your_FWD_adapter_sequence", 'SEQUENCE_OVERHANG_RIGHT': "your_REV_adapter_sequence"}**
+TEMPLATES (& KEEPLIST) --> [mw-primer-design](1_BatchPrimerDesign.md) --> [MFEprimer dimer](2_DimerPrediction.md) --> 
+[mw-tabulate-dimers](3_TabulateDimers.md) --> [mw-mult-optimizations](5_MultipleRunOptimizations.md)
+
+Note that `mw-mult-optimizations` also runs [mw-assess-panel](6_AssessPanel.md) at the end.
 
 
 ## Usage
-### Dependencies
-Requires primer3-py Python module
-
 ### Command line syntax
 ```
-mw-primer-design -t TEMPLATES -o OUT [-l TM_LIMIT] [-d HAIRPINS_DG] [-m MIDDIMERS_DG]
-                [-e ENDDIMERS_DG] [-k KEEPLIST] [-s SETTINGS] [-b]
+multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
+                   [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
+                   [-s SIMPLE] [-d] [-v]
 ```
 
-### Python syntax
+### Python usage
 ```
+# load module
 import multiplex_wormhole as mw
-mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None)
+
+# panel design example (showing defaults for optional parameters)
+mw.multiplexWormhole(TEMPLATES="Input_Templates.csv", 
+                     N_LOCI=50, 
+                     OUTDIR="Test_MW", 
+                     PREFIX="Test_MW_default",
+                     KEEPLIST_FA="Keeplist.fa",
+                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)#optional
 ```
 
 ### Arguments
-**TEMPLATES (-t)** : CSV filepath to templates in the following format (including these specific headers):
-
-| SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
-| ------------- | -------------------- | ------------------ |
-| CLocus_704    | TCAGAGAC...          | 53,1               |
-| ...           | ...                  | ...                |
-
-The sequence target is in <POSITION,LENGTH> format. In the example, the target for PCR is a 1-bp region (i.e., SNP or indel) at basepair 53. (Required)
-
-**OUTPATH (-o)** : Prefix (including directory structure) for output files which will include a CSV and FASTA. (Required)
-
-**Tm_LIMIT (-l)** : Upper limit for melting temperatures (in Celsius) of intra-pair secondary structures, including hairpins, homodimers, and heterodimers. (Default: 45.0)
-
-**dG_HAIRPINS (-d)** : Lower limit for delta G (i.e., Gibbs free energy) of hairpin structures. (Default: -2)
-
-**dG_MID_LIMIT (-m)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers not occurring at 3' ends. (Default: -8)
-
-**dG_END_LIMIT (-e)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers at 3' ends. (Default: -4)
-
-**KEEPLIST (-k)** : FASTA of keeplist primers, where names follow the format <SeqID>.<#>.FWD and <SeqID>.<#>.REV (e.g., MACA01.1.FWD, MACA01.1.REV). *IMPORTANT*: If the same target is in the keeplist and the templates file, ensure that SeqIDs name match- otherwise, multiple primer pairs may be designed for the same target. (Default: None)
-
-**ENABLE_BROAD (-b)** : Try less conservative settings if primers could not be developed for a template under strict design settings? (Default: False)
-
-**SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). If running from the command line, use the format `-s '{"PRIMER_ANNEALING_TEMP": "52.0"}'`. Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
-
-**(-h)**: Help for usage.
+**TEMPLATES (-t --templates)** : Path to templates CSV. 
+**NLOCI (-n --nloci)** : Final panel size (i.e., # primer pairs & # templates amplified).
+**OUTDIR (-o --outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure.
+**PREFIX (-p --prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided]
+**KEEPLIST_FA (-k --keeplist)** : Path to keeplist FASTA. [Default: None]
+**N_RUNS (-r --runs)** : Number of optimization runs. [Default: 10]
+**ITERATIONS (-i --iter)** : Number of simulated annealing iterations per cycle. [Default: 1000]
+**CYCLES (-c --cycles) ** : Number of simulated annealing cycles per run. [Default: 10]
+**SIMPLE (-s --simple)** : Number of simple iterative improvement iterations per run. [Default: 5000]
+**deltaG (-d --deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
+**VERBOSE (-v --verbose)** : Print all steps and swaps at the optimization step. [Default: False]
 
 
 ## Outputs
-* `OUTPATH`.csv : CSV of filtered primer pair details output by primer3, including primerIDs, sequences, amplicon size, start BP within template, primer length, melting temperature, % GC content, proportion bound at annealing temp, 3' end stability, penalty, and template mispriming.
-* `OUTPATH`.fa : FASTA of filtered primer pairs.
-* `OUTPATH`_plusKeeplist.fa : FASTA merging filtered primer pairs with KEEPLIST primer pairs (automatically removes any duplicate names & primers between the KEEPLIST and TEMPLATES).
+`multiplex-wormhole` sets up a directory structure in the designated `OUTDIR`, which contains the following outputs:
+- 0_Inputs
+  - `TEMPLATES` : copy of input templates
+  - `KEEPLIST_FA` : copy of keeplist (if provided)
+- 1_PrimerDesign
+  - 
+  - File 2
+  - Folder B
+    - File 3
+- 2_PredictedDimers
+  - File 4
+- 3_OptimizedMultiplexes
+  - Logfiles
+  - Plots_Dimer_Load
+  - Trace_Dimer_Load
+  - Final_Dimers
+  - Final_Primers
+
 
 
 [Next](1_BatchPrimerDesign.md)
