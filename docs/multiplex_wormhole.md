@@ -55,36 +55,36 @@ mw.multiplexWormhole(TEMPLATES="Input_Templates.csv",
 
 ```
 OUTDIR
-├── 0_Inputs
+├── 0_Inputs : Copies of input files for this run
 │   ├── TEMPLATES
 │   ├── KEEPLIST_FA
-├── 1_PrimerDesign
-│   ├── FilteredPrimers.csv
-│   ├── FilteredPrimers.fa
+├── 1_PrimerDesign : Outputs from mw-primer-design + mw-add-keeplist (if KEEPLIST provided)
+│   ├── FilteredPrimers.csv : Designed primers with full details
+│   ├── FilteredPrimers.fa : Sequences for filtered primers
 │   ├── FilteredPrimers.log
 │   ├── FilteredPrimers_plusKeeplist.fa
-├── 2_PredictedDimers
-│   ├── MFEprimerDimers.txt
-│   ├── MFEprimerDimers_ends.txt
-│   ├── PrimerPairInteractions_wide.csv
-│   ├── PrimerPairInteractions_mean.csv
-│   ├── PrimerPairInteractions_sum.csv
-│   ├── PrimerPairInteractions_binary_sum.csv
-│   ├── PrimerPairInteractions_binary_wide.csv
+├── 2_PredictedDimers : Outputs from MFEprimer dimer and mw-tabulate-dimers
+│   ├── MFEprimerDimers.txt : MFE primer dimer output
+│   ├── MFEprimerDimers_ends.txt : MFE primer dimer output for 3' end dimers
+│   ├── PrimerPairInteractions_wide.csv : pairwise dimer loads
+│   ├── PrimerPairInteractions_mean.csv : mean deltaG primer pair across all others (if deltaG=True)
+│   ├── PrimerPairInteractions_sum.csv : total dimer count per primer pair across all others (if deltaG=False)
+│   ├── PrimerPairInteractions_binary_sum.csv : count of # interacting primer pairs per primer pair
+│   ├── PrimerPairInteractions_binary_wide.csv : pairwise interactions between primer pairs (1=dimer, 0=no dimers)
 │   ├── PrimerPairInteractions.log
-├── 3_OptimizedMultiplexes
-    ├── PREFIX_RunSummary.csv
-    ├── PREFIX_Runx_primers.fasta
-    ├── Plots_Dimer_Load
+├── 3_OptimizedMultiplexes : Outputs from mult-optimizations
+    ├── PREFIX_RunSummary.csv : Dimer load summary for all optimization runs
+    ├── PREFIX_Runx_primers.fasta : Primer sequences for "best" optimization runs
+    ├── Plots_Dimer_Load : Dimer load trace plots across all optimization runs
     │   ├── PREFIX_Runx_DimerLoad.png
-    ├── Final_Primers
+    ├── Final_Primers : CSVs of primer sequences for all optimization runs
     │   ├── PREFIX_Runx_primers.csv
-    ├── Final_Dimers
+    ├── Final_Dimers : Pairwise dimer tables for output panels from all optimization runs
     │   ├── PREFIX_Runx_dimers.csv
-    ├── Trace_Dimer_Load
+    ├── Trace_Dimer_Load : Dimer trace values for each iteration where a change was accepted during optimization runs
     │   ├── PREFIX_Runx_costsTrace.csv
-    ├── Logfiles
-        ├── PREFIX_Runx.log
+    ├── Logfiles : Log files for all optimization runs
+        └── PREFIX_Runx.log
 ```
 
 
