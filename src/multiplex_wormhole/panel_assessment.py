@@ -48,7 +48,7 @@ except ImportError:
 
 
 
-def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10):
+def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-3, BAD_DIMERS_dG=-10):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
     ALL_DIMERS_dG : DeltaG threshold used for dimer prediction (all dimers)

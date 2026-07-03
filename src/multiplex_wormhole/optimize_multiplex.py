@@ -759,8 +759,9 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
     MEAN_DIMER = np.mean(neg_changes)
     MAX_DIMER = max(neg_changes)
     MIN_DIMER = min(neg_changes)#almost always 1!
-    logger.info("     Changes that increase cost: %s", 
-                str(round(len(neg_changes)/len(change),3)*100)+"%")
+    if len(change)>0:
+        logger.info("     Changes that increase cost: %s", 
+                    str(round(len(neg_changes)/len(change),3)*100)+"%")
     logger.info("     Mean +cost change: %s", round(MEAN_DIMER,2))
     logger.info("     Max +cost observed: %s", round(MAX_DIMER,2))
     logger.info("     Min +cost observed: %s", round(MIN_DIMER,2))
