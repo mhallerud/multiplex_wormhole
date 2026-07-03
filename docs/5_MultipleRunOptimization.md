@@ -8,20 +8,22 @@ The [optimization process](7_OptimizationProcess.md) includes randomness and out
 
 
 ## Usage
+### Command line syntax
+```
+mult_optimizations -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST]
+                    [-e SEED] [-s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN]
+                    [-y DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ] [-u TIMEOUT]
+                    [-g] [-v] [-m]
+```
+
 ### Python syntax
 ```
 import multiplex_wormhole as mw
+# example with full inputs & their defaults
 mw.multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
 	deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
     SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100,
     DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PROB_ADJ=2)
-```
-
-### Command line syntax
-```
-cd ~/multiplex_wormhole #navigate to where mw scripts live
-
-python3 multiple_run_optimization.py -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST] [-e SEED] [-s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN] [-y DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ] [-u TIMEOUT] [-g] [-v] [-m]
 ```
 
 ### Parameters
