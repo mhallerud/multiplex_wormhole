@@ -20,11 +20,13 @@ import csv
 try:
     from .optimize_multiplex import main as optimizeMultiplex
     from .optimize_multiplex import CheckInputFile
+    from .optimize_multiplex import LoadPrimers
     from .panel_assessment import main as assessPanel
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from optimize_multiplex import main as optimizeMultiplex
     from optimize_multiplex import CheckInputFile
+    from optimize_multiplex import LoadPrimers
     from panel_assessment import main as assessPanel
 
 
@@ -68,6 +70,20 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     CheckInputFile(DIMER_TABLE, "DIMER_TABLE", required=True)
     CheckInputFile(KEEPLIST, "KEEPLIST", required=False)
     CheckInputFile(SEED, "SEED", required=False)
+    
+    # check that primer IDs are in correct format
+    try:
+        test = LoadPrimers(PRIMER_FA)
+    except Exception:
+        raise InputError("PrimerIDs in PRIMER_FA are not in the correct format! " \
+                         "Reformat IDs as <name>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
+    
+    if KEEPLIST is not None:
+        try:
+            test = LoadPrimers(KEEPLIST)
+        except Exception:
+            raise InputError("PrimerIDs in KEEPLIST are not in the correct format! " \
+                             "Reformat IDs as <name>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
     
     # set up output filename if None
     if OUTPATH is None or OUTPATH=="None":

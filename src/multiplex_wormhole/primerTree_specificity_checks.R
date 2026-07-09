@@ -1,6 +1,6 @@
 ##--------RUN PRIMER-TREE FOR MULTIPLEX WORMHOLE OUTPUTS-------------##
 # function:
-runPrimerTree <- function(primers, organisms, 
+runPrimerTree <- function(primers, organisms, outcsv,
                           fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                           rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                           all_combos=FALSE,
@@ -13,6 +13,11 @@ runPrimerTree <- function(primers, organisms,
   #---------READ INPUTS ----------#
   # load multiplex_wormhole output
   primers <- read.csv(primers)
+  
+  # make everything lowercase
+  primers$Sequence <- tolower(primers$Sequence)
+  fwd_adapter <- tolower(fwd_adapter)
+  rev_adapter <- tolower(rev_adapter)
   
   # remove Illumina Nextera adapters from primer sequences
   primers$Sequence <- gsub(fwd_adapter, "", primers$Sequence)
@@ -50,6 +55,7 @@ runPrimerTree <- function(primers, organisms,
                 hits$FWDseq <- paste0(forwards[fwd], ".FWD")
                 hits$REVseq <- paste0(reverses[rev], ".REV")
                 all_hits <- rbind(all_hits, hits)
+                write.csv(all_hits, outcsv)
               }#if
             }#for l
           },#try, 
@@ -82,7 +88,9 @@ runPrimerTree <- function(primers, organisms,
       all_hits$Sequence[row] <- paste(unlist(as.character(seq)), collapse="")
     }#if
   }#for
-  return(all_hits)
+  
+  write.csv(all_hits, outcsv)
+  #return(all_hits)
 }#runPrimerTree
 
 
@@ -178,7 +186,7 @@ plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET", dG=0, dG_
       # run maximum likelihood tree with ancestral state reconstruction
       mltree <- DECIPHER::TreeLine(align, method="ML", reconstruct=TRUE, type="dendrogram")
       # plot trees with number of state transitions
-      plottree <- MapCharacters(mltree, labelEdges=TRUE)
+      plottree <- DECIPHER::MapCharacters(mltree, labelEdges=TRUE)
       #plottree <- dendrapply(plottree, function(x){
       #  attr(x, "edgetext") <- paste(attr(x,"edgetext"),"\n")
       #})#dendrapply

@@ -36,12 +36,14 @@ import subprocess
 # load multiplex wormhole scripts
 try:
     from .tabulate_dimers import main as tabulateDimers
+    from .optimize_multiplex import LoadPrimers
     from .helpers.CSVtoFasta import main as csv2fasta
     from .helpers.logging_setup import setup_logging
     from .helpers._setup_mfeprimer import main as setup_mfeprimer
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
     from tabulate_dimers import main as tabulateDimers
+    from optimize_multiplex import LoadPrimers
     from helpers.CSVtoFasta import main as csv2fasta
     from helpers.logging_setup import setup_logging
     from helpers._setup_mfeprimer import main as setup_mfeprimer
@@ -92,6 +94,13 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-3, BAD_DIMERS_dG=-10):
     else:
         INPUT = PRIMERS
     
+    # check that primer IDs are in correct format
+    try:
+        test = LoadPrimers(INPUT)
+    except Exception:
+        raise InputError("PrimerIDs in PRIMER_FA are not in the correct format! " \
+                         "Reformat IDs as <name>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
+        
     # predict dimers with MFEprimer dimer function
     logger.info("Predicting dimers....")
     PREFIX = INPUT.replace(".fasta","").replace(".fa","")

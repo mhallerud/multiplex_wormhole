@@ -33,6 +33,7 @@ try:
     from .helpers.logging_setup import setup_logging
     from .helpers._setup_mfeprimer import main as setup_mfeprimer
     from . import plot_ASA_temps as plotASAtemps
+    from .optimize_multiplex import LoadPrimers
 # load using standalone script
 except ImportError:
     sys.path.append(os.path.dirname(__file__))
@@ -42,6 +43,7 @@ except ImportError:
     from helpers.CSVtoFasta import main as CSVtoFASTA
     from helpers.logging_setup import setup_logging
     from helpers._setup_mfeprimer import main as setup_mfeprimer
+    from optimize_multiplex import LoadPrimers
     plotASAtemps = importlib.import_module("plot_ASA_temps")
 
 
@@ -81,7 +83,14 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     # set suffix to current datetime if not given
     if PREFIX is None:
         PREFIX = str(datetime.now()).replace(" ","_").replace(".","_")
-
+    
+    # check format of KEEPLIST primerIDs
+    try:
+        test = LoadPrimers(KEEPLIST_FA)
+    except Exception:
+        raise InputError("PrimerIDs in the KEEPLIST_FA are not in the proper format! "\
+                         "Reformat as <locus>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
+    
     # initialize logging
     mwlogger = setup_logging("multiplex_wormhole_"+PREFIX+".log", VERBOSE, "mw_main")
     # log start time & inputs
@@ -309,7 +318,7 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-t", "--templates", type=str, required=True)
+    parser.add_argument("-t", "--templates", type=str, required=True, help="")
     parser.add_argument("-n", "--nloci", type=int, required=True)
     parser.add_argument("-o", "--outdir", type=str, required=True)
     # add optional arguments
