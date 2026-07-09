@@ -972,7 +972,7 @@ def CheckPrimersInDimerTables(dimer_table, primer_pairs, primer_loci, primer_seq
 
 
 
-def LoadPrimers(PRIMER_FASTA, keeplist=False):
+def LoadPrimers(PRIMER_FASTA):
     # read in files as lists
     primer_loci = []
     primer_IDs = []
@@ -1004,7 +1004,6 @@ def LoadPrimers(PRIMER_FASTA, keeplist=False):
         dirs = set(dirs)
         dirs.remove("FWD")
         dirs.remove("REV")
-        raise Exception("")
     except Exception:
         raise InputError("PrimerIDs in "+PRIMER_FASTA+" are not in the right format! " \
                          "Reformat as <locusID>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
