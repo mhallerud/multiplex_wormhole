@@ -31,8 +31,8 @@ def main(MAIN_FA, KEEPLIST_FA, OUTPATH=None):
         raise InputError("KEEPLIST_FA file could not be found!")
     
     # set output filepath if not provided
-    if OUTPATH==None:
-    	OUTPATH= MAIN_FA.split('.fa')[0] + '_plusKeeplist.fa'
+    if OUTPATH is None:
+    	OUTPATH=MAIN_FA.split('.')[0] + '_plusKeeplist.fa'
 
     # read in fastas
     main_primers, main_ids, main_seqids = readFasta(MAIN_FA)
