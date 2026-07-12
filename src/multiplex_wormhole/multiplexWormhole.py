@@ -21,6 +21,7 @@ import shutil
 import pandas as pd
 import subprocess
 import argparse
+import json
 
 
 # load multiplex wormhole functions
@@ -49,7 +50,16 @@ except ImportError:
 
 
 def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, 
-         ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False):
+         ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False, 
+         # primer design options                      
+         Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,  dG_MID_LIMIT=-8, 
+         ENABLE_BROAD=False, PRIMER3_SETTINGS=None, 
+         # MFEprimer options (also uses dG_END_LIMIT & dG_MID_LIMIT from above)
+         THREADS=None,
+         # optimization / plotting options
+         BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.001, PROB_ADJ=2,
+         # assessment limits
+         dG_BAD_LIMIT=-10):
     """
     ----------
     TEMPLATES : CSV containing DNA sequences, IDs, and target sin "startBP,lengthBP" format. [filepath]
@@ -107,6 +117,20 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     mwlogger.info("     ITERATIONS: %s", ITERATIONS)
     mwlogger.info("     deltaG: %s", deltaG)
     mwlogger.info("     VERBOSE: %s", VERBOSE)
+    mwlogger.info("     THREADS: %s", THREADS)
+    mwlogger.info("     Tm_LIMIT: %s", Tm_LIMIT)
+    mwlogger.info("     dG_MID_LIMIT: %s", dG_MID_LIMIT)
+    mwlogger.info("     dG_END_LIMIT: %s", dG_END_LIMIT)
+    mwlogger.info("     dG_BAD_LIMIT: %s", dG_BAD_LIMIT)
+    mwlogger.info("     ENABLE_BROAD: %s", ENABLE_BROAD)
+    if PRIMER3_SETTINGS is not None:
+        mwlogger.info("     PRIMER3_SETTINGS: (see primerdesign logfile)")
+    mwlogger.info("     BURNING: %s", BURNIN)
+    mwlogger.info("     DECAY_RATE: %s", DECAY_RATE)
+    mwlogger.info("     PROB_ADJ: %s", PROB_ADJ)
+    mwlogger.info("     T_INIT: %s", T_INIT)
+    mwlogger.info("     T_FINAL: %s", T_FINAL)
+    
     
     # set input types
     N_LOCI = int(N_LOCI)
@@ -141,10 +165,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     # details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags 
     primer3BatchDesign(TEMPLATES, 
                        os.path.join(OUTDIR1, "FilteredPrimers"),
-                       Tm_LIMIT=45, #upper limit for dimer melting temp
-                       dG_HAIRPINS=-2,  #lower limit for hairpin deltaG
-                       dG_END_LIMIT=-4, #lower limit for 3' end dimer deltaG
-                       dG_MID_LIMIT=-8, #lower limit for deltaG of all other dimers
+                       Tm_LIMIT=Tm_LIMIT, #upper limit for dimer melting temp
+                       dG_HAIRPINS=dG_HAIRPINS,  #lower limit for hairpin deltaG
+                       dG_END_LIMIT=dG_END_LIMIT, #lower limit for 3' end dimer deltaG
+                       dG_MID_LIMIT=dG_MID_LIMIT, #lower limit for deltaG of all other dimers
                        KEEPLIST=KEEPLIST_FA, #keeplist FASTA
                        ENABLE_BROAD=False, #try broader settings if primer design fails?
                        SETTINGS=None) #primer3 settings (in dictionary format)
@@ -160,7 +184,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
         INPUT = os.path.join(OUTDIR1, "FilteredPrimers_plusKeeplist.fa")
     mwlogger.info("")
     mwlogger.info("-----RUNNING DIMER PREDICTION WITH MFEPRIMER-----")
-    mwlogger.info("Note: This is the slowest step! Especially with large candidate sets. Use -t option for multithreading.")
+    mwlogger.info("Note: This is the slowest step! Especially with large candidate sets. Use --threads option for multiprocessing.")
    # NOTE: Originally, primers were checked via the PrimerSuite PrimerDimer function (http://www.primer-dimer.com/)
     # PrimerSuite PrimerDimerReport files can be converted to the necessary table/sum files using scripts/translate_primerSuite_report.R
     # I decided to transition to MFEprimer because primer-dimer.com returned an unreasonable number of dimers
@@ -181,9 +205,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     if not os.path.exists(INPUT):
         raise Exception(INPUT+" not found- did primer3BatchDesign step fail?")
     try:
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d -8 -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50",
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(dG_MID_LIMIT)+" -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(THREADS),
                         shell=True)
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p",
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(dG_END_LIMIT)+" -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(THREADS),
                         shell=True)
     except Exception:
         print("MFEprimer dimer step failed! Error message & traceback:")
@@ -225,10 +249,12 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                       N_LOCI=N_LOCI, #number of target loci in panel
                       KEEPLIST=KEEPLIST_FA, 
                       SEED=None, #this would be an output from optimizeMultiplex
-                      BURNIN=200,#number iterations with dimer loads used to sample cost space
-                      DECAY_RATE=0.95, #temp decay rate
-                      PROB_ADJ=2,#decay rate of acceptance probability
-                      deltaG=deltaG)
+                      BURNIN=BURNIN,#number iterations with dimer loads used to sample cost space
+                      DECAY_RATE=DECAY_RATE, #temp decay rate
+                      PROB_ADJ=PROB_ADJ,#decay rate of acceptance probability
+                      deltaG=deltaG,
+                      T_INIT=T_INIT,
+                      T_FINAL=T_FINAL)
     # Alternative implementation where dimers and T_INIT/T_FINAL are specified:
     # plotSAtemps(OUTPATH=os.path.join(OUTDIR4, "TestingASAparams"),
     #             # dimer counts to plot and calculate temps from (if not set)
@@ -265,20 +291,24 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 
                           CYCLES=CYCLES, #simulated annealing cycles to run (default=10)
-                          BURNIN=200, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
-                          DECAY_RATE=0.95, # temperature decay parameter for SA temps (default=0.95)
+                          BURNIN=BURNIN, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
+                          DECAY_RATE=DECAY_RATE, # temperature decay parameter for SA temps (default=0.95)
                               # closer to 1 - least conservative, explores more cost space at higher risk
                               # closer to 0 - most conservative, explores less cost space at lower risk
                               # recommendations: 0.90-0.98, higher with fewer iterations
-                          T_INIT=None, # starting temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
-                          T_FINAL=0.001, # ending temp for fixed SA schedule (default=0.1)
+                          T_INIT=T_INIT, # starting temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
+                          T_FINAL=T_FINAL, # ending temp for fixed SA schedule (default=0.1)
                               # temperatures=0 is equivalent to simple iterative improvement, while 
                               # higher temperatures explore more of the cost space at higher risk of accepting dimers
                               # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
-                          PROB_ADJ=2,# adjusts dimer acceptance probabilities (default=2)
+                          PROB_ADJ=PROB_ADJ,# adjusts dimer acceptance probabilities (default=2)
                               # increase if too many dimers are being accepted during simulated annealing, 
                               # decrease if local optima are not being overcome
-                          SEED=None)#primer set from previous optimization run to start with, in CSV format
+                          SEED=None,#primer set from previous optimization run to start with, in CSV format
+                          # inputs to mw.assessPanel
+                          dG_END_LIMIT=dG_END_LIMIT,
+                          dG_MID_LIMIT=dG_MID_LIMIT,
+                          dG_BAD_LIMIT=dG_BAD_LIMIT)
     #OUTPUT: MAF30_150loci_RunSummary.csv
     
     
@@ -318,18 +348,56 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-t", "--templates", type=str, required=True, help="")
-    parser.add_argument("-n", "--nloci", type=int, required=True)
-    parser.add_argument("-o", "--outdir", type=str, required=True)
+    parser.add_argument("-t", "--templates", type=str, required=True, 
+                        help="Filepath to CSV containing SEQUENCE_ID, SEQUENCE_TEMPLATE, and SEQUENCE_TARGET fields")
+    parser.add_argument("-n", "--nloci", type=int, required=True,
+                        help="Number of primer pairs in optimized multiplex")
+    parser.add_argument("-o", "--outdir", type=str, required=True,
+                        help="Name of output directory to create & store outputs")
     # add optional arguments
-    parser.add_argument("-p", "--prefix", type=str, default=None)
-    parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-r", "--runs", type=int, default=10)
-    parser.add_argument("-i", "--iter", type=int, default=1000)
-    parser.add_argument("-c", "--cycles", type=int, default=10)
-    parser.add_argument("-s", "--simple", type=int, default=5000)
-    parser.add_argument("-d", "--deltaG", action="store_true")#type=str, default=False)
-    parser.add_argument("-v", "--verbose", action="store_true")#type=str, default=False)
+    parser.add_argument("-p", "--prefix", type=str, default=None,
+                        help="Prefix used to name output files")
+    parser.add_argument("-k", "--keeplist", type=str, default=None,
+                        help="Filepath to FASTA containing keeplist primer sequences")
+    parser.add_argument("-r", "--runs", type=int, default=10,
+                        help="Number of optimization runs")
+    parser.add_argument("-s", "--simple", type=int, default=5000,
+                        help="Number of iterations in simple iterative improvement")
+    parser.add_argument("-i", "--iter", type=int, default=1000,
+                        help="Number of iterations in each adaptive simulated annealing (ASA) cycle")
+    parser.add_argument("-c", "--cycles", type=int, default=10,
+                        help="Number of adaptive simulated annealing cycles")
+    parser.add_argument("-d", "--deltaG", action="store_true",
+                        help="Use deltaG optimization algorithm")#type=str, default=False)
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Verbose logging")#type=str, default=False)
+    # add arguments from sub-modules
+    parser.add_argument("--tm-limit", type=float, default=45,
+                        help="Min melting temperature of dimers (Celsius)")
+    parser.add_argument("--dg-hairpins", type=float, default=-2,
+                        help="DeltaG threshold for primer hairpins (kcal/mol)")
+    parser.add_argument("--dg-end-limit", type=float, default=-4,
+                        help="DeltaG threshold for 3' end dimers (kcal/mol)")
+    parser.add_argument("--dg-mid-limit", type=float, default=-8,
+                        help="DeltaG threshold for non-end dimers (kcal/mol)")
+    parser.add_argument("--dg-bad-limit", type=float, default=-10,
+                        help="DeltaG threshold for counting 'bad' dimers (kcal/mol)")
+    parser.add_argument("--enable-broad", action="store_true",
+                        help="Enable broader settings during primer design")
+    parser.add_argument("--primer3-settings", type=json.loads, default=None,
+                        help="Dictionary of primer3 settings for primer design")
+    parser.add_argument("--threads", type=int, default=None,
+                        help="# Processors for multi-threading")
+    parser.add_argument("--burnin", type=int, default=200,
+                        help="Sampling iterations for setting ASA temperatures")
+    parser.add_argument("--decay-rate", type=float, default=0.95,
+                        help="ASA temperature decay rate")
+    parser.add_argument("--t-init", type=float, default=None,
+                        help="Initial temperature for fixed-schedule simulated annealing")
+    parser.add_argument("--t-final", type=float, default=0.01,
+                        help="Final temperature for fixed-schedule simulated annealing")
+    parser.add_argument("--prob-adj", type=float, default=2,
+                        help="Adjustment for acceptance probabilities in ASA algorithm")
     return parser.parse_args()
 
 
@@ -348,7 +416,20 @@ def cli():
          CYCLES = args.cycles,
          SIMPLE = args.simple,
          deltaG = args.deltaG,
-         VERBOSE = args.verbose)
+         VERBOSE = args.verbose,
+         Tm_LIMIT=args.tm_limit,
+         dG_HAIRPINS=args.dg_hairpins,
+         dG_END_LIMIT=args.dg_end_limit,
+         dG_MID_LIMIT=args.dg_mid_limit,
+         dG_BAD_LIMIT=args.dg_bad_limit,
+         ENABLE_BROAD=args.enable_broad,
+         PRIMER3_SETTINGS=args.primer3_settings,
+         THREADS=args.threads,
+         BURNIN=args.burnin, 
+         DECAY_RATE=args.decay_rate, 
+         T_INIT=args.t_init, 
+         T_FINAL=args.t_final, 
+         PROB_ADJ=args.prob_adj)
 
 
 
