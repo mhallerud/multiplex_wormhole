@@ -171,10 +171,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         # remove keeplist loci from input primers
         for x in range(len(keeplist_loci)):
             if keeplist_loci[x] in primer_loci:
-                primer_loci = [x for x in primer_loci if x not in keeplist_loci]
                 primer_seqs = [primer_seqs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
                 primer_IDs = [primer_IDs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
                 primer_pairs = [primer_pairs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]                
+                primer_loci = [x for x in primer_loci if x not in keeplist_loci]
     else:
         keeplist_pairs = []
         #keeplist_loci = []
@@ -1085,9 +1085,9 @@ def ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, primer_seqs,
     outpairs = [primer_IDs[x] for x in current_pairs_index]
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     # add keeplist loci
-    if len(keeplist_IDs)>0:
-        outpairs = outpairs + keeplist_IDs
-        outseqs = outseqs + keeplist_seqs
+    #if len(keeplist_IDs)>0:
+    #    outpairs = outpairs + keeplist_IDs
+    #    outseqs = outseqs + keeplist_seqs
     # export selected multiplex to CSV
     with open(OUTPATH+'_primers.csv', 'w') as file:
         file.write("PrimerID,Sequence\n")
