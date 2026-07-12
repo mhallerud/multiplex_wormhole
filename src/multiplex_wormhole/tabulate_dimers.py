@@ -291,12 +291,17 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-a", "--all_dimers", type=str, required=True)
-    parser.add_argument("-e", "--end_dimers", type=str, required=True)
-    parser.add_argument("-o", "--outpath", type=str, required=True)
+    parser.add_argument("-a", "--all_dimers", type=str, required=True,
+                        help="Filepath to MFEprimer dimer output for all dimers")
+    parser.add_argument("-e", "--end_dimers", type=str, required=True,
+                        help="Filepath to MFEprimer dimer output for 3' end dimers")
+    parser.add_argument("-o", "--outpath", type=str, required=True,
+                        help="Prefix for output files for primer pairs (including directory)")
     # add optional arguments
-    parser.add_argument("-p", "--outpath_primers", type=str, default="False")
-    parser.add_argument("-d", "--deltaG", action="store_true")
+    parser.add_argument("-p", "--outpath_primers", type=str, default="False",
+                        help="Prefix for output files for individual primers")
+    parser.add_argument("-d", "--deltaG", action="store_true",
+                        help="Use deltaG optimization algorithm")
     
     return parser.parse_args()
 

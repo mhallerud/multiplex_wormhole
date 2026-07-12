@@ -13,6 +13,7 @@ import sys
 import os
 import csv
 import argparse
+import traceback
 
 
 
@@ -39,16 +40,32 @@ def main(IN_CSV, OUT_FA, ID_FIELD="PrimerID", SEQ_FIELD="Sequence",
     ids = []
 
     # read in csv
-    with open(IN_CSV, 'r', encoding=ENCODING) as file:
-        reader = csv.reader(file)
-        # grab column index for each field
-        header = next(reader)
-        seqi = [header.index(i) for i in [SEQ_FIELD]][0]
-        idi = [header.index(i) for i in [ID_FIELD]][0]
-        for line in reader:
-            # extract sequence and id based on field numbers
-            sequences.append(line[seqi])
-            ids.append(line[idi])
+    try:
+        with open(IN_CSV, 'r', encoding=ENCODING) as file:
+            reader = csv.reader(file)
+            # grab column index for each field
+            header = next(reader)
+            seqi = [header.index(i) for i in [SEQ_FIELD]][0]
+            idi = [header.index(i) for i in [ID_FIELD]][0]
+            for line in reader:
+                # extract sequence and id based on field numbers
+                sequences.append(line[seqi])
+                ids.append(line[idi])
+    except Exception:
+        try:
+            with open(IN_CSV, 'r', encoding='utf-8-sig') as file:
+                reader = csv.reader(file)
+                # grab column index for each field
+                header = next(reader)
+                seqi = [header.index(i) for i in [SEQ_FIELD]][0]
+                idi = [header.index(i) for i in [ID_FIELD]][0]
+                for line in reader:
+                    # extract sequence and id based on field numbers
+                    sequences.append(line[seqi])
+                    ids.append(line[idi])
+        except Exception as err:
+            print(err)
+            traceback.print_exc()
     
     # export data to fasta
     with open(OUT_FA, 'w') as file:

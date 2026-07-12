@@ -150,7 +150,7 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA){
+plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA){
   # load dependencies
   library(DECIPHER)
   library(Biostrings)
@@ -171,28 +171,32 @@ plotPrimerBlast <- function(primerblast, primerinfo, species="TARGET", dG=0, dG_
     # subset results to those associated with this primer pair  
     sub <- primerblast[which(startsWith(primerblast$FWD,id) | startsWith(primerblast$REV,id)),]
     # extract amplicon sequence for pair
-    amp <- primerinfo[primerinfo$PairID==id, c("LocusID","AmpliconSeq")][1,]#keep FWD record
-    names(amp) <- c("accession","Sequence")
-    amp$species <- species
-    # merge primerblast and amplicon info for this primer pair
-    sub <- plyr::rbind.fill(sub, amp)
+    if(!is.na(primerinfo)){
+      amp <- primerinfo[primerinfo$PairID==id, c("LocusID","AmpliconSeq")][1,]#keep FWD record
+      names(amp) <- c("accession","Sequence")
+      amp$species <- species
+      # merge primerblast and amplicon info for this primer pair
+      sub <- plyr::rbind.fill(sub, amp)
+    }#if
     if(nrow(sub)>1){
       # convert sequences to DNAstringset
       dnaseqs <- sub$Sequence
       names(dnaseqs) <- paste(sub$species, sub$accession)
       dnas <- Biostrings::DNAStringSet(dnaseqs, use.names=TRUE)
-      # align (unique) sequences
-      align <- DECIPHER::AlignSeqs(unique(dnas))
-      # run maximum likelihood tree with ancestral state reconstruction
-      mltree <- DECIPHER::TreeLine(align, method="ML", reconstruct=TRUE, type="dendrogram")
-      # plot trees with number of state transitions
-      plottree <- DECIPHER::MapCharacters(mltree, labelEdges=TRUE)
-      #plottree <- dendrapply(plottree, function(x){
-      #  attr(x, "edgetext") <- paste(attr(x,"edgetext"),"\n")
-      #})#dendrapply
-      plot(plottree, edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
-           main=id, yaxt="n", horiz=TRUE)
-      #attr(plottree[[1]], "change") #status changes on first branch left of (virtual) root
+      if(length(unique(dnas))>1){
+        # align (unique) sequences
+        align <- DECIPHER::AlignSeqs(unique(dnas))
+        # run maximum likelihood tree with ancestral state reconstruction
+        mltree <- DECIPHER::TreeLine(align, method="ML", reconstruct=TRUE, type="dendrogram")
+        # plot trees with number of state transitions
+        plottree <- DECIPHER::MapCharacters(mltree, labelEdges=TRUE)
+        #plottree <- dendrapply(plottree, function(x){
+        #  attr(x, "edgetext") <- paste(attr(x,"edgetext"),"\n")
+        #})#dendrapply
+        plot(plottree, edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
+             main=id, yaxt="n", horiz=TRUE)
+        #attr(plottree[[1]], "change") #status changes on first branch left of (virtual) root
+      }#if
     }#if
   }#for
   # reset plot margins

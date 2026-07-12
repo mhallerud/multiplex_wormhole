@@ -16,6 +16,9 @@ import shutil
 import argparse
 from datetime import datetime
 import csv
+from multiprocessing.Pool import Pool
+from functools import partial
+from math import ceil
 
 try:
     from .optimize_multiplex import main as optimizeMultiplex
@@ -34,7 +37,8 @@ except ImportError:
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
          SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
-         T_INIT=None, T_FINAL=0.001, PROB_ADJ=2, MAKEPLOT=False):
+         T_INIT=None, T_FINAL=0.001, PROB_ADJ=2, MAKEPLOT=False,
+         THREADS=None, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, dG_BAD_LIMIT=-10):
     """
     N_RUNS : # optimization runs [int]
     PRIMER_FA : Contains primer IDs and sequences [FASTA]
@@ -91,53 +95,25 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     # set up empty array to hold overall dimer load 
     loads = [['Run', 'Filepath','N_Pairs','TotalDimers','PairsWithDimers','DimersPerPair',
               'MeanDeltaG','N_BadDimers']]
-    
-    # while instead of for loop allows runs that timeout to restart
-    run = 1
-    while run <= N_RUNS:
-        # set timer- this helps to timeout runs with infinite loops in the optimization process
-        #TIMEOUT = TIMEOUT*60 # convert to seconds
-        #start=time.time()
-        #while time.time()-start <= TIMEOUT:
-            try:
-                OUT = OUTPATH+"_Run"+str(run).zfill(2)
-                # run optimization
-                optimizeMultiplex(PRIMER_FASTA = PRIMER_FA, 
-                                  DIMER_SUMS=DIMER_SUMS, 
-                                  DIMER_TABLE=DIMER_TABLE, 
-                                  OUTPATH = OUT, 
-                                  N_LOCI=N_LOCI, 
-                                  KEEPLIST=KEEPLIST, 
-                                  deltaG=deltaG, 
-                                  SEED=SEED, 
-                                  VERBOSE=VERBOSE,
-                                  SIMPLE=SIMPLE, 
-                                  ITERATIONS=ITERATIONS, 
-                                  CYCLES=CYCLES, 
-                                  BURNIN=BURNIN, 
-                                  DECAY_RATE=DECAY_RATE, 
-                                  T_INIT=T_INIT, 
-                                  T_FINAL=T_FINAL, 
-                                  PROB_ADJ=PROB_ADJ, 
-                                  MAKEPLOT=MAKEPLOT,
-                                  RNG = run*10)
-                # run panel assessment
-                cost = assessPanel(OUT+"_primers.csv")
-                cost.insert(0, "Run"+str(run).zfill(2))
-                loads.append(cost)
-                run+=1
-                print(" ")
-            except Exception as e:
-                print("AN ERROR OCCURRED IN RUN "+str(run))
-                print(e)
-                traceback.print_exc()
-                print("---")
-                run+=1
-                continue
-        #else:
-        #    raise TimeoutException("in run "+str(run))
-        #continue
-
+        
+    # run optimizations with multi-processing
+    # set up arguments as list
+    worker = partial(runOpt, PRIMER_FA=PRIMER_FA, DIMER_SUMS=DIMER_SUMS, DIMER_TABLE=DIMER_TABLE,
+                     OUTPATH=OUTPATH, N_LOCI=N_LOCI, KEEPLIST=KEEPLIST, deltaG=deltaG, SEED=SEED,
+                     VERBOSE=VERBOSE, SIMPLE=SIMPLE, ITERATIONS=ITERATIONS, CYCLES=CYCLES,
+                     BURNIN=BURNIN, DECAY_RATE=DECAY_RATE, T_INIT=T_INIT, T_FINAL=T_FINAL,
+                     PROB_ADJ=PROB_ADJ, MAKEPLOT=MAKEPLOT, dG_END_LIMIT=dG_END_LIMIT,
+                     dG_MID_LIMIT=dG_MID_LIMIT, dG_BAD_LIMIT=dG_BAD_LIMIT)
+    CPUs = THREADS if THREADS else (os.cpu_count() or 1)
+    with Pool(CPUs) as pool:
+        # calc number of runs per thread
+        chunksize = ceil(N_RUNS / CPUs)
+        results = pool.map_async(worker, #function
+                                 list(range(1,N_RUNS+1)), #iterable
+                                 chunksize=chunksize #max tasks per processor
+                                 ).get()
+        for row in results:
+            loads.append(row)
     
     # export dimer loads per run
     with open(OUTPATH+'_RunSummary.csv', 'w') as file:
@@ -159,6 +135,63 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     moveAllFiles(OUTDIR+"/*_costsTrace.csv", os.path.join(OUTDIR, "Trace_Dimer_Load"))
     moveAllFiles(OUTDIR+"/*_DimerLoad.png", os.path.join(OUTDIR, "Plots_Dimer_Load"))
     moveAllFiles(OUTDIR+"/*log", os.path.join(OUTDIR, "Logfiles"))
+
+
+
+def runOpt(run, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
+           KEEPLIST, deltaG, SEED, VERBOSE, SIMPLE, ITERATIONS, CYCLES,
+           BURNIN, DECAY_RATE, T_INIT, T_FINAL, PROB_ADJ, MAKEPLOT,#TIMEOUT=5, 
+           dG_MID_LIMIT, dG_END_LIMIT, dG_BAD_LIMIT):
+    """
+    Function for optimizing panels + assessing results for each run
+    (to pass to mp.pool)
+    """
+    # set timer- this helps to timeout runs with infinite loops in the optimization process
+    #TIMEOUT = TIMEOUT*60 # convert to seconds
+    #start=time.time()
+    #while time.time()-start <= TIMEOUT:
+    try:
+            OUT = OUTPATH+"_Run"+str(run).zfill(2)
+            # run optimization
+            optimizeMultiplex(PRIMER_FASTA = PRIMER_FA, 
+                              DIMER_SUMS=DIMER_SUMS, 
+                              DIMER_TABLE=DIMER_TABLE, 
+                              OUTPATH = OUT, 
+                              N_LOCI=N_LOCI, 
+                              KEEPLIST=KEEPLIST, 
+                              deltaG=deltaG, 
+                              SEED=SEED, 
+                              VERBOSE=VERBOSE,
+                              SIMPLE=SIMPLE, 
+                              ITERATIONS=ITERATIONS, 
+                              CYCLES=CYCLES, 
+                              BURNIN=BURNIN, 
+                              DECAY_RATE=DECAY_RATE, 
+                              T_INIT=T_INIT, 
+                              T_FINAL=T_FINAL, 
+                              PROB_ADJ=PROB_ADJ, 
+                              MAKEPLOT=MAKEPLOT,
+                              RNG = run*10)
+            # run panel assessment
+            cost = assessPanel(OUT+"_primers.csv", 
+                               ALL_DIMERS_dG=dG_MID_LIMIT,
+                               END_DIMERS_dG=dG_END_LIMIT,
+                               BAD_DIMERS_dG=dG_BAD_LIMIT)
+            cost.insert(0, "Run"+str(run).zfill(2))
+            return cost
+            #loads.append(cost)
+            #run+=1
+            print(" ")
+    except Exception as e:
+            print("AN ERROR OCCURRED IN RUN "+str(run))
+            print(e)
+            traceback.print_exc()
+            print("---")
+            run+=1
+            #continue
+    #else:
+    #    raise TimeoutException("in run "+str(run))
+    #continue
 
 
 
@@ -202,28 +235,57 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-r", "--runs", type=int, required=True)
-    parser.add_argument("-f", "--primer_fasta", type=str, required=True)
-    parser.add_argument("-d", "--dimer_sums", type=str, required=True)
-    parser.add_argument("-t", "--dimer_table", type=str, required=True)
-    parser.add_argument("-o", "--outpath", type=str, required=True)
-    parser.add_argument("-n", "--nloci", type=int, required=True)
+    parser.add_argument("-r", "--runs", type=int, required=True,
+                        help="Number of optimization runs")
+    parser.add_argument("-f", "--primer_fasta", type=str, required=True,
+                        help="Path to FASTA of candidate primers output by primer-design step")
+    parser.add_argument("-d", "--dimer_sums", type=str, required=True,
+                        help="Path to dimer totals table output by tabulate-dimers step")
+    parser.add_argument("-t", "--dimer_table", type=str, required=True,
+                        help="Path to pairwise dimers table output by tabulate-dimers step")
+    parser.add_argument("-o", "--outpath", type=str, required=True,
+                        help="Prefix for output files, including directory")
+    parser.add_argument("-n", "--nloci", type=int, required=True,
+                        help="Number of primer pairs in optimized panel")
     # add optional arguments
-    parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-e", "--seed", type=str, default=None)
-    parser.add_argument("-s", "--simple", type=int, default=5000)
-    parser.add_argument("-i", "--iter", type=int, default=1000)
-    parser.add_argument("-c", "--cycles", type=int, default=10)
-    parser.add_argument("-b", "--burnin", type=int, default=200)
-    parser.add_argument("-y", "--decay_rate", type=float, default=0.95)
-    parser.add_argument("-x", "--temp_init", type=float, default=None)
-    parser.add_argument("-l", "--temp_final", type=float, default=0.01)
-    parser.add_argument("-a", "--prob_adj", type=float, default=2)
-    parser.add_argument("-u", "--timeout", type=float, default=5)
+    parser.add_argument("-k", "--keeplist", type=str, default=None,
+                        help="Path to FASTA of keeplist primer sequences")
+    parser.add_argument("--seed", type=str, default=None,
+                        help="Path to previous optimization output to use as starting point")
+    parser.add_argument("-s", "--simple", type=int, default=5000,
+                        help="Iterations for simple iterative improvement")
+    parser.add_argument("-i", "--iter", type=int, default=1000,
+                        help="Iterations for each cycle of adaptive simulated annealing (ASA)")
+    parser.add_argument("-c", "--cycles", type=int, default=10,
+                        help="Number of adaptive simulated annealing cycles")
+    parser.add_argument("-b", "--burnin", type=int, default=200,
+                        help="Iterations for sampling cost space to set ASA temperature schedule")
+    parser.add_argument("--decay_rate", type=float, default=0.95,
+                        help="ASA temperature decay rate")
+    parser.add_argument("--t_init", type=float, default=None,
+                        help="Initial temperature for fixed-schedule simulated annealing")
+    parser.add_argument("--t_final", type=float, default=0.01,
+                        help="End temperature for fixed-schedule simulated annealing")
+    parser.add_argument("--prob_adj", type=float, default=2,
+                        help="Adjustment multiplier for ASA acceptance probabilities")
+    parser.add_argument("--timeout", type=float, default=5,
+                        help="Maximum allowed time (minutes) per swap")
     # add flags
-    parser.add_argument("-g", "--deltaG", action="store_true")
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-m", "--makeplot", action="store_true")
+    parser.add_argument("-g", "--deltaG", action="store_true",
+                        help="Use deltaG optimization algorithm")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Print out all steps")
+    parser.add_argument("-m", "--makeplot", action="store_true",
+                        help="Make temperature schedule plots for each run")
+    # add sub-module arguments
+    parser.add_argument("--threads", type=int, default=None,
+                        help="Number of processors for multi-threading")
+    parser.add_argument("--dg_end_limit", type=float, default=-4,
+                        help="DeltaG threshold (kcal/mol) for 3' end dimers used in panel assessment")
+    parser.add_argument("--dg_mid_limit", type=float, default=-8,
+                        help="DeltaG threshold (kcal/mol) for non-end dimers used in panel assessment")
+    parser.add_argument("--dg_bad_limit", type=float, default=-10,
+                        help="DeltaG threshold (kcal/mol) for 'bad' dimers used in panel assessment")
     return parser.parse_args()
 
 
@@ -251,7 +313,11 @@ def cli():
          T_INIT = args.temp_init, 
          T_FINAL = args.temp_final, 
          PROB_ADJ = args.prob_adj,
-         MAKEPLOT = args.makeplot)
+         MAKEPLOT = args.makeplot,
+         THREADS = args.threads,
+         dG_END_LIMIT = args.dg_end_limit,
+         dG_MID_LIMIT = args.dg_mid_limit, 
+         dG_BAD_LIMIT = args.dg_bad_limit)
 
 
 

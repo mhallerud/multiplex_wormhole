@@ -20,7 +20,9 @@ import pandas as pd
 import argparse
 import json
 from datetime import datetime
-
+from multiprocessing.pool import Pool
+from math import ceil
+from functools import partial
 
 # import additional sub-modules
 try:
@@ -36,7 +38,9 @@ except ImportError:
 
 
 def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4, 
-         dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None):
+         dG_MID_LIMIT=-8, KEEPLIST=None, ENABLE_BROAD=False, SETTINGS=None,
+         FWD_OVERHANG="tcgtcggcagcgtcagatgtgtataagagacag", REV_OVERHANG="gtctcgtgggctcggagatgtgtataagagacag",
+         THREADS=None):
     """
     TEMPLATES : DNA templates with 'SEQUENCE_ID', 'SEQUENCE_TEMPLATE', and 'SEQUENCE_TARGET' 
         (in "start_bp,length" format) fields. [CSV]
@@ -110,8 +114,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     
     # set up primer3 settings
     # details on settings: https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags
-    PRIMER3_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgtcagatgtgtataagagacag",
-    'SEQUENCE_OVERHANG_RIGHT': "gtctcgtgggctcggagatgtgtataagagacag",
+    PRIMER3_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': FWD_OVERHANG,
+    'SEQUENCE_OVERHANG_RIGHT': REV_OVERHANG,
     'PRIMER_ANNEALING_TEMP': 52.0,
     'PRIMER_DMSO_CONC': 0.0,
     'PRIMER_DMSO_FACTOR': 0.6,
@@ -226,8 +230,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     'PRIMER_WT_TM_LT': 1.0,
     'P3_PILE_FLAG': 1}
     
-    BROAD_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgtcagatgtgtataagagacag",
-    'SEQUENCE_OVERHANG_RIGHT': "gtctcgtgggctcggagatgtgtataagagacag",
+    BROAD_SETTINGS = {'SEQUENCE_OVERHANG_LEFT': FWD_OVERHANG,
+    'SEQUENCE_OVERHANG_RIGHT': REV_OVERHANG,
     'PRIMER_ANNEALING_TEMP': 52.0,
     'PRIMER_DMSO_CONC': 0.0,
     'PRIMER_DMSO_FACTOR': 0.6,
@@ -343,9 +347,6 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     'PRIMER_WT_TM_GT': 1.0,
     'PRIMER_WT_TM_LT': 1.0,
     'P3_PILE_FLAG': 1 }
-        
-    Ladapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_LEFT'].upper()
-    Radapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_RIGHT'].upper()
     
     if SETTINGS is not None:
         for k, v in SETTINGS.items():
@@ -389,45 +390,113 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                              "AmpliconSize","StartBP","Length","MeltingTempC",
                              "GC%","PropBound","EndStability","Penalty","TempMispriming"])
     
-    # set up arrays for progress tracking
-    passed_ids = []
-    failed_ids = []
-    tot_pairs = 0
+    # grab adapter info
+    Ladapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_LEFT'].upper()
+    Radapt = PRIMER3_SETTINGS['SEQUENCE_OVERHANG_RIGHT'].upper()
 
     # set up translation table for replacing all punctuation in input
     translator = str.maketrans('', '', string.punctuation.replace("_","").replace(":",""))
     
-    # loop through each template, design & filter primers
+    # set up baselines for counting
+    tot_pairs = 0
+    passed_ids = []
+    failed_ids = []
+    
+    # set up partial function with common arguments
+    worker = partial(designFilterPrimers, PRIMER3_SETTINGS=PRIMER3_SETTINGS,
+                     ENABLE_BROAD=ENABLE_BROAD, BROAD_SETTINGS=BROAD_SETTINGS,
+                     Tm_LIMIT=Tm_LIMIT, dG_HAIRPINS=dG_HAIRPINS,
+                     dG_MID_LIMIT=dG_MID_LIMIT, dG_END_LIMIT=dG_END_LIMIT,
+                     Ladapt=Ladapt, Radapt=Radapt, translator=translator, td=td)
+    # extract # processors per CPU
+    CPUs = THREADS if THREADS else (os.cpu_count() or 1)
+    chunksize = ceil(len(td.keys()) / CPUs)
+    # shunt each primer to primerdesign function for multiprocessing
     row=0
-    for k in td.keys():
-        # progress tracking
-        row+=1
-        if row%100 == 0:
-           logger.info("      primers designed for %s sequences....", str(row))
-        
-        # extract sequence ID, template, target info
-        seqid = str(k).translate(translator)
-        # design primers for template
-        try:
-            out = primer3.bindings.design_primers(seq_args={
-                        'SEQUENCE_ID': k,
-                        'SEQUENCE_TEMPLATE': td[k]['SEQUENCE_TEMPLATE'],
-                        'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
-                    global_args=PRIMER3_SETTINGS)
-        except Exception as err:
-           logger.error("PRIMER DESIGN FAILED FOR %s WITH THE FOLLOWING ERROR:", str(k))
-           logger.error(err)
+    with Pool(CPUs) as pool:
+        keys=list(td.keys())
+        # imap preserves input order in its outputs
+        for k, result in zip(keys, pool.imap(worker, keys, chunksize=chunksize)):
+            # progress tracking
+            row+=1
+            if row % 100==0:
+                logger.info("      primers designed for %s sequences....", str(row))
+            # add subprocess log messages to logfile
+            for msg in result["log"]:
+                logger.info(msg)
+            # combine results
+            if result["rows"]:
+                filtered_primers.extend(result["rows"])
+            tot_pairs += result["n_pairs"]
+            if result["passed"]:
+                passed_ids.append(result["seqid"])
+            else:
+                passed_ids.append(result["seqid"])
             
+    # Print number loci in filtered output
+    logger.info("# Input loci: %s", str(len(templates)))
+    logger.info("# Loci with primers passing filtering: %s", str(len(passed_ids)))
+    logger.info("# Primer pairs designed: %s", str(tot_pairs))
+    logger.info("# Primer pairs passing filtering: %s", str(len(filtered_primers)/2-1))
+    if len(failed_ids)>0:
+        logger.info("Filtering failed for the following loci:")
+        for l in failed_ids:
+            logger.info("          %s", l)
 
-        # save full primer3 output to file
-        # remove lists- this info is all redundant
-        #out.pop('PRIMER_PAIR')
-        #out.pop('PRIMER_LEFT')
-        #out.pop('PRIMER_RIGHT')
-        #with open() as file:
-        #    for k, v in out.items():
-        #        file.write(f"{k}={v}\n")
+    # Export filtered primers as CSV
+    if len(filtered_primers)>1:
+        OUTCSV= OUTPATH + '.csv'
+        with open(OUTCSV, 'w', newline="\n") as file:
+            writer = csv.writer(file)
+            for row in filtered_primers:
+                writer.writerow(row)
+    
+        # Export filtered primers as FASTA file
+        CSV2FASTA(OUTCSV, OUTPATH+".fa")
         
+        # if keeplist provided, add 
+        if KEEPLIST is not None:
+            try: 
+                AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST)
+            except Exception:
+                logger.info("KEEPLIST could not be added to filtered primers FASTA")                
+
+    # raise Exception here if no primer passed filtering since pointless to continue
+    else:
+        raise OutputError("NO PRIMER PAIRS PASSED FILTERING- STOPPING AT DESIGN/FILTER STEP!")
+    
+    # finish logging
+    print("")
+    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
+    logging.shutdown()
+    
+
+
+def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS, 
+                        Tm_LIMIT, dG_HAIRPINS, dG_MID_LIMIT, dG_END_LIMIT,
+                        Ladapt, Radapt, translator, td):
+    """Designs and filters primer pairs for each template """
+    # progress tracking
+    #row+=1
+    #if row%100 == 0:
+    #   logger.info("      primers designed for %s sequences....", str(row))
+    # set up arrays for progress tracking / saving outputs
+    filtered_primers = []
+    passed_ids = []
+    failed_ids = []
+    tot_pairs = 0
+    log_lines = []
+
+    # extract sequence ID, template, target info
+    seqid = str(k).translate(translator)
+    # design primers for template
+    try:
+        out = primer3.bindings.design_primers(seq_args={
+                    'SEQUENCE_ID': k,
+                    'SEQUENCE_TEMPLATE': td[k]['SEQUENCE_TEMPLATE'],
+                    'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
+                global_args=PRIMER3_SETTINGS)
+    
         # try running with broader settings if none found
         pairs = out['PRIMER_PAIR_NUM_RETURNED']
         if pairs == 0:
@@ -439,8 +508,8 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                                 'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
                             global_args=BROAD_SETTINGS)
                 except Exception as err:
-                    logger.info("PRIMER DESIGN FAILED FOR %s WITH THE FOLLOWING ERROR:", str(k))
-                    logger.error(err)
+                    log_lines.append(f"PRIMER DESIGN FAILED FOR {k} WITH THE FOLLOWING ERROR:")
+                    log_lines.append(err)
         
         # loop through primer pairs & filter dimers     
         passed = 0 # track number pairs passed per template
@@ -569,44 +638,17 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
             else:
                 failed_ids.append(seqid)
     
-    # Print number loci in filtered output
-    logger.info("# Input loci: %s", str(len(templates)))
-    logger.info("# Loci with primers passing filtering: %s", str(len(passed_ids)))
-    logger.info("# Primer pairs designed: %s", str(tot_pairs))
-    logger.info("# Primer pairs passing filtering: %s", str(len(filtered_primers)))
-    if len(failed_ids)>0:
-        logger.info("Filtering failed for the following loci:")
-        for l in failed_ids:
-            logger.info("          %s", l)
+        return {"seqid": k, 
+                "rows": filtered_primers, 
+                "passed": passed>0, 
+                "n_pairs": tot_pairs, 
+                "log": log_lines}
 
-    # Export filtered primers as CSV
-    if len(filtered_primers)>1:
-        OUTCSV= OUTPATH + '.csv'
-        with open(OUTCSV, 'w', newline="\n") as file:
-            writer = csv.writer(file)
-            for row in filtered_primers:
-                writer.writerow(row)
+    except Exception as err:
+        log_lines.append(f"PRIMER DESIGN FAILED FOR {k} WITH THE FOLLOWING ERROR:")
+        log_lines.append(str(err))
+            
     
-        # Export filtered primers as FASTA file
-        CSV2FASTA(OUTCSV, OUTPATH+".fa")
-        
-        # if keeplist provided, add 
-        if KEEPLIST is not None:
-            try: 
-                AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST)
-            except Exception:
-                logger.info("KEEPLIST could not be added to filtered primers FASTA")                
-
-    # raise Exception here if no primer passed filtering since pointless to continue
-    else:
-        raise OutputError("NO PRIMER PAIRS PASSED FILTERING- STOPPING AT DESIGN/FILTER STEP!")
-    
-    # finish logging
-    print("")
-    logger.info("END TIME: %s", datetime.now().strftime('%m/%d/%Y %I:%M:%S %p'))
-    logging.shutdown()
-    
-
 
 def testStructure(structure, TM_LIMIT, DG_LIMIT, TESTS):
     dg = structure.dg
@@ -631,16 +673,31 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-t", "--templates", type=str, required=True)
-    parser.add_argument("-o", "--out", type=str, required=True)
+    parser.add_argument("-t", "--templates", type=str, required=True,
+                        help="Filepath to templates CSV containing SEQUENCE_ID, SEQUENCE_TEMPLATE, and SEQUENCE_TARGET fields")
+    parser.add_argument("-o", "--out", type=str, required=True,
+                        help="Output filepath")
     # add optional arguments
-    parser.add_argument("-l", "--tm_limit", type=float, default=45.0)
-    parser.add_argument("-d", "--hairpins_dg", type=float, default=-2)
-    parser.add_argument("-m", "--middimers_dg", type=float, default=-8)
-    parser.add_argument("-e", "--enddimers_dg", type=float, default=-4)
-    parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-b", "--enable_broad", action="store_true")
-    parser.add_argument("-s", "--settings", type=json.loads, default=None)
+    parser.add_argument("-l", "--tm_limit", type=float, default=45.0,
+                        help="Minimum melting temperature of dimers (Celsius)")
+    parser.add_argument("-d", "--hairpins_dg", type=float, default=-2,
+                        help="DeltaG threshold for primer hairpins (kcal/mol)")
+    parser.add_argument("-m", "--middimers_dg", type=float, default=-8,
+                        help="DeltaG threshold for primer dimers (kcal/mol)")
+    parser.add_argument("-e", "--enddimers_dg", type=float, default=-4,
+                        help="DeltaG threshold for primer dimers at 3' ends (kcal/mol)")
+    parser.add_argument("-k", "--keeplist", type=str, default=None,
+                        help="Filepath to FASTA of keeplist primers")
+    parser.add_argument("-f", "--fwd_overhang", type=str, default="tcgtcggcagcgtcagatgtgtataagagacag",
+                        help="Overhang added to FWD primer (5'-->3' direction) for indexing PCR")
+    parser.add_argument("-r", "--rev_overhang", type=str, default="gtctcgtgggctcggagatgtgtataagagacag",
+                        help="Overhang added to REV primer (5'-->3' direction) for indexing PCR")
+    parser.add_argument("-b", "--enable_broad", action="store_true",
+                        help="Enable broad primer design settings")
+    parser.add_argument("-s", "--settings", type=json.loads, default=None,
+                        help="Dictionary of primer3 settings in the format """"'{"PRIMER_ANNEALING_TEMP": "52.0"}'""")
+    parser.add_argument("--threads", type=int, default=None, 
+                        help="Number of processors for multi-threading")
     
     return parser.parse_args()
 
@@ -658,7 +715,10 @@ def cli():
          dG_MID_LIMIT=args.middimers_dg, 
          KEEPLIST=args.keeplist, 
          ENABLE_BROAD=args.enable_broad, 
-         SETTINGS=args.settings)
+         SETTINGS=args.settings,
+         FWD_OVERHNAG=args.fwd_overhang,
+         REV_OVERHANG=args.rev_overhang,
+         THREADS=args.threads)
 
 
 

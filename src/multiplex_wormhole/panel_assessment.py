@@ -50,12 +50,13 @@ except ImportError:
 
 
 
-def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-3, BAD_DIMERS_dG=-10):
+def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10, THREADS=1):
     """
     PRIMERS : FASTA or CSV (ID,Sequence) of primer sequences
     ALL_DIMERS_dG : DeltaG threshold used for dimer prediction (all dimers)
     END_DIMERS_dG : DeltaG threshold used for dimer prediction (end dimers)
     BAD_DIMERS_dG : DeltaG threshold used to count "bad" dimers
+    THREADS : number of threads for multiprocessing
     -------------
     Calculates predicted dimer load and primer pairs involved, returns dimer output files.
     """    
@@ -108,9 +109,9 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-3, BAD_DIMERS_dG=-10):
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
     try:
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_dG)+\
-                        " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50", shell=True)
+                        " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(THREADS), shell=True)
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
-                        " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p", shell=True)
+                        " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(THREADS), shell=True)
     except Exception:
         logger.info("MFEprimer failed! Full error message:")
         logger.info(traceback.format_exc())
@@ -176,7 +177,7 @@ def countDimers(DIMERS_WIDE, DELTAG_WIDE, dG_THRESHOLD, logger):
     b = numpy.triu(df,1).sum()
     logger.info("Number of pairwise interactions with 'bad' dimers: %s", str(b))
     logger.info("    (based on a deltaG threshold %s)", str(dG_THRESHOLD))
-    return [n, s, p, r, g, b]
+    return [n, s, p, r, g, b ]
 
 
 
@@ -191,9 +192,14 @@ def parse_args():
     # add required arguments
     parser.add_argument("-i", "--input", type=str, required=True)
     # add optional arguments
-    parser.add_argument("-a", "--alldimers_dg", type=float, default=-5)
-    parser.add_argument("-e", "--enddimers_dg", type=float, default=-3)
-    parser.add_argument("-b", "--baddimers_dg", type=float, default=-8)
+    parser.add_argument("-a", "--alldimers_dg", type=float, default=-8,
+                        help="DeltaG threshold for identifying non-end primer dimers (kcal/mol)")
+    parser.add_argument("-e", "--enddimers_dg", type=float, default=-4,
+                        help="DeltaG threshold for identifying 3' end dimers (kcal/mol)")
+    parser.add_argument("-b", "--baddimers_dg", type=float, default=-10,
+                        help="DeltaG threshold for counting dimers as 'bad' (kcal/mol)")
+    parser.add_argument("--threads", type=int, default=1,
+                        help="Number of processors for multi-processing")
     return parser.parse_args()
 
 

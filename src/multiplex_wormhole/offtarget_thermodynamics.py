@@ -95,7 +95,7 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
 
         else:
             warnings.warn("Sequence not present for row %s in INFILE", row)
-                
+     
     # save outputs
     inputs.to_csv(OUTFILE)
 
@@ -117,14 +117,21 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-i", "--infile", type=str, required=True)
-    parser.add_argument("-o", "--outfile", type=str, required=True)
+    parser.add_argument("-i", "--infile", type=str, required=True,
+                        help="Filepath to primers (FASTA or CSV)")
+    parser.add_argument("-o", "--outfile", type=str, required=True,
+                        help="Output filepath")
     # add optional arguments
-    parser.add_argument("-t", "--anneal-temp", type=float, default=52)
-    parser.add_argument("-m", "--mv_conc", type=float, default=50)
-    parser.add_argument("-d", "--dv_conc", type=float, default=3.8)
-    parser.add_argument("-p", "--dntp_conc", type=float, default=0.25)
-    parser.add_argument("-c", "--dna_conc", type=float, default=50)
+    parser.add_argument("-t", "--anneal-temp", type=float, default=52,
+                        help="Annealing temperature")
+    parser.add_argument("-m", "--mv_conc", type=float, default=50,
+                        help="Monovalent cation concentration")
+    parser.add_argument("-d", "--dv_conc", type=float, default=3.8,
+                        help="Divalent cation concentration")
+    parser.add_argument("-p", "--dntp_conc", type=float, default=0.25,
+                        help="Primer concentration")
+    parser.add_argument("-c", "--dna_conc", type=float, default=50,
+                        help="DNA concentration")
     return parser.parse_args()
 
 

@@ -520,23 +520,38 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-o", "--outpath", type=str, required=True)
+    parser.add_argument("-o", "--outpath", type=str, required=True,
+                        help="Prefix for output files (including directory)")
     # add optional arguments
-    parser.add_argument("-f", "--primer_fasta", type=str, default=None)
-    parser.add_argument("-d", "--dimer_sums", type=str, default=None)
-    parser.add_argument("-t", "--dimer_table", type=str, default=None)
-    parser.add_argument("-n", "--nloci", type=int, default=None)
-    parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-e", "--seed", type=str, default=None)
-    parser.add_argument("-m", "--min_dimers", type=int, default=None)
-    parser.add_argument("-a", "--max_dimers", type=int, default=None)
-    parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
-    parser.add_argument("-i", "--temp_init", type=float, default=None)
-    parser.add_argument("-j", "--temp_final", type=float, default=0.1)
-    parser.add_argument("-b", "--burnin", type=int, default=100)
-    parser.add_argument("-p", "--prob_adj", type=float, default=2)
+    parser.add_argument("-f", "--primer_fasta", type=str, default=None,
+                        help="Filepath to FASTA of primers")
+    parser.add_argument("-d", "--dimer_sums", type=str, default=None,
+                        help="Filepath to dimer totals table output by tabulate-dimers step")
+    parser.add_argument("-t", "--dimer_table", type=str, default=None,
+                        help="Filepath to pairwise dimers table output by tabulate-dimers step")
+    parser.add_argument("-n", "--nloci", type=int, default=None,
+                        help="Number of primer pairs in optimized panel")
+    parser.add_argument("-k", "--keeplist", type=str, default=None,
+                        help="Filepath to FASTA containing keeplist primers")
+    parser.add_argument("-e", "--seed", type=str, default=None,
+                        help="Path to previous optimization output CSV to use as starting point")
+    parser.add_argument("-m", "--min_dimers", type=int, default=None,
+                        help="Minimum number of dimers to plot")
+    parser.add_argument("-a", "--max_dimers", type=int, default=None,
+                        help="Maximum number of dimers to plot")
+    parser.add_argument("-r", "--decay_rate", type=float, default=0.95,
+                        help="Simulated annealing temperature decay rate")
+    parser.add_argument("-i", "--temp_init", type=float, default=None,
+                        help="Initial temperature in simulated annealing temp schedule")
+    parser.add_argument("-j", "--temp_final", type=float, default=0.1,
+                        help="Final temperature in simulated annealing temp schedule")
+    parser.add_argument("-b", "--burnin", type=int, default=100,
+                        help="Iterations for sampling cost space for setting ASA temp schedule")
+    parser.add_argument("-p", "--prob_adj", type=float, default=2,
+                        help="Multiplier for adjusting simulated annealing acceptance probabilities")
     # add flags
-    parser.add_argument("-g", "--deltaG", action="store_true")
+    parser.add_argument("-g", "--deltaG", action="store_true",
+                        help="Use deltaG optimization algorithm")
     return parser.parse_args()
 
 

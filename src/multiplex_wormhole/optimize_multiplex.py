@@ -1116,26 +1116,44 @@ def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser()
     # add required arguments
-    parser.add_argument("-f", "--primer_fasta", type=str, required=True)
-    parser.add_argument("-d", "--dimer_sums", type=str, required=True)
-    parser.add_argument("-t", "--dimer_table", type=str, required=True)
-    parser.add_argument("-o", "--outpath", type=str, required=True)
-    parser.add_argument("-n", "--nloci", type=int, required=True)
+    parser.add_argument("-f", "--primer_fasta", type=str, required=True,
+                        help="Filepath to FASTA containing primer sequences")
+    parser.add_argument("-d", "--dimer_sums", type=str, required=True,
+                        help="Filepath to dimer totals table output by tabulate-dimers")
+    parser.add_argument("-t", "--dimer_table", type=str, required=True,
+                        help="Filepath to pairwise dimer table output by tabulate-dimers")
+    parser.add_argument("-o", "--outpath", type=str, required=True,
+                        help="Prefix for output files (including directory)")
+    parser.add_argument("-n", "--nloci", type=int, required=True, 
+                        help="Number of primer pairs in optimized panel")
     # add optional arguments
-    parser.add_argument("-k", "--keeplist", type=str, default=None)
-    parser.add_argument("-e", "--seed", type=str, default=None)
-    parser.add_argument("-s", "--simple", type=int, default=5000)
-    parser.add_argument("-i", "--iter", type=int, default=1000)
-    parser.add_argument("-c", "--cycles", type=int, default=10)
-    parser.add_argument("-b", "--burnin", type=int, default=200)
-    parser.add_argument("-r", "--decay_rate", type=float, default=0.95)
-    parser.add_argument("-x", "--temp_init", type=float, default=None)
-    parser.add_argument("-l", "--temp_final", type=float, default=0.1)
-    parser.add_argument("-a", "--prob_adj", type=float, default=2)
+    parser.add_argument("-k", "--keeplist", type=str, default=None,
+                        help="Filepath to FASTA containing keeplist primers")
+    parser.add_argument("-e", "--seed", type=str, default=None,
+                        help="Filepath to previous optimized panel CSV to use as starting point")
+    parser.add_argument("-s", "--simple", type=int, default=5000,
+                        help="Iterations for simple iterative improvement")
+    parser.add_argument("-i", "--iter", type=int, default=1000,
+                        help="Iterations for each adaptive simulated annealing (ASA) cycle")
+    parser.add_argument("-c", "--cycles", type=int, default=10,
+                        help="Number of ASA cycles")
+    parser.add_argument("-b", "--burnin", type=int, default=200,
+                        help="Iterations to sample cost space for setting ASA cycle temp schedules")
+    parser.add_argument("-r", "--decay_rate", type=float, default=0.95,
+                        help="Decay rate for ASA temperature schedule")
+    parser.add_argument("-x", "--temp_init", type=float, default=None,
+                        help="Initial temperature for simulated annealing temp schedule")
+    parser.add_argument("-l", "--temp_final", type=float, default=0.1,
+                        help="Final temperature for simulated annealing temp schedule")
+    parser.add_argument("-a", "--prob_adj", type=float, default=2,
+                        help="Multiplier for adjusting ASA acceptance probabilities")
     # add flags
-    parser.add_argument("-g", "--deltaG", action="store_true")
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-m", "--makeplot", action="store_true")
+    parser.add_argument("-g", "--deltaG", action="store_true",
+                        help="Use deltaG optimization algorithm")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Print full logging details")
+    parser.add_argument("-m", "--makeplot", action="store_true",
+                        help="Make simulated annealing temperature schedule plots (for cycle 1 only)")
     return parser.parse_args()
 
 
