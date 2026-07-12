@@ -177,6 +177,7 @@ def runOpt(run, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                                ALL_DIMERS_dG=dG_MID_LIMIT,
                                END_DIMERS_dG=dG_END_LIMIT,
                                BAD_DIMERS_dG=dG_BAD_LIMIT)
+            cost.insert(0, OUT+"_primers.csv")
             cost.insert(0, "Run"+str(run).zfill(2))
             return cost
             #loads.append(cost)

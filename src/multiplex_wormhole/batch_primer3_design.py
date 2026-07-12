@@ -88,6 +88,10 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     if not all([x in templates.keys() for x in ['SEQUENCE_ID', 'SEQUENCE_TEMPLATE', 'SEQUENCE_TARGET']]):
         raise InputError("TEMPLATES must include fields named 'SEQUENCE_ID', 'SEQUENCE_TEMPLATE', & 'SEQUENCE_TARGET'.")
     
+    # Flag if empty file
+    if len(templates)<1:
+        raise InputError("TEMPLATES file is empty!")
+    
     # Raise error if SEQUENCE_IDs aren't unique
     if len(set(templates['SEQUENCE_ID'])) != len(templates):
         counts = templates['SEQUENCE_ID'].value_counts()
