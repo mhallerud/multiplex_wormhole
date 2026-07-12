@@ -326,8 +326,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
             mwlogger.info("Run %s had %s dimers.", str(run[i]), str(dimers[i]))
             if dimers[i]==min(dimers):
                 mwlogger.info(".....Converting to FASTA for additional screening")
-                CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(run[i])+"_primers.csv"), 
-                           OUT_FA = os.path.join(OUTDIR3,"Run"+str(run[i])+"_"+PREFIX+"_primers.fasta"))
+                CSVtoFASTA(IN_CSV = os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_Run"+str(i)+"_primers.csv"), 
+                           OUT_FA = os.path.join(OUTDIR3,PREFIX+run[i]+"_primers.fasta"))
     else: 
         mwlogger.warning("RunSummary not found- optimization step may have failed.")
     
