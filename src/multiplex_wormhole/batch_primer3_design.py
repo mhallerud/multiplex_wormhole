@@ -441,7 +441,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     logger.info("# Input loci: %s", str(len(templates)))
     logger.info("# Loci with primers passing filtering: %s", str(len(passed_ids)))
     logger.info("# Primer pairs designed: %s", str(tot_pairs))
-    logger.info("# Primer pairs passing filtering: %s", str(len(filtered_primers)/2-1))
+    logger.info("# Primer pairs passing filtering: %s", str((len(filtered_primers)-1)/2))
     if len(failed_ids)>0:
         logger.info("Filtering failed for the following loci:")
         for l in failed_ids:
@@ -487,6 +487,7 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
     # set up arrays for progress tracking / saving outputs
     filtered_primers = []
     tot_pairs = 0
+    passed = 0
     log_lines = []
 
     # extract sequence ID, template, target info
@@ -511,10 +512,9 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
                             global_args=BROAD_SETTINGS)
                 except Exception as err:
                     log_lines.append(f"PRIMER DESIGN FAILED FOR {k} WITH THE FOLLOWING ERROR:")
-                    log_lines.append(err)
+                    log_lines.append(str(err))
         
         # loop through primer pairs & filter dimers     
-        passed = 0 # track number pairs passed per template
         pairs = out['PRIMER_PAIR_NUM_RETURNED']
         if pairs > 0:
             tot_pairs += pairs # count overall # primer pairs designed
@@ -645,8 +645,6 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
             "log": log_lines}
 
 
-            
-    
 
 def testStructure(structure, TM_LIMIT, DG_LIMIT, TESTS):
     dg = structure.dg
