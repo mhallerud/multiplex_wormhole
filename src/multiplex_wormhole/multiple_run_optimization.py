@@ -260,13 +260,13 @@ def parse_args():
                         help="Number of adaptive simulated annealing cycles")
     parser.add_argument("-b", "--burnin", type=int, default=200,
                         help="Iterations for sampling cost space to set ASA temperature schedule")
-    parser.add_argument("--decay_rate", type=float, default=0.95,
+    parser.add_argument("--decay-rate", type=float, default=0.95,
                         help="ASA temperature decay rate")
-    parser.add_argument("--t_init", type=float, default=None,
+    parser.add_argument("--t-init", type=float, default=None,
                         help="Initial temperature for fixed-schedule simulated annealing")
-    parser.add_argument("--t_final", type=float, default=0.01,
+    parser.add_argument("--t-final", type=float, default=0.01,
                         help="End temperature for fixed-schedule simulated annealing")
-    parser.add_argument("--prob_adj", type=float, default=2,
+    parser.add_argument("--prob-adj", type=float, default=2,
                         help="Adjustment multiplier for ASA acceptance probabilities")
     parser.add_argument("--timeout", type=float, default=5,
                         help="Maximum allowed time (minutes) per swap")

@@ -57,7 +57,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
          # MFEprimer options (also uses dG_END_LIMIT & dG_MID_LIMIT from above)
          THREADS=None,
          # optimization / plotting options
-         BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.001, PROB_ADJ=2,
+         BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, PROB_ADJ=2,
          # assessment limits
          dG_BAD_LIMIT=-10):
     """
