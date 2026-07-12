@@ -47,9 +47,6 @@ primerblast <- runPrimerTree(primers, organisms=c(),
                              fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                              rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                              all_combos=FALSE,
-                             primer_specificity_database="core_nt",
-                             exclude_env="False",
-                             MAX_TARGET_SIZE=1000 #max amplicon size
                              ...)
 # check output
 View(primerblast)
@@ -60,14 +57,6 @@ View(primerblast)
 **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
 
 **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
-
-**primer_specificity_database** : Search database (options="core_nt", "nt", "PRIMERDB/genome_selected_species", "refseq_mrna", "refseq_representative_genomes", "Custom"). If "Custom", provide sequences in FASTA format to the "CUSTOM_DB" option.
-
-**exclude_env** : Exclude NCBI sequences from environmental or uncultured samples?
-
-**MAX_TARGET_SIZE** : Max amplicon size to return from PRIMER-BLAST.
-
-**...** : Additional arguments that will be passed to primerTree::primer_search. These may include: `num_aligns=500`: # alignments to keep, `.parallel=c(True,False)` to enable parallel processing with foreach, `.progress=c("none", "tk", "text")` to enable a progress bar, or the full scope of [PRIMER-BLAST options](#primer-blast-options). If >500 returns are provided for a given taxonomic group + primer pair combination, rerun with increased `num_aligns` argument.
 
 
 ### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
@@ -96,7 +85,7 @@ mw.offtargetThermodynamics(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CON
 **DNA_CONC (-c)** : DNA concentration in PCR. Default: 50
 
 
-### 3. Extract Target Amplicons and Primer Information with `extractTemplateInfo`
+### 3. Extract Target Amplicons and Primer Information with `extractTemplateInfo` (Optional but required for target amplicon to be included in plots)
 This function extracts the amplicon sequence and primer information for an optimized multiplex based on the input, intermediate, and output files from multiplex wormhole. The output is a dataframe containing the primer information, template sequences and targets, and amplicon sequences and targets (i.e., the shifted target position relative to the full template).
 ```
 primerinfo <- extractPrimerInfo(templates, filtprimers, finalprimers, 
@@ -104,9 +93,9 @@ primerinfo <- extractPrimerInfo(templates, filtprimers, finalprimers,
 View(primerinfo)
 ```
 #### Arguments
-**templates** : Input CSV containing template DNA sequences and targets input to multiplex wormhole (e.g, 0_Inputs/*Templates.csv)
+**templates** : Input CSV containing template DNA sequences and targets input to multiplex wormhole (e.g, 0_Inputs/*Templates.csv). Can also be NA if this information is missing.
 
-**filtprimers** : CSV output by the [primer3BatchDesign](1_BatchPrimerDesign) of multiplex wormhole (e.g., 1_PrimerDesign/FilteredPrimers.csv)
+**filtprimers** : CSV output by the [primer3BatchDesign](1_BatchPrimerDesign) of multiplex wormhole (e.g., 1_PrimerDesign/FilteredPrimers.csv). 
 
 **finalprimers** : CSV of primers in optimized multiplex (e.g., 3_Optimized_Multiplexes/Final_Primers/{OUTNAME)_Run01_primers.csv)
 
@@ -127,9 +116,9 @@ dev.off() #close PDF
 #### Arguments
 **primerblast** : Table output by runPrimerTree. May use other BLAST-like specificity check results as long as the table contains "FWD", "REV", "Sequence", "accession", and "species" fields, with sequences trimmed at the primer binding sites. 
 
-**primerinfo** : Table output by extractPrimerInfo. May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields.
+**primerinfo** : Table output by extractPrimerInfo. May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields. Can be NA. 
 
-**species** : Prefix for amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots.
+**species** : Prefix for amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots. Can be NA.
 
 **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
 
