@@ -409,7 +409,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
                      dG_MID_LIMIT=dG_MID_LIMIT, dG_END_LIMIT=dG_END_LIMIT,
                      Ladapt=Ladapt, Radapt=Radapt, translator=translator, td=td)
     # extract # processors per CPU
-    CPUs = THREADS if THREADS else (os.cpu_count() or 1)
+    CPUs = THREADS if THREADS else (os.cpu_count()-1 or 1)
     chunksize = ceil(len(td.keys()) / CPUs)
     # shunt each primer to primerdesign function for multiprocessing
     row=0

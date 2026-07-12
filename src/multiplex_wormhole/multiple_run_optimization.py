@@ -104,7 +104,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                      BURNIN=BURNIN, DECAY_RATE=DECAY_RATE, T_INIT=T_INIT, T_FINAL=T_FINAL,
                      PROB_ADJ=PROB_ADJ, MAKEPLOT=MAKEPLOT, dG_END_LIMIT=dG_END_LIMIT,
                      dG_MID_LIMIT=dG_MID_LIMIT, dG_BAD_LIMIT=dG_BAD_LIMIT)
-    CPUs = THREADS if THREADS else (os.cpu_count() or 1)
+    CPUs = THREADS if THREADS else (os.cpu_count()-1 or 1)
     with Pool(CPUs) as pool:
         # calc number of runs per thread
         chunksize = ceil(N_RUNS / CPUs)
