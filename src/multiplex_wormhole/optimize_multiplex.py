@@ -866,7 +866,7 @@ def removePairsFromList(pairs, primer_loci, primer_pairs, allowlist):
                     allowlist.remove(p)
                 except Exception:
                     pass
-        return allowlist
+    return allowlist
 
 
 def condition(x, list):
