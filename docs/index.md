@@ -207,7 +207,7 @@ mw.assessPanel(PRIMERS,
 **END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
 **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
-`multiplex-wormhole` is a wrapper around the steps described below and uses their defaults. See the [multiplex_wormhole page](multiplex_wormhole.md) to understand the pipeline steps and output structure. 
+`multiplex-wormhole` is a wrapper around the steps described below and uses their defaults. See the [multiplex_wormhole page](multiplex_wormhole.md) to understand the pipeline steps, full optionality, and output structure. 
 
 
 ## Multiplex Wormhole Functions
