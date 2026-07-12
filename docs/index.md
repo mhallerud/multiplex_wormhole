@@ -152,7 +152,7 @@ For example, I use the following steps to prepare input data for applications fo
 
 
 ## Quick Start
-**The multiplexWormhole function is a wrapper around all sub-modules and will optimize a panel using the defaults for all other functions. Check out the [full workflow](#multiplex-wormhole-functions) and settings within individual functions for ultimate flexibility.**
+**The multiplexWormhole function is a wrapper around all sub-modules. Check out the [multiplex_wormhole page](multiplex_wormhole.md) for ultimate flexibility and to understand the pipeline steps and output structure. See individual modules within the [full workflow](#multiplex-wormhole-functions) to understand each step and its defaults.**
 
 ### Command line usage
 ```ruby
@@ -206,8 +206,6 @@ mw.assessPanel(PRIMERS,
 **ALL_DIMERS_dG (-a --alldimers_dg)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8]
 **END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4]
 **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
-
-`multiplex-wormhole` is a wrapper around the steps described below and uses their defaults. See the [multiplex_wormhole page](multiplex_wormhole.md) to understand the pipeline steps, full optionality, and output structure. 
 
 
 ## Multiplex Wormhole Functions
