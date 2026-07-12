@@ -407,11 +407,12 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     failed_ids = []
     
     # set up partial function with common arguments
+    items = [(k, td[k]) for k in td.keys()]
     worker = partial(designFilterPrimers, PRIMER3_SETTINGS=PRIMER3_SETTINGS,
                      ENABLE_BROAD=ENABLE_BROAD, BROAD_SETTINGS=BROAD_SETTINGS,
                      Tm_LIMIT=Tm_LIMIT, dG_HAIRPINS=dG_HAIRPINS,
                      dG_MID_LIMIT=dG_MID_LIMIT, dG_END_LIMIT=dG_END_LIMIT,
-                     Ladapt=Ladapt, Radapt=Radapt, translator=translator, td=td)
+                     Ladapt=Ladapt, Radapt=Radapt, translator=translator)
     # extract # processors per CPU
     CPUs = THREADS if THREADS else (os.cpu_count()-1 or 1)
     chunksize = ceil(len(td.keys()) / CPUs)
@@ -441,7 +442,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     logger.info("# Input loci: %s", str(len(templates)))
     logger.info("# Loci with primers passing filtering: %s", str(len(passed_ids)))
     logger.info("# Primer pairs designed: %s", str(tot_pairs))
-    logger.info("# Primer pairs passing filtering: %s", str((len(filtered_primers)-1)/2))
+    logger.info("# Primer pairs passing filtering: %s", str(int((len(filtered_primers)-1)/2)))
     if len(failed_ids)>0:
         logger.info("Filtering failed for the following loci:")
         for l in failed_ids:
@@ -476,14 +477,13 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     
 
 
-def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS, 
+def designFilterPrimers(item, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS, 
                         Tm_LIMIT, dG_HAIRPINS, dG_MID_LIMIT, dG_END_LIMIT,
-                        Ladapt, Radapt, translator, td):
+                        Ladapt, Radapt, translator):
     """Designs and filters primer pairs for each template """
-    # progress tracking
-    #row+=1
-    #if row%100 == 0:
-    #   logger.info("      primers designed for %s sequences....", str(row))
+    # parse input
+    k, td = item
+    
     # set up arrays for progress tracking / saving outputs
     filtered_primers = []
     tot_pairs = 0
@@ -496,8 +496,8 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
     try:
         out = primer3.bindings.design_primers(seq_args={
                     'SEQUENCE_ID': k,
-                    'SEQUENCE_TEMPLATE': td[k]['SEQUENCE_TEMPLATE'],
-                    'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
+                    'SEQUENCE_TEMPLATE': td['SEQUENCE_TEMPLATE'],
+                    'SEQUENCE_TARGET': [int(x) for x in td['SEQUENCE_TARGET'].split(",")]}, 
                 global_args=PRIMER3_SETTINGS)
     
         # try running with broader settings if none found
@@ -507,8 +507,8 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
                 try:
                     out = primer3.bindings.design_primers(seq_args={
                                 'SEQUENCE_ID': k,
-                                'SEQUENCE_TEMPLATE': td[k]['SEQUENCE_TEMPLATE'],
-                                'SEQUENCE_TARGET': [int(x) for x in td[k]['SEQUENCE_TARGET'].split(",")]}, 
+                                'SEQUENCE_TEMPLATE': td['SEQUENCE_TEMPLATE'],
+                                'SEQUENCE_TARGET': [int(x) for x in td['SEQUENCE_TARGET'].split(",")]}, 
                             global_args=BROAD_SETTINGS)
                 except Exception as err:
                     log_lines.append(f"PRIMER DESIGN FAILED FOR {k} WITH THE FOLLOWING ERROR:")
