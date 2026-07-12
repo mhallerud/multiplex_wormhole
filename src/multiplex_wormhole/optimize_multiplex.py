@@ -827,7 +827,7 @@ def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dim
     return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
 
 
-def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, keeplist_pairs=None, new_pair = None):
+def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = None):
     # add alternative primer pairs for swap locus back to list
     swap_pair = str(swap_pair)
     swap_locus = swap_pair.split(".")[0]
@@ -846,7 +846,7 @@ def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, keeplist_pa
     # remove primer pairs for new pair ID
     inlist = removePairsFromList(new_pair, primer_loci, primer_pairs, inlist)
     # remove 
-    inlist = removePairsFromList(new_pair, primer_loci, keeplist_pairs, inlist)
+    #inlist = removePairsFromList(new_pair, primer_loci, keeplist_pairs, inlist)
     # return new allowed list
     return inlist
 
