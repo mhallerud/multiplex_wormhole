@@ -168,6 +168,13 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     if KEEPLIST is not None:
         keeplist_loci, keeplist_seqs, keeplist_IDs, keeplist_pairs = LoadPrimers(KEEPLIST)
         n_keeplist = len(set(keeplist_pairs))
+        # remove keeplist loci from input primers
+        for x in range(len(keeplist_loci)):
+            if keeplist_loci[x] in primer_loci:
+                primer_loci = [x for x in primer_loci if x not in keeplist_loci]
+                primer_seqs = [primer_seqs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
+                primer_IDs = [primer_IDs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
+                primer_pairs = [primer_pairs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]                
     else:
         keeplist_pairs = []
         #keeplist_loci = []
@@ -339,7 +346,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             if comparison < 0:
                 update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
                 current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
-                UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs)
+                allowed_pairs = UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs, new_pair=new_best_id)
                 costs.append([i, Temp, curr_total])
     
             # otherwise, loop through remaining replacement options
@@ -352,7 +359,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 except:
                     pass
                 # add indices for the other primer pairs for the current worst locus to the allowed list
-                UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
+                allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
                 # avoid trying the same values...
                 orig_swap = swap_id
                 orig_best = new_best_id
@@ -820,7 +827,7 @@ def updateSet(swap_id, new_id, new_pairIDs, new_primerset_dimers, new_nonset_dim
     return current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers
 
 
-def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = None):
+def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, keeplist_pairs=None, new_pair = None):
     # add alternative primer pairs for swap locus back to list
     swap_pair = str(swap_pair)
     swap_locus = swap_pair.split(".")[0]
@@ -837,19 +844,29 @@ def UpdateAllowedPairs(swap_pair, inlist, primer_loci, primer_pairs, new_pair = 
         for p in swap_pairs:
             inlist.append(p)
     # remove primer pairs for new pair ID
-    if new_pair is not None:
-        new_pair = str(new_pair)
-        new_locus = new_pair.split(".")[0]
-        new_idx = list(filter(lambda x: primer_loci[x] == new_locus, range(len(primer_loci))))
-        new_pairs = [primer_pairs[i] for i in new_idx]
-        new_pairs = (set(new_pairs))  # extract unique values only
-        for p in new_pairs:
-            try:
-                inlist.remove(p)
-            except Exception:
-                pass
+    inlist = removePairsFromList(new_pair, primer_loci, primer_pairs, inlist)
+    # remove 
+    inlist = removePairsFromList(new_pair, primer_loci, keeplist_pairs, inlist)
     # return new allowed list
     return inlist
+
+
+def removePairsFromList(pairs, primer_loci, primer_pairs, allowlist):
+    if pairs is not None:
+        if not type(pairs)==list:
+            pairs = [pairs]
+        for pr in pairs:
+            pr = str(pr)
+            locus = pr.split(".")[0]
+            rmv_idx = list(filter(lambda x: primer_loci[x] == locus, range(len(primer_loci))))
+            rmv_pairs = [primer_pairs[i] for i in rmv_idx]
+            rmv_pairs = (set(rmv_pairs))  # extract unique values only
+            for p in rmv_pairs:
+                try:
+                    allowlist.remove(p)
+                except Exception:
+                    pass
+        return allowlist
 
 
 def condition(x, list):
@@ -1070,7 +1087,7 @@ def ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, primer_seqs,
     # add keeplist loci
     if len(keeplist_IDs)>0:
         outpairs = outpairs + keeplist_IDs
-        outseqs = outseqs + keeplist_seqs    
+        outseqs = outseqs + keeplist_seqs
     # export selected multiplex to CSV
     with open(OUTPATH+'_primers.csv', 'w') as file:
         file.write("PrimerID,Sequence\n")
