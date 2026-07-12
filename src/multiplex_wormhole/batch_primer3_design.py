@@ -421,7 +421,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
     with Pool(CPUs) as pool:
         keys=list(td.keys())
         # imap preserves input order in its outputs
-        for k, result in zip(keys, pool.imap(worker, keys, chunksize=chunksize)):
+        for k, result in zip(keys, pool.imap(worker, items, chunksize=chunksize)):
             # progress tracking
             row+=1
             if row % 100==0:
