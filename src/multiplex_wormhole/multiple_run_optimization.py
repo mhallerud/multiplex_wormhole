@@ -16,7 +16,7 @@ import shutil
 import argparse
 from datetime import datetime
 import csv
-from multiprocessing.Pool import Pool
+from multiprocessing.pool import Pool
 from functools import partial
 from math import ceil
 
@@ -181,14 +181,11 @@ def runOpt(run, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
             return cost
             #loads.append(cost)
             #run+=1
-            print(" ")
-    except Exception as e:
+    except Exception:
             print("AN ERROR OCCURRED IN RUN "+str(run))
-            print(e)
             traceback.print_exc()
             print("---")
-            run+=1
-            #continue
+            return ["Run"+str(run).zfill(2), "ERROR", None, None, None, None, None, None]            #continue
     #else:
     #    raise TimeoutException("in run "+str(run))
     #continue
@@ -310,8 +307,8 @@ def cli():
          CYCLES = args.cycles,
          BURNIN = args.burnin, 
          DECAY_RATE = args.decay_rate,
-         T_INIT = args.temp_init, 
-         T_FINAL = args.temp_final, 
+         T_INIT = args.t_init, 
+         T_FINAL = args.t_final, 
          PROB_ADJ = args.prob_adj,
          MAKEPLOT = args.makeplot,
          THREADS = args.threads,

@@ -431,7 +431,7 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
             if result["passed"]:
                 passed_ids.append(result["seqid"])
             else:
-                passed_ids.append(result["seqid"])
+                failed_ids.append(result["seqid"])
             
     # Print number loci in filtered output
     logger.info("# Input loci: %s", str(len(templates)))
@@ -482,8 +482,6 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
     #   logger.info("      primers designed for %s sequences....", str(row))
     # set up arrays for progress tracking / saving outputs
     filtered_primers = []
-    passed_ids = []
-    failed_ids = []
     tot_pairs = 0
     log_lines = []
 
@@ -632,21 +630,17 @@ def designFilterPrimers(k, PRIMER3_SETTINGS, ENABLE_BROAD, BROAD_SETTINGS,
                                                  round(misprime,1)])#misprime rate
                     # progress tracking
                     passed +=1 #keep track of # pairs passing per template
-            # track whether template had passing primer pairs or not
-            if passed > 0:
-                passed_ids.append(seqid)
-            else:
-                failed_ids.append(seqid)
     
-        return {"seqid": k, 
-                "rows": filtered_primers, 
-                "passed": passed>0, 
-                "n_pairs": tot_pairs, 
-                "log": log_lines}
-
     except Exception as err:
         log_lines.append(f"PRIMER DESIGN FAILED FOR {k} WITH THE FOLLOWING ERROR:")
         log_lines.append(str(err))
+    return {"seqid": k, 
+            "rows": filtered_primers, 
+            "passed": passed>0, 
+            "n_pairs": tot_pairs, 
+            "log": log_lines}
+
+
             
     
 
@@ -716,7 +710,7 @@ def cli():
          KEEPLIST=args.keeplist, 
          ENABLE_BROAD=args.enable_broad, 
          SETTINGS=args.settings,
-         FWD_OVERHNAG=args.fwd_overhang,
+         FWD_OVERHANG=args.fwd_overhang,
          REV_OVERHANG=args.rev_overhang,
          THREADS=args.threads)
 
