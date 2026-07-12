@@ -108,10 +108,11 @@ def main(PRIMERS, ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10, THREADS
     ALL_DIMERS = PREFIX+"_MFEdimers.txt"
     END_DIMERS = PREFIX+"_MFEdimers_ends.txt"
     try:
+        CPU = THREADS if THREADS else 2
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(ALL_DIMERS_dG)+\
-                        " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(THREADS), shell=True)
+                        " -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(CPU), shell=True)
         subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(END_DIMERS_dG)+\
-                        " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(THREADS), shell=True)
+                        " -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(CPU), shell=True)
     except Exception:
         logger.info("MFEprimer failed! Full error message:")
         logger.info(traceback.format_exc())

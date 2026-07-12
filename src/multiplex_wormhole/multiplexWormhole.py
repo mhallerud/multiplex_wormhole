@@ -205,9 +205,10 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     if not os.path.exists(INPUT):
         raise Exception(INPUT+" not found- did primer3BatchDesign step fail?")
     try:
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(dG_MID_LIMIT)+" -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(THREADS),
+        CPU = THREADS if THREADS else 2
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(dG_MID_LIMIT)+" -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(CPU),
                         shell=True)
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(dG_END_LIMIT)+" -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(THREADS),
+        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(dG_END_LIMIT)+" -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(CPU),
                         shell=True)
     except Exception:
         print("MFEprimer dimer step failed! Error message & traceback:")
