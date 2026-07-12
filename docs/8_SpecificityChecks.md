@@ -33,9 +33,9 @@ For phylogenetic reconstruction of alignments:
 
 
 ## Usage
-Within R:
+Within R (replace "~" with location of your primerTree_specificity_checks.R script- [DOWNLOAD HERE](https://github.com/mhallerud/multiplex_wormhole/edit/main/docs/8_SpecificityChecks.md#:~:text=primerTree_specificity_checks.R):
 ```
-load("~/multiplex_wormhole/primerTree_specificity_checks.R")
+source("~primerTree_specificity_checks.R")
 ```
 ### 1. Check Specificity with `runPrimerTree` (in R)
 This function loops through each primer pair and organism combination and runs PRIMER-BLAST using primerTree::primer_search, merging results into a single dataframe. Taxonomy and sequences are then pulled from NCBI for each record using the primerTree::get_taxonomy and primerTree::get_sequence commands. The output is a dataframe containing the query primer pair (FWD & REV) and full PRIMER-BLAST outputs. [Details on full functionality of primerTree](https://cran.r-project.org/web/packages/primerTree/refman/primerTree.html).
