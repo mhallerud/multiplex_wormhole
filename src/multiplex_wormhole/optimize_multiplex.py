@@ -171,10 +171,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         # remove keeplist loci from input primers
         for x in range(len(keeplist_loci)):
             if keeplist_loci[x] in primer_loci:
-                primer_seqs = [primer_seqs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
-                primer_IDs = [primer_IDs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]
-                primer_pairs = [primer_pairs[x] for x in range(len(primer_loci)) if primer_loci[x] not in keeplist_loci]                
-                primer_loci = [x for x in primer_loci if x not in keeplist_loci]
+                keep_idx = [i for i in range(len(primer_loci)) if primer_loci[i] not in keeplist_loci]
+                primer_seqs = [primer_seqs[i] for i in keep_idx]
+                primer_IDs = [primer_IDs[i] for i in keep_idx]
+                primer_pairs = [primer_pairs[i] for i in keep_idx]                
+                primer_loci = [primer_loci[i] for i in keep_idx]
     else:
         keeplist_pairs = []
         #keeplist_loci = []
