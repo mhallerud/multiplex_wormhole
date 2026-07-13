@@ -328,7 +328,9 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
             if dimers[i]==min(dimers):
                 mwlogger.info(".....Converting to FASTA for additional screening")
                 print(files[i]) #check
-                CSVtoFASTA(IN_CSV = files[i], #os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_"+run[i]+"_primers.csv"), 
+                file = files[i]
+                file.replace("3_OptimizedMultiplexes", "3_OptimizedMultiplexes/Final_Primers")
+                CSVtoFASTA(IN_CSV = file, #os.path.join(OUTDIR3,"Final_Primers", PREFIX+"_"+run[i]+"_primers.csv"), 
                            OUT_FA = os.path.join(OUTDIR3,PREFIX+run[i]+"_primers.fasta"))
     else: 
         mwlogger.warning("RunSummary not found- optimization step may have failed.")
