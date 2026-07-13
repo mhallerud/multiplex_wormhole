@@ -1086,9 +1086,9 @@ def ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, primer_seqs,
     outpairs = [primer_IDs[x] for x in current_pairs_index]
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     # add keeplist loci
-    #if len(keeplist_IDs)>0:
-    #    outpairs = outpairs + keeplist_IDs
-    #    outseqs = outseqs + keeplist_seqs
+    if len(keeplist_IDs)>0:
+        outpairs = outpairs + keeplist_IDs
+        outseqs = outseqs + keeplist_seqs
     # export selected multiplex to CSV
     with open(OUTPATH+'_primers.csv', 'w') as file:
         file.write("PrimerID,Sequence\n")
