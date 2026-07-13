@@ -23,6 +23,7 @@ from datetime import datetime
 from multiprocessing.pool import Pool
 from math import ceil
 from functools import partial
+import traceback
 
 # import additional sub-modules
 try:
@@ -461,10 +462,11 @@ def main(TEMPLATES, OUTPATH, Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,
         
         # if keeplist provided, add 
         if KEEPLIST is not None:
-            #try: 
+            try: 
                 AddKeeplist2FASTA(OUTPATH+".fa", KEEPLIST, OUTPATH+"_plusKeeplist.fa")
-            #except Exception:
-            #    logger.info("KEEPLIST could not be added to filtered primers FASTA")                
+            except Exception:
+                logger.info("KEEPLIST could not be added to filtered primers FASTA")
+                logger.info(traceback.format_exc())               
 
     # raise Exception here if no primer passed filtering since pointless to continue
     else:
