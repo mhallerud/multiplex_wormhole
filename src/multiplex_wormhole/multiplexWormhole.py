@@ -92,7 +92,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
             raise InputError("KEEPLIST_FA file not found!")
     # set suffix to current datetime if not given
     if PREFIX is None:
-        PREFIX = str(datetime.now()).replace(" ","_").replace(".","_")
+        PREFIX = str(datetime.now()).replace(" ","_").replace(".","_").replace(":","")
     
     # check format of KEEPLIST primerIDs
     try:
