@@ -150,7 +150,8 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA){
+plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA,
+                            MAX_AMPLICON_SIZE=500){
   # load dependencies
   library(DECIPHER)
   library(Biostrings)
@@ -163,6 +164,11 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
     primerblast <- primerblast[which(primerblast$dG_FWD_END<dG_end & primerblast$dG_REV_END<dG_end),]
   }#ifdG_end
   print(paste("# Off-target sequences after delta G filtering:", nrow(primerblast)))
+  # filter based on amplicon size
+  if(!is.na(MAX_AMPLICON_SIZE)){
+    primerblast <- primerblast[-which(primerblast$product_length>MAX_AMPLICON_SIZE),]
+  }#if
+  print(paste("# Off-target sequences after amplicon size filtering:", nrow(primerblast)))
   # configure plotting environment to allow space for labels
   par(mar=c(1,1,1,16))
   # run new tree for each primer pair combination
