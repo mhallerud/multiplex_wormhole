@@ -104,13 +104,14 @@ View(primerinfo)
 
 ### 4. Align & Plot Specificity Check Results
 This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). `TreeLine` infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair. Off-target sequences can be optionally filtered by delta G values from mw.offtargetThermodynamics results. To be conservative, the default is to plot all off-target sequences with deltaG<0 of the full binding site.
+#### Usage in R
 ```
 library(DECIPHER)
 library(Biostrings)
 
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
-plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA)
+plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600)
 dev.off() #close PDF
 ```
 #### Arguments
@@ -123,6 +124,8 @@ dev.off() #close PDF
 **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
 
 **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
+
+**MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. (Default: 600)
 
 #### Output
 This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon.
