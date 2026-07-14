@@ -94,7 +94,7 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
             inputs.dG_REV_END[row] = rev_end.dg/1000
 
         else:
-            warnings.warn("Sequence not present for row %s in INFILE", row)
+            warnings.warn("Sequence not present for row %s in " % row + INFILE)
      
     # save outputs
     inputs.to_csv(OUTFILE)
