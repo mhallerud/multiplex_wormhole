@@ -15,27 +15,27 @@ FASTA = os.path.join(os.path.dirname(__file__), "../examples/example_keeplist.fa
 
 
 def _has_mfeprimer():
-    if shutil.which("mfeprimer"):
-        return True
+    path = shutil.which("mfeprimer")
+    if path is not None:
+        return [True, path]
     pkg_dir = os.path.join(os.path.dirname(__file__), "../src/multiplex_wormhole")
-    return len(glob.glob(os.path.join(pkg_dir, "*mfeprimer*"))) > 0
+    path = glob.glob(os.path.join(pkg_dir, "*mfeprimer*"))
+    return [len(path) > 0, path[0]]
 
 
 HAS_MFEPRIMER = _has_mfeprimer()
 
 
-
-def test_mfeprimer(mfeprimer=HAS_MFEPRIMER):
+def test_mfeprimer(mfeprimer=HAS_MFEPRIMER[1]):
    if not mfeprimer:
-       setup_mfeprimer()
-       path = _has_mfeprimer()
+       path = setup_mfeprimer()
    else:
        path = mfeprimer
    assert os.path.exists(path), "MFEprimer binary not found and couldn't be installed!"
 
 
 
-@pytest.mark.skipif(not HAS_MFEPRIMER, reason="MFEprimer binary not installed")
+@pytest.mark.skipif(not HAS_MFEPRIMER[0], reason="MFEprimer binary not installed")
 def test_multiplex_wormhole(tmp_path, templates=EXAMPLES):
     # test multiplex wormhole - primer design pipeline
     multiplexWormhole(TEMPLATES=templates, N_LOCI=30, OUTDIR=tmp_path, PREFIX='pytest', 
@@ -65,7 +65,7 @@ def test_multiplex_wormhole(tmp_path, templates=EXAMPLES):
     
 
 
-@pytest.mark.skipif(not HAS_MFEPRIMER, reason="MFEprimer binary not installed")
+@pytest.mark.skipif(not HAS_MFEPRIMER[0], reason="MFEprimer binary not installed")
 def test_panel_assessment(fasta=FASTA):
     counts = assessPanel(PRIMERS=fasta)
     assert counts, "Panel assessment failed!"
