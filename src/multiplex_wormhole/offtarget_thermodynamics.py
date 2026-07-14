@@ -118,7 +118,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # add required arguments
     parser.add_argument("-i", "--infile", type=str, required=True,
-                        help="Filepath to primers (FASTA or CSV)")
+                        help="Filepath to CSV of primerTree outputs")
     parser.add_argument("-o", "--outfile", type=str, required=True,
                         help="Output filepath")
     # add optional arguments

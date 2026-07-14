@@ -42,8 +42,8 @@ Now you are ready to run multiplex wormhole!
 # usage: multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
 #                           [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
 #                           [-s SIMPLE] [-d] [-v]
-# example for standard optimization with defaults:
-python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa"
+# example for standard optimization with minimum settings + prefix & keeplist:
+multiplex-wormhole -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa"
 
 # PANEL ASSESSMENT
 # usage: mw-assess-panel [-h] -i INPUT [-a ALLDIMERS_DG] [-e ENDDIMERS_DG] [-b BADDIMERS_DG]
