@@ -171,8 +171,8 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                        dG_END_LIMIT=dG_END_LIMIT, #lower limit for 3' end dimer deltaG
                        dG_MID_LIMIT=dG_MID_LIMIT, #lower limit for deltaG of all other dimers
                        KEEPLIST=KEEPLIST_FA, #keeplist FASTA
-                       ENABLE_BROAD=False, #try broader settings if primer design fails?
-                       SETTINGS=None) #primer3 settings (in dictionary format)
+                       ENABLE_BROAD=ENABLE_BROAD, #try broader settings if primer design fails?
+                       SETTINGS=PRIMER3_SETTINGS) #primer3 settings (in dictionary format)
     # Outputs are found in the 1_PrimerDesign folder. 
     
     
