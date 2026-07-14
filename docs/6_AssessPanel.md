@@ -21,13 +21,10 @@ mw.assessPanel(PRIMERS,  ALL_DIMERS_dG=-8, END_DIMERS_dG=-4, BAD_DIMERS_dG=-10)
 ```
 
 ### Arguments
-**INPUT (-i)** : Input primers, can be either CSV or FASTA format. If CSV, must have "PrimerID" and "Sequence" fields for conversion.
-
-**ALL_DIMERS_dG (-a)** : Gibbs free energy (delta G) threshold used to consider dimers not at 3' ends.[Default: -8]
-
-**END_DIMERS_dG (-e)** : Gibbs free energy (delta G) threshold used to consider dimers at 3' ends. [Default: -4]
-
-**BAD_DIMERS_dG (-b)** : Gibbs free energy (delta G) threshold used to consider dimers especially "bad". [Default: -10]
+* **INPUT (-i)** : Input primers, can be either CSV or FASTA format. If CSV, must have "PrimerID" and "Sequence" fields for conversion.
+* **ALL_DIMERS_dG (-a)** : Gibbs free energy (delta G) threshold used to consider dimers not at 3' ends.[Default: -8]
+* **END_DIMERS_dG (-e)** : Gibbs free energy (delta G) threshold used to consider dimers at 3' ends. [Default: -4]
+* **BAD_DIMERS_dG (-b)** : Gibbs free energy (delta G) threshold used to consider dimers especially "bad". [Default: -10]
 
 
 ## Outputs
