@@ -389,6 +389,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             logger.debug("     No new sets can be found for %s ! Removing from swap options.", swap_id)
                         blockedlist.append(swap_id)
                         break
+                    elif newSet==0:
+                        break
                     else:
                         swap_id, new_best_id, new_pairIDs = newSet
                         if VERBOSE:
