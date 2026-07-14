@@ -95,11 +95,12 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
         PREFIX = str(datetime.now()).replace(" ","_").replace(".","_").replace(":","")
     
     # check format of KEEPLIST primerIDs
-    try:
-        test = LoadPrimers(KEEPLIST_FA)
-    except Exception:
-        raise InputError("PrimerIDs in the KEEPLIST_FA are not in the proper format! "\
-                         "Reformat as <locus>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
+    if KEEPLIST_FA is not None:
+        try:
+            test = LoadPrimers(KEEPLIST_FA)
+        except Exception:
+            raise InputError("PrimerIDs in the KEEPLIST_FA are not in the proper format! "\
+                             "Reformat as <locus>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
     
     # initialize logging
     mwlogger = setup_logging("multiplex_wormhole_"+PREFIX+".log", VERBOSE, "mw_main")
