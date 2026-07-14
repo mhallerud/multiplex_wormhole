@@ -232,7 +232,8 @@ class TimeoutException(Exception):   # Custom exception class
 
 def parse_args():
     # initialize argparser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Optimizes multiple multiplex PCR panels for minimum dimer load from input primer and dimer info. "+
+                                                  "Full documentation: https://mhallerud.github.io/multiplex_wormhole/run-multiple-optimizations")
     # add required arguments
     parser.add_argument("-r", "--runs", type=int, required=True,
                         help="Number of optimization runs")

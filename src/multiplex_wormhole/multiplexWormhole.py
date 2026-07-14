@@ -356,14 +356,15 @@ class InputError(Exception):
 
 def parse_args():
     # initialize argparser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Designs a multiplex PCR panel for targeted sequencing by optimizing for minimum dimer load. "+
+                                                  "Full documentation: https://mhallerud.github.io/multiplex_wormhole/multiplex-wormhole")
     # add required arguments
     parser.add_argument("-t", "--templates", type=str, required=True, 
-                        help="Filepath to CSV containing SEQUENCE_ID, SEQUENCE_TEMPLATE, and SEQUENCE_TARGET fields")
+                          help="Filepath to CSV containing SEQUENCE_ID, SEQUENCE_TEMPLATE, and SEQUENCE_TARGET fields")
     parser.add_argument("-n", "--nloci", type=int, required=True,
-                        help="Number of primer pairs in optimized multiplex")
+                          help="Number of primer pairs in optimized multiplex")
     parser.add_argument("-o", "--outdir", type=str, required=True,
-                        help="Name of output directory to create & store outputs")
+                          help="Name of output directory to create & store outputs")
     # add optional arguments
     parser.add_argument("-p", "--prefix", type=str, default=None,
                         help="Prefix used to name output files")
@@ -410,6 +411,7 @@ def parse_args():
                         help="Adjustment for acceptance probabilities in ASA algorithm")
     parser.add_argument("--makeplots", action="store_true",
                         help="Make ASA plots for all runs and cycles?")
+
     return parser.parse_args()
 
 

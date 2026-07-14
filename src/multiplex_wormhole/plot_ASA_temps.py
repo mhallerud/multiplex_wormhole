@@ -518,7 +518,8 @@ class InputError(Exception):
 
 def parse_args():
     # initialize argparser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Plots simulated annealing temperature schedule and dimer acceptance probabilities for a given problem set OR parameter set. "+
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/plot-asa-params")
     # add required arguments
     parser.add_argument("-o", "--outpath", type=str, required=True,
                         help="Prefix for output files (including directory)")

@@ -18,6 +18,7 @@ import urllib.request
 import gzip
 import shutil
 import subprocess
+import argparse
 
 
 
@@ -101,5 +102,14 @@ def install_mfeprimer(outdir):
 
 
 
-if __name__ == "__main__":
+def cli():
+    # add argparser (so that help message is printed)
+    parser = argparse.ArgumentParser(description="Sets up the MFEprimer binary. "+
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/setup-mfeprimer")
+    args = parser.parse_args()
     main()
+
+
+
+if __name__ == "__main__":
+    cli()

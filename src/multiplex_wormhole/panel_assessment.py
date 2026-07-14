@@ -189,7 +189,8 @@ class InputError(Exception):
 
 def parse_args():
     # initialize argparser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Assesses dimer loads for a set of multiplex PCR primers. "+
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/assess-panel")
     # add required arguments
     parser.add_argument("-i", "--input", type=str, required=True)
     # add optional arguments
