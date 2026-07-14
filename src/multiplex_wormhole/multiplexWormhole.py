@@ -57,7 +57,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
          # MFEprimer options (also uses dG_END_LIMIT & dG_MID_LIMIT from above)
          THREADS=None,
          # optimization / plotting options
-         BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, PROB_ADJ=2,
+         BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.01, PROB_ADJ=2, MAKEPLOT=False,
          # assessment limits
          dG_BAD_LIMIT=-10):
     """
@@ -298,6 +298,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           deltaG = deltaG, #True: deltaG optimization, False=standard optimization
                           KEEPLIST = KEEPLIST_FA, 
                           VERBOSE=VERBOSE,#set to true to print dimers at each change
+                          SEED=None,#primer set from previous optimization run to start with, in CSV format
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 
                           CYCLES=CYCLES, #simulated annealing cycles to run (default=10)
@@ -313,14 +314,13 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                               # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
                           PROB_ADJ=PROB_ADJ,# adjusts dimer acceptance probabilities (default=2)
                               # increase if too many dimers are being accepted during simulated annealing, 
-                              # decrease if local optima are not being overcome
-                          SEED=None,#primer set from previous optimization run to start with, in CSV format
+                              # decrease if local optima are not being overcome   
+                          MAKEPLOT=MAKEPLOT,
+                          THREADS=THREADS,
                           # inputs to mw.assessPanel
                           dG_END_LIMIT=dG_END_LIMIT,
                           dG_MID_LIMIT=dG_MID_LIMIT,
                           dG_BAD_LIMIT=dG_BAD_LIMIT)
-    #OUTPUT: MAF30_150loci_RunSummary.csv
-    
     
     ## STEP 7: Convert selected primer set to FASTA format for additional screening
     runs = pd.read_csv(os.path.join(OUTDIR3, PREFIX+"_RunSummary.csv"))
@@ -408,6 +408,8 @@ def parse_args():
                         help="Final temperature for fixed-schedule simulated annealing")
     parser.add_argument("--prob-adj", type=float, default=2,
                         help="Adjustment for acceptance probabilities in ASA algorithm")
+    parser.add_argument("--makeplots", action="store_true",
+                        help="Make ASA plots for all runs and cycles?")
     return parser.parse_args()
 
 
@@ -439,7 +441,8 @@ def cli():
          DECAY_RATE=args.decay_rate, 
          T_INIT=args.t_init, 
          T_FINAL=args.t_final, 
-         PROB_ADJ=args.prob_adj)
+         PROB_ADJ=args.prob_adj,
+         MAKEPLOT=args.makeplots)
 
 
 
