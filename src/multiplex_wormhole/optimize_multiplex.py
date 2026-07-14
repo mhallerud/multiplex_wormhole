@@ -368,68 +368,77 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 x = len(allowed_pairs_rmv)
                 blockedlist2 = []
                 while x > 0:
-                    if x > 0:
-                        # set these to avoid infinite loops
-                        prev_worst = swap_id
-                        prev_best = new_best_id
-                        # make new set
-                        newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
-                                            primer_pairs, primer_loci, 
-                                            OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger,
-                                            blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
-                        if newSet is None:
-                            if VERBOSE:
-                                logger.debug("     No new sets can be found for %s ! Removing from swap options.", swap_id)
-                            blockedlist.append(swap_id)
-                            break
-                        else:
-                            swap_id, new_best_id, new_pairIDs = newSet
-                            break
-                        # skip back to top of while if new best is same as original curr_worst
-                        if new_best_id == orig_swap or new_best_id == orig_best:
-                            #print(new_best_id)
-                            if x > 1:
-                                try:
-                                    allowed_pairs_rmv.remove(new_best_id)
-                                except:
-                                    pass
-                                x = len(allowed_pairs_rmv)
-                                continue  # go back to while
-                            else:
-                                break
-                        # add to blockedlist2 if stuck in an infinite loop
-                        if new_best_id == prev_best and swap_id == prev_worst:
-                            if VERBOSE:
-                                logger.info("     Infinite loop caused by %s ! Removing from swap options.", new_best_id)
-                            blockedlist2.append(new_best_id)
-                        # compare new set against current set
-                        comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
-                            compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_sums, deltaG=deltaG)
-                        # keep new set if it has fewer dimers
-                        if comparison < 0:
-                            update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
-                            current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
-                            allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
-                            costs.append([i, Temp, curr_total])
-                            break  # exit this loop if a replacement was found
-                        else:
-                            try:
-                                allowed_pairs_rmv.remove(new_best_id)
-                            except:
-                                pass
-                            try:
-                                allowed_pairs_rmv.remove(swap_id)
-                            except:
-                                pass
-                    # otherwise, loop through remaining replacement options
-                    # this avoids retesting the same options for this replacement
-                    x = len(allowed_pairs_rmv)  # update
+                    # set these to avoid infinite loops
+                    prev_worst = swap_id
+                    prev_best = new_best_id
+                    # make new set
+                    newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
+                                        primer_pairs, primer_loci, 
+                                        OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger,
+                                        blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
+                        
+                    # if no new sets possible, break while loop & blocklist this swap pair
+                    if newSet is None:
+                        if VERBOSE:
+                            logger.debug("     No new sets can be found for %s ! Removing from swap options.", swap_id)
+                        blockedlist.append(swap_id)
+                        break
+                    else:
+                        swap_id, new_best_id, new_pairIDs = newSet
+                    
+                    # skip back to top of while if new best is same as original curr_worst
+                    if new_best_id == orig_swap or new_best_id == orig_best:
+                        if VERBOSE:
+                            logger.info("     Infinite loop caused by %s! Removing from swap options.", new_best_id)
+                        blockedlist2.append(new_best_id)
+                        #if x > 1:
+                        try:
+                            allowed_pairs_rmv.remove(new_best_id)
+                        except ValueError:
+                            pass
+                        x = len(allowed_pairs_rmv)
+                        continue  # go back to while
+                        # stop if no other options for swapping this pair
+                        #else:
+                        #    break
+                    
+                    # skip if new_best is the original pair we started with
+                    if new_best_id == prev_best and swap_id == prev_worst:
+                        if VERBOSE:
+                            logger.info("     Infinite loop caused by %s ! Removing from swap options.", new_best_id)
+                        #blockedlist2.append(new_best_id)
+                        try:
+                            allowed_pairs_rmv.remove(new_best_id)
+                        except ValueError:
+                            pass
+                        x = len(allowed_pairs_rmv)
+                        continue
+                        
+                    # compare new set against current set
+                    comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
+                        compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_sums, deltaG=deltaG)
+                    # keep new set if it has fewer dimers
+                    if comparison < 0:
+                        update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
+                        current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
+                        allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
+                        costs.append([i, Temp, curr_total])
+                        break  # exit this loop if a replacement was found
+                    else:
+                        try:
+                            allowed_pairs_rmv.remove(new_best_id)
+                        except ValueError:
+                            pass
+                        try:
+                            allowed_pairs_rmv.remove(swap_id)
+                        except ValueError:
+                            pass
+
                     # when options run out for replacing this pair, add it to blockedlist to avoid trying to replace
                     if x <= 1:
-                        #print("i")
-                        #print("Adding "+curr_worst+" to blockedlist")
+                        if VERBOSE:
+                            logger.info("     Ran out of options for replacing %s. Added to blockedlist.", swap_id)
                         blockedlist.append(swap_id)
-                        continue
     
             # stop iterating if no new sets can be made in the previous while loop
             if newSet is None:
