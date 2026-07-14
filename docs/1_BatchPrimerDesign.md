@@ -28,7 +28,7 @@ mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_
 ```
 
 ### Arguments
-**TEMPLATES (-t)** : CSV filepath to templates in the following format (including these specific headers):
+* **TEMPLATES (-t)** : CSV filepath to templates in the following format (including these specific headers):
 
 | SEQUENCE_ID   | SEQUENCE_TEMPLATE    | SEQUENCE_TARGET    |
 | ------------- | -------------------- | ------------------ |
@@ -37,23 +37,15 @@ mw.primer3BatchDesign(TEMPLATES, OUTPATH, Tm_LIMIT=45.0, dG_HAIRPINS=-2, dG_END_
 
 The sequence target is in <POSITION,LENGTH> format. In the example, the target for PCR is a 1-bp region (i.e., SNP or indel) at basepair 53. (Required)
 
-**OUTPATH (-o)** : Prefix (including directory structure) for output files which will include a CSV and FASTA. (Required)
-
-**Tm_LIMIT (-l)** : Upper limit for melting temperatures (in Celsius) of intra-pair secondary structures, including hairpins, homodimers, and heterodimers. (Default: 45.0)
-
-**dG_HAIRPINS (-d)** : Lower limit for delta G (i.e., Gibbs free energy) of hairpin structures. (Default: -2)
-
-**dG_MID_LIMIT (-m)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers not occurring at 3' ends. (Default: -8)
-
-**dG_END_LIMIT (-e)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers at 3' ends. (Default: -4)
-
-**KEEPLIST (-k)** : FASTA of keeplist primers, where names follow the format <SeqID>.<#>.FWD and <SeqID>.<#>.REV (e.g., MACA01.1.FWD, MACA01.1.REV). *IMPORTANT*: If the same target is in the keeplist and the templates file, ensure that SeqIDs name match- otherwise, multiple primer pairs may be designed for the same target. (Default: None)
-
-**ENABLE_BROAD (-b)** : Try less conservative settings if primers could not be developed for a template under strict design settings? (Default: False)
-
-**SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). If running from the command line, use the format `-s '{"PRIMER_ANNEALING_TEMP": "52.0"}'`. Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
-
-**(-h)**: Help for usage.
+* **OUTPATH (-o)** : Prefix (including directory structure) for output files which will include a CSV and FASTA. (Required)
+* **Tm_LIMIT (-l)** : Upper limit for melting temperatures (in Celsius) of intra-pair secondary structures, including hairpins, homodimers, and heterodimers. (Default: 45.0)
+* **dG_HAIRPINS (-d)** : Lower limit for delta G (i.e., Gibbs free energy) of hairpin structures. (Default: -2)
+* **dG_MID_LIMIT (-m)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers not occurring at 3' ends. (Default: -8)
+* **dG_END_LIMIT (-e)** : Lower limit for delta G (i.e., Gibbs free energy) of primer dimers at 3' ends. (Default: -4)
+* **KEEPLIST (-k)** : FASTA of keeplist primers, where names follow the format <SeqID>.<#>.FWD and <SeqID>.<#>.REV (e.g., MACA01.1.FWD, MACA01.1.REV). *IMPORTANT*: If the same target is in the keeplist and the templates file, ensure that SeqIDs name match- otherwise, multiple primer pairs may be designed for the same target. (Default: None)
+* **ENABLE_BROAD (-b)** : Try less conservative settings if primers could not be developed for a template under strict design settings? (Default: False)
+* **SETTINGS (-s)** : Primer3 settings, provided in dictionary format (e.g. `{'PRIMER_ANNEALING_TEMP': 52.0, 'SEQUENCE_OVERHANG_LEFT': "tcgtcggcagcgt..."}`). If running from the command line, use the format `-s '{"PRIMER_ANNEALING_TEMP": "52.0"}'`. Setting names and definitions can be found on the [primer3 website](https://htmlpreview.github.io/?https://github.com/primer3-org/primer3/blob/v2.6.1/src/primer3_manual.htm#globalTags). Default settings are in lines 72-187 of the [primer3_batch_design.py script](https://github.com/mhallerud/multiplex_wormhole/blob/main/src/scripts/primer3_batch_design.py). (Default: None)
+* **(-h)**: Help for usage.
 
 
 ## Outputs
