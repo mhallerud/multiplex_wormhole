@@ -55,6 +55,7 @@ primerblast <- runPrimerTree(primers, organisms=c(),
                              fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                              rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                              all_combos=FALSE,
+                             THREADS=1,
                              MAX_TARGET_SIZE=600,
                              EXCLUDE_ENV="$0",
                              PRIMER_SPECIFICITY_DATABASE="nt",
@@ -65,7 +66,8 @@ View(primerblast)
 ### Arguments
 * **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
 * **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
-* **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
+* **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take a long time!).
+* **THREADS** : Number of processors for multi-threading [Default: 1 / i.e. no multi-threading]
 * **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
 * **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
 * **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
@@ -118,9 +120,6 @@ View(primerinfo)
 This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). `TreeLine` infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair. Off-target sequences can be optionally filtered by delta G values from mw.offtargetThermodynamics results. To be conservative, the default is to plot all off-target sequences with deltaG<0 of the full binding site.
 ### Usage in R
 ```
-library(DECIPHER)
-library(Biostrings)
-
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
 plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600)

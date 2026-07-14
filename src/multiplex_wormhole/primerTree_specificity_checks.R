@@ -93,7 +93,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     # register the cluster
     doParallel::registerDoParallel(cluster)
     # multi-thread primerTree across pairs
-    all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %do% 
+    all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% 
       runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
               PRIMER_SPECIFICITY_DATABASE, ...)
     # close cluster
