@@ -9,7 +9,7 @@ permalink: /multiplex-wormhole
 `multiplex-wormhole` is a wrapper function that performs the following submodules using defaults:
 
 [TEMPLATES](index.md#input-file-format) (& KEEPLIST) --> [mw-primer-design](1_BatchPrimerDesign.md) --> [MFEprimer dimer](2_DimerPrediction.md) --> 
-[mw-tabulate-dimers](3_TabulateDimers.md) --> [mw-mult-optimizations](5_MultipleRunOptimizations.md)
+[mw-tabulate-dimers](3_TabulateDimers.md) --> [mw-mult-optimizations](5_MultipleRunOptimization.md)
 
 Note that `mw-mult-optimizations` also runs [mw-assess-panel](6_AssessPanel.md) at the end.
 
