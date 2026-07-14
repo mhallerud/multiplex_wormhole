@@ -4,5 +4,6 @@ scripts/.DS_Store
 scripts/__pycache__/
 scripts/extras/.DS_Store
 scripts/extras/__pycache__/
+src/multiplex_wormhole/mfeprimer-3.2.7-darwin-10.6-amd64 
 examples/.DS_Store
 primer3_settings/.DS_Store

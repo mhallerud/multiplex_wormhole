@@ -32,7 +32,7 @@ setup_mfeprimer = _setup_mfeprimer.main
 
 
 # SET DEPENDENCY PATH FOR MFEPRIMER
-_hits = glob.glob(os.path.dirname(__file__)+"/*mfeprimer*")
+_hits = glob.glob(os.path.join(os.path.dirname(__file__), "/*mfeprimer*"))
 MFEprimer_PATH = _hits[0] if _hits else None
 
 

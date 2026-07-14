@@ -132,11 +132,16 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     OUTDIR=os.path.dirname(OUTPATH) or "."
     #moveAllFiles(outdir+"/*_SAprimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
     #moveAllFiles(outdir+"/*_SAdimers.csv", os.path.join(newoutdir, "Checkpoint_Primers"))
-    moveAllFiles(OUTDIR+"/*_primers.csv", os.path.join(OUTDIR, "Final_Primers"))
-    moveAllFiles(OUTDIR+"/*_dimers.csv", os.path.join(OUTDIR, "Final_Dimers"))
-    moveAllFiles(OUTDIR+"/*_costsTrace.csv", os.path.join(OUTDIR, "Trace_Dimer_Load"))
-    moveAllFiles(OUTDIR+"/*_DimerLoad.png", os.path.join(OUTDIR, "Plots_Dimer_Load"))
-    moveAllFiles(OUTDIR+"/*log", os.path.join(OUTDIR, "Logfiles"))
+    moveAllFiles(os.path.join(OUTDIR, "*_primers.csv"), 
+                 os.path.join(OUTDIR, "Final_Primers"))
+    moveAllFiles(os.path.join(OUTDIR, "*_dimers.csv"), 
+                 os.path.join(OUTDIR, "Final_Dimers"))
+    moveAllFiles(os.path.join(OUTDIR, "*_costsTrace.csv"),
+                 os.path.join(OUTDIR, "Trace_Dimer_Load"))
+    moveAllFiles(os.path.join(OUTDIR, "*_DimerLoad.png"), 
+                 os.path.join(OUTDIR, "Plots_Dimer_Load"))
+    moveAllFiles(os.path.join(OUTDIR, "*log"), 
+                 os.path.join(OUTDIR, "Logfiles"))
 
 
 

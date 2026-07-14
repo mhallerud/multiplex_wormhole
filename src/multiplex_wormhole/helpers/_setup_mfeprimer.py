@@ -79,7 +79,7 @@ def install_mfeprimer(outdir):
                 
                 # change permissions to allow usage
                 f_out = outpath.replace(".gz","")
-                if os.path.exists(f_out):
+                if os.path.exists(f_out) and not f_out.endswith(".exe"):
                     print("Allowing usage as executable....")
                     try:
                         st = os.stat(f_out)
