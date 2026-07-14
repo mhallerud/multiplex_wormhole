@@ -21,13 +21,10 @@ mw.tabulateDimers(ALL_DIMERS, END_DIMERS, OUTPATH, OUTPRIMERPATH="False", deltaG
 ```
 
 ### Arguments
-**ALL_DIMERS (-a)** : Text file output for all dimers output from MFE primer.
-
-**END_DIMERS (-e)** : Text file output for end dimers output from MFE primer. If you did not predict end dimers (not recommended), you can provide a blank text file here.
-
-**OUTPATH (-o)** : Directory path and prefix for output tables of primer pair interactions.
-
-**OUTPRIMERPATH (-p)** : Directory path and prefix for output tables of primer interactions. (Default: "False" -produces no output)
+* **ALL_DIMERS (-a)** : Text file output for all dimers output from MFE primer.
+* **END_DIMERS (-e)** : Text file output for end dimers output from MFE primer. If you did not predict end dimers (not recommended), you can provide a blank text file here.
+* **OUTPATH (-o)** : Directory path and prefix for output tables of primer pair interactions.
+* **OUTPRIMERPATH (-p)** : Directory path and prefix for output tables of primer interactions. (Default: "False" -produces no output)
 
 **deltaG (-d)** : Tabulate dimer load using deltaG (True) or standard tally (False) method. (Default: False)
 
