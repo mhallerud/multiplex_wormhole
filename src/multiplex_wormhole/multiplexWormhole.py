@@ -195,7 +195,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     if not os.path.exists(INPUT):
         raise Exception(INPUT+" not found- did primer3BatchDesign step fail?")
     try:
-        CPU = THREADS if THREADS else 2
+        CPU = THREADS if THREADS else 1
         subprocess.call([MFEprimer_PATH,"dimer", 
                          "-i", INPUT, # input FASTA of primer sequences 
                          "-o", ALL_DIMERS, # output file
@@ -206,7 +206,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                          "--mono", "50", # concentration of monovalent cations (mM)
                          "--dntp", "0.25", # concentration of dNTPs (mM)
                          "--oligo", "50", # concentration of annealing oligos (nM)
-                         "--cpu "+str(CPU)], # cpus for multi-threading
+                         "--cpu", str(CPU)], # cpus for multi-threading
                         shell=False)
         subprocess.call([MFEprimer_PATH,"dimer", "-i", INPUT,
                          "-o", END_DIMERS,
@@ -218,7 +218,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                          "--dntp", "0.25",
                          "--oligo", "50",
                          "-p", # only output dimers with 3' end bind
-                         "--cpu "+str(CPU)],
+                         "--cpu", str(CPU)],
                         shell=False)
     except Exception:
         print("MFEprimer dimer step failed! Error message & traceback:")
