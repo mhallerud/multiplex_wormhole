@@ -55,12 +55,12 @@ primerblast <- runPrimerTree(primers, organisms=c(),
 View(primerblast)
 ```
 #### Arguments
-- **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
-- **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
-- **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
-- **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
-- **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
-- **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
+* **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
+* **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
+* **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
+* **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
+* **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
+* **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
   * "nt" [Default] : includes NCBI nt database + chromosomes from genome assemblies
   * "core_nt" : nt database without genomes
   * "refseq_mrna" : Refseq mRNA database
@@ -68,7 +68,7 @@ View(primerblast)
   * "PRIMERDB/genome_selected_species" : Genomes for selected organisms (primary assembly only)
   * "refseq_rna" : RefSeq RNA database
   * "Custom" + "CUSTOMSEQFILE"="<filepath>" : Custom BLAST database.
-- **...** : 
+* **...** : Additional PRIMER-BLAST arguments will be passed to primerTree::primer_search. These can be explored by visiting the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi) and, at settings of interest, right-clicking and selecting "inspect element". Options and their defaults can be retrieved in R by loading the XML and httr packages, all functions from the [primerTree::primer_search source code](https://github.com/MVesuviusC/primerTree/blob/master/R/search.R), and then running lines 130-135 in that same file.
 
 ### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
 This function uses primer3-py to calculate thermodynamic stability of full binding sites and end stability of binding sites. Binding sites are identified from PrimerTree/PRIMER-BLAST outputs.
