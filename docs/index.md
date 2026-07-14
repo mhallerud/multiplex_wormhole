@@ -210,6 +210,7 @@ mw.assessPanel(PRIMERS,
 
 ## Multiplex Wormhole Functions
 
+See [multiplex_wormhole](multiplex_wormhole.md) for details on the primary function that runs panel design.
 Click on the functions below for detailed information on inputs, outputs, and settings (including defaults). 
 
 1. [Batch Primer Design](1_BatchPrimerDesign.md) with `mw-primer-design`
@@ -231,8 +232,6 @@ Click on the functions below for detailed information on inputs, outputs, and se
 Helper Functions:
 * [Convert CSV to FASTA](CSVtoFASTA.md) with `mw-csv2fasta`
 * [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `mw-add-keeplist`
-
-See [multiplex_primer_design.py](https://github.com/mhallerud/multiplex_wormhole/blob/main/multiplex_primer_design.py) for a full line-by-line workflow (equivalent to the multiplex-wormhole wrapper function). 
 
 ![diagram showing mw workflow](assets/images/diagram.png)
 

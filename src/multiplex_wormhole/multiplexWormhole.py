@@ -84,7 +84,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     
     # check all inputs
     if not os.path.exists(MFEprimer_PATH):
-        raise Exception("MFEprimer_PATH not found! Path provided on lines 37-38: "+MFEprimer_PATH)
+        raise Exception("MFEprimer_PATH not found! Try running mw-setup-mfeprimer.")
     if not os.path.exists(TEMPLATES):
         raise InputError("TEMPLATES file not found!")
     if KEEPLIST_FA is not None:
