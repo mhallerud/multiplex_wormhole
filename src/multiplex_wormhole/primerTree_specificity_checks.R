@@ -4,12 +4,15 @@ runPrimerTree <- function(primers, organisms, outcsv,
                           fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                           rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                           all_combos=FALSE,
+                          MAX_TARGET_SIZE=600, #max amplicon size is 600 bp
+                          EXCLUDE_ENV="$0", #checks box for "exclude environmental samples"
+                          PRIMER_SPECIFICITY_DATABASE="nt", #includes core_nt + genomes
                           ...){
   # load packages
   library(primerTree)
   library(plyr)
   library(dplyr)
-  
+
   #---------READ INPUTS ----------#
   # load multiplex_wormhole output
   primers <- read.csv(primers)
@@ -99,8 +102,8 @@ runPrimerTree <- function(primers, organisms, outcsv,
 
 #---------------EXTRACT AMPLICON SEQUENCES FOR DESIGNED PRIMERS-------------#
 extractPrimerInfo <- function(templates, filtprimers, finalprimers,
-                                fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
-                                rev_adapter="gtctcgtgggctcggagatgtgtataagagacag"){
+                              fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
+                              rev_adapter="gtctcgtgggctcggagatgtgtataagagacag"){
   # First, load all datasets
   templates <- read.csv(templates)
   filtprimers <- read.csv(filtprimers)
