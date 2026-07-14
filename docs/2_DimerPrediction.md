@@ -35,40 +35,30 @@ subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d -3 -s 3
 ```
 
 ### Arguments
-**INPUT (-i)** : FASTA of primer sequences (with adapters) used to predict dimers. (Required)
-
-**ALL_DIMERS (-o)** : Filepath for MFEprimer text output containing information on predicted dimers.
-
-**END_DIMERS (-o)** : Filepath for MFEprimer text output containing information on predicted 3' end dimers.
-
-**(-d)** : Maximum (i.e., least negative) deltaG (kcal/mol) threshold of predicted dimers.
-
-**(-s)** : Minimum score threshold of predicted dimers, where scores are calculated with +1 for each match and -1 for each mismatch. 
-
-**(-m)** : Max allowed mismatches per dimer.
-
-**(--diva)** : Concentration of divalent salt cations (mM).
-
-**(--mono)** : Concentration of monovalent salt cations (mM).
-
-**(--dntp)** : Concentration of dNTPs (mM).
-
-**(--oligo)** : Concentration of primers (nM).
-
-**(-p)** : Only output dimers with 3' end bind?
+* **INPUT (-i)** : FASTA of primer sequences (with adapters) used to predict dimers. (Required)
+* **ALL_DIMERS (-o)** : Filepath for MFEprimer text output containing information on predicted dimers.
+* **END_DIMERS (-o)** : Filepath for MFEprimer text output containing information on predicted 3' end dimers.
+* **(-d)** : Maximum (i.e., least negative) deltaG (kcal/mol) threshold of predicted dimers.
+* **(-s)** : Minimum score threshold of predicted dimers, where scores are calculated with +1 for each match and -1 for each mismatch. 
+* **(-m)** : Max allowed mismatches per dimer.
+* **(--diva)** : Concentration of divalent salt cations (mM).
+* **(--mono)** : Concentration of monovalent salt cations (mM).
+* **(--dntp)** : Concentration of dNTPs (mM).
+* **(--oligo)** : Concentration of primers (nM).
+* **(-p)** : Only output dimers with 3' end bind?
 
 
 ## Outputs
 Two textfiles saved at ALL_DIMERS and END_DIMERS, each of which contain binding information for all predicted dimers, e.g.:
 
-Dimer 164: 17249.3.REV x 19580.2.REV
-Score: 6, Delta G = -5.82 kcal/mol
-
-gtctcgtgggctcggagatgtgtataagagacagttctctggccttcctccag
-                                               ::::::
-                                               gaggtcaacaaccactaccggacagagaatatgtgtagaggctcgggtgctctg
-
-
+    Dimer 164: 17249.3.REV x 19580.2.REV
+    Score: 6, Delta G = -5.82 kcal/mol
+    
+    gtctcgtgggctcggagatgtgtataagagacagttctctggccttcctccag
+                                                   ::::::
+                                                   gaggtcaacaaccactaccggacagagaatatgtgtagaggctcgggtgctctg
+    
+    
 ## Alternative dimer calculation tools
 The pipeline is built to use MFEprimer dimer to calculate dimer formation, however the optimization process will accept any input tables as long as the 2 input tables specify 1) pairwise dimer loads between primer pairs and 2) the total dimer load per primer pair, with primer pair IDs matching between the input templates and both tables. 
 
