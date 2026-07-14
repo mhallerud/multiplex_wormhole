@@ -35,7 +35,7 @@ except ImportError:
 
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
-         deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
+         deltaG=False, KEEPLIST=None, VERBOSE=False, SEED=None, #TIMEOUT=5,
          SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
          T_INIT=None, T_FINAL=0.001, PROB_ADJ=2, MAKEPLOT=False,
          THREADS=None, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, dG_BAD_LIMIT=-10):
@@ -48,8 +48,6 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     N_LOCI : Number of primer pairs in desired multipled [integer]
     KEEPLIST : Contains primers that MUST be included in the final solution [FASTA; default=None]
     deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [Default: False]
-    TIMEOUT : TYPE, optional
-        DESCRIPTION. The default is 5.
     VERBOSE : Print progress? [Default: False]
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
@@ -265,8 +263,8 @@ def parse_args():
                         help="End temperature for fixed-schedule simulated annealing")
     parser.add_argument("--prob-adj", type=float, default=2,
                         help="Adjustment multiplier for ASA acceptance probabilities")
-    parser.add_argument("--timeout", type=float, default=5,
-                        help="Maximum allowed time (minutes) per swap")
+    #parser.add_argument("--timeout", type=float, default=5,
+    #                    help="Maximum allowed time (minutes) per swap")
     # add flags
     parser.add_argument("-g", "--deltaG", action="store_true",
                         help="Use deltaG optimization algorithm")
@@ -299,7 +297,7 @@ def cli():
          N_LOCI = args.nloci, 
          deltaG = args.deltaG,
          KEEPLIST = args.keeplist, 
-         TIMEOUT = args.timeout, 
+         #TIMEOUT = args.timeout, 
          VERBOSE = args.verbose, 
          SEED = args.seed,
          SIMPLE = args.simple, 

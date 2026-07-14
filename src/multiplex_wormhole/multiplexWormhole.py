@@ -297,7 +297,6 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           N_LOCI = N_LOCI, 
                           deltaG = deltaG, #True: deltaG optimization, False=standard optimization
                           KEEPLIST = KEEPLIST_FA, 
-                          TIMEOUT = 360,#time allowed per run- runs 30 minutes will break
                           VERBOSE=VERBOSE,#set to true to print dimers at each change
                           SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 

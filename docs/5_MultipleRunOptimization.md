@@ -12,7 +12,7 @@ The [optimization process](7_OptimizationProcess.md) includes randomness and out
 ```
 mult_optimizations -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST]
                     [--seed CSV] [--s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN]
-                    [-decay-rate 2.0] [--t-init None] [--t-final 0.01] [--prob-adj 2.0] [--timeout 5]
+                    [-decay-rate 2.0] [--t-init None] [--t-final 0.01] [--prob-adj 2.0]
                     [-g] [-v] [-m] [--threads 1]
                     [--dg-end-limit -4] [--dg-mid-limit -8] [--dg-bad-limit -10]
 ```
@@ -22,7 +22,7 @@ mult_optimizations -r RUNS -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPA
 import multiplex_wormhole as mw
 # example with full inputs & their defaults
 mw.multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
-	deltaG=False, KEEPLIST=None, TIMEOUT=5, VERBOSE=False, SEED=None,
+    deltaG=False, KEEPLIST=None, VERBOSE=False, SEED=None,
     SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=100,
     DECAY_RATE=0.95, T_INIT=None, T_FINAL=None, PROB_ADJ=2)
 ```
@@ -46,7 +46,6 @@ mw.multipleOptimizations(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_
 * **PROB_ADJ (--prob-adj)** : Multiplier used to adjust dimer acceptance probabilities. Increased values result in lower dimer acceptance probabilities at the cost of exploring less of the cost optimization space. [Default: 2]
 * **VERBOSE (-v)** : Print updates as algorithm proceeds? [Default: False]
 * **MAKEPLOT (-m)** : Make simulated annealing temperature schedule plots? Runs [explore optimization parameters](4A_ExploreOptimParameters.md) function. [Default: False]
-* **TIMEOUT (--timeout)** : Number of minutes each swap is allowed to run before the step will be killed by a timeout error. [Default: 5]
 * **THREADS (--threads)** : Number of processors to use for multiprocessing. [Default: None]
 * **dG_END_LIMIT (--dg-end-limit)** : DeltaG threshold used to count 3' end dimers during panel assessment. [Default: -4]
 * **dG_MID_LIMIT (--dg-mid-limit)** : DeltaG threshold used to count non-end dimers during panel assessment. [Default: -8]
