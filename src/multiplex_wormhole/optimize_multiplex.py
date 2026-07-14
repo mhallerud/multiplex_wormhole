@@ -441,14 +441,14 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             pass
                         x = len(allowed_pairs_rmv)
 
-                    # when options run out for replacing this pair, add it to blockedlist to avoid trying to replace
-                    if x <= 1:
-                        if VERBOSE:
-                            logger.info("     Ran out of options for replacing %s. Added to blockedlist.", swap_id)
-                        blockedlist.append(swap_id)
+                        # when options run out for replacing this pair, add it to blockedlist to avoid trying to replace
+                        if x <= 1:
+                            if VERBOSE:
+                                logger.info("     Ran out of options for replacing %s. Added to blockedlist.", swap_id)
+                            blockedlist.append(swap_id)
     
             # stop iterating if no new sets can be made in the previous while loop
-            if newSet is None:
+            if newSet is None or 0:
                 costs.append([i, Temp, curr_total])
                 logger.info("No new sets can be made with the available primers!")
                 break
@@ -1104,8 +1104,8 @@ def ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, primer_seqs,
     outseqs = [primer_seqs[x] for x in current_pairs_index]
     # add keeplist loci
     if len(keeplist_IDs)>0:
-        outpairs = outpairs + keeplist_IDs
-        outseqs = outseqs + keeplist_seqs
+        outpairs = outpairs# + keeplist_IDs
+        outseqs = outseqs# + keeplist_seqs
     # export selected multiplex to CSV
     with open(OUTPATH+'_primers.csv', 'w') as file:
         file.write("PrimerID,Sequence\n")
