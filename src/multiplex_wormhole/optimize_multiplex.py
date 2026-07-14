@@ -199,7 +199,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("")
     logger.info("GENERATING INITIAL PRIMER SET........")
     # make list of unique loci
-    uniq_loci = list(set([primer_loci, keeplist_loci]))# convert to list because new versions of random.sample won't be able to handle sets...
+    uniq_loci = list(set(primer_loci))# convert to list because new versions of random.sample won't be able to handle sets...
     # grab best primer pairs for each locus
     best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
     #nloci = len(uniq_loci)
