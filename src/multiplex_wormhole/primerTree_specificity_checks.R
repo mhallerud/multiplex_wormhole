@@ -32,12 +32,6 @@ runPrimerTree <- function(primers, organisms, outcsv,
   names <- gsub(".FWD", "", primers$PrimerID[endsWith(primers$PrimerID,".FWD")])
   
   #---------RUN PRIMER-BLAST SPECIFICITY CHECK FOR ALL PRIMERS-----------#
-  ## NOTE: This will consider mispriming from all combinations of FWD/REV primer pairs!
-  ## only one "organism" argument allowed, so run multiple times per "organism" group
-  # set up function with global settings:
-  run_primer_search <- function(fwd, rev, organism, ...){
-    primerTree::primer_search(forward=fwd, reverse=rev, organism=organism, ...)
-  }#run_primer_search
   all_hits <- data.frame()
   # loop through forwards
   for (fwd in 1:length(forwards)){
@@ -49,7 +43,12 @@ runPrimerTree <- function(primers, organisms, outcsv,
         for (o in organisms){
           skip_to_next <- FALSE
           tryCatch({
-            search <- run_primer_search(forwards[fwd], reverses[rev], organism=o, ...)
+            search <- primerTree::primer_search(forwards[fwd], reverses[rev], 
+                                                organism=o, 
+                                                max_target_size=MAX_TARGET_SIZE,
+                                                exclude_env=EXCLUDE_ENV,
+                                                primer_specificity_database=PRIMER_SPECIFICITY_DATABASE,
+                                                ...)
             for (l in 1:length(search)){
               hits <- primerTree::parse_primer_hits(search[[l]])
               if (!is.null(hits)){
