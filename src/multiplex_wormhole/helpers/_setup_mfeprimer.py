@@ -12,6 +12,7 @@ Created on Mon Apr 27 09:55:08 2026
 # load dependency modules
 import sys
 import os
+import stat
 import glob
 import urllib.request
 import gzip
@@ -80,7 +81,8 @@ def install_mfeprimer(outdir):
                 if os.path.exists(f_out):
                     print("Allowing usage as executable....")
                     try:
-                        subprocess.call("chmod +x "+f_out, shell=True)
+                        st = os.stat(f_out)
+                        os.chmod(f_out, st.st_mode | stat.S_IEXEC) #stat.S_IEXEC = owner executable
                         return [f_out]
                     except Exception:
                         print("Permissions could not be changed for MFEprimer- try running:")
