@@ -192,25 +192,34 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     # set output paths
     ALL_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers.txt')
     END_DIMERS=os.path.join(OUTDIR2, 'MFEprimerDimers_ends.txt')
-    # MFEprimer parameters:
-    # -i = input FASTA of primer sequences 
-    # -o = output file
-    # -d = maximum deltaG threshold to consider dimers (kcal/mol)
-    # -s = minimum score threshold to consider dimers(scores are calculated with +1 for each match and -1 for each mismatch (not including Ns)
-    # -m = max allowed mismatches per dimer
-    # -p = only output dimers with 3' end bind
-    # --diva = concentration of divalent cations (mM)
-    # --mono = concentration of monovalent cations (mM)
-    # --dntp = concentration of dNTPs (mM)
-    # --oligo = concentration of annealing oligos (nM)
     if not os.path.exists(INPUT):
         raise Exception(INPUT+" not found- did primer3BatchDesign step fail?")
     try:
         CPU = THREADS if THREADS else 2
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+ALL_DIMERS+" -d "+str(dG_MID_LIMIT)+" -s 3 -m 50 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 --cpu "+str(CPU),
-                        shell=True)
-        subprocess.call(MFEprimer_PATH+" dimer -i "+INPUT+" -o "+END_DIMERS+" -d "+str(dG_END_LIMIT)+" -s 3 -m 70 --diva 3.8 --mono 50 --dntp 0.25 --oligo 50 -p --cpu "+str(CPU),
-                        shell=True)
+        subprocess.call([MFEprimer_PATH,"dimer", 
+                         "-i", INPUT, # input FASTA of primer sequences 
+                         "-o", ALL_DIMERS, # output file
+                         "-d", str(dG_MID_LIMIT), # max deltaG threshold to consider dimers (kcal/mol)
+                         "-s", "3",  # min score threshold to consider dimers(scores are calculated with +1 for each match and -1 for each mismatch (not including Ns)
+                         "-m", "50", # max allowed mismatches per dimer
+                         "--diva", "3.8", # concentration of divalent cations (mM)
+                         "--mono", "50", # concentration of monovalent cations (mM)
+                         "--dntp", "0.25", # concentration of dNTPs (mM)
+                         "--oligo", "50", # concentration of annealing oligos (nM)
+                         "--cpu "+str(CPU)], # cpus for multi-threading
+                        shell=False)
+        subprocess.call([MFEprimer_PATH,"dimer", "-i", INPUT,
+                         "-o", END_DIMERS,
+                         "-d", str(dG_END_LIMIT),
+                         "-s", "3",
+                         "-m", "50",
+                         "--diva", "3.8",
+                         "--mono", "50",
+                         "--dntp", "0.25",
+                         "--oligo", "50",
+                         "-p", # only output dimers with 3' end bind
+                         "--cpu "+str(CPU)],
+                        shell=False)
     except Exception:
         print("MFEprimer dimer step failed! Error message & traceback:")
         print(traceback.format_exc())
