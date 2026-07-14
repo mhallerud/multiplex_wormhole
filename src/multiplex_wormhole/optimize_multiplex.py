@@ -317,6 +317,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             logger.info("Initial mean deltaG: %s", str(-curr_total))
         else:
             logger.info("Initial # dimers: %s", str(curr_total))
+        # blockedlist are pairs that cannot be replaced in the set
         if len(keeplist_pairs) > 0:
             blockedlist = keeplist_pairs
         else:
@@ -336,8 +337,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                                 [], random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i)
             if newSet is None:
                 comparison = False
+            elif newSet==0:
+                break
             else:
                 swap_id, new_best_id, new_pairIDs = newSet
+                if VERBOSE:
+                    logger.info("  Swapping  "+swap_id+" with "+new_best_id+" (outer SII loop)")
                 # test if new set is better than current set (if fewer overall dimers)
                 comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
                     compareSets(new_pairIDs, curr_total, swap_id, new_best_id, dimer_table, dimer_sums, deltaG=deltaG)
@@ -366,6 +371,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 orig_best = new_best_id
                 # loop through, allowing all other replacement options to be tested
                 x = len(allowed_pairs_rmv)
+                # keep track of pairs that should not be added to allowed list
                 blockedlist2 = []
                 while x > 0:
                     # set these to avoid infinite loops
@@ -385,11 +391,15 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         break
                     else:
                         swap_id, new_best_id, new_pairIDs = newSet
-                    
+                        if VERBOSE:
+                            logger.info("  Swapping "+swap_id+" with "+new_best_id+" (inner SII loop)")
+
                     # skip back to top of while if new best is same as original curr_worst
                     if new_best_id == orig_swap or new_best_id == orig_best:
                         if VERBOSE:
-                            logger.info("     Infinite loop caused by %s! Removing from swap options.", new_best_id)
+                            logger.info("     Infinite loop (A) caused by %s! Removing from swap options.", new_best_id)
+                        #blockedlist.append(swap_id)
+                        #blockedlist2.append(swap_id)
                         blockedlist2.append(new_best_id)
                         #if x > 1:
                         try:
@@ -405,8 +415,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     # skip if new_best is the original pair we started with
                     if new_best_id == prev_best and swap_id == prev_worst:
                         if VERBOSE:
-                            logger.info("     Infinite loop caused by %s ! Removing from swap options.", new_best_id)
-                        #blockedlist2.append(new_best_id)
+                            logger.info("     Infinite loop (B) caused by %s ! Removing from swap options.", new_best_id)
+                        #blockedlist2.append(swap_id)
+                        blockedlist2.append(new_best_id)
                         try:
                             allowed_pairs_rmv.remove(new_best_id)
                         except ValueError:
