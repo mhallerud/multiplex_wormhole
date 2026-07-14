@@ -152,7 +152,7 @@ For example, I use the following steps to prepare input data for applications fo
 
 
 ## Quick Start
-**The multiplexWormhole function is a wrapper around all sub-modules. Check out the [multiplex_wormhole page](multiplex_wormhole.md) for ultimate flexibility and to understand the pipeline steps and output structure. See individual modules within the [full workflow](#multiplex-wormhole-functions) to understand each step and its defaults.**
+**The multiplexWormhole function is a wrapper around all sub-modules, minimum inputs are shown here. Check out the [multiplex_wormhole page](multiplex_wormhole.md) for ultimate flexibility and to understand the pipeline steps and output structure. See individual modules within the [full workflow](#multiplex-wormhole-functions) to understand each step and its defaults.**
 
 ### Command line usage
 ```ruby
