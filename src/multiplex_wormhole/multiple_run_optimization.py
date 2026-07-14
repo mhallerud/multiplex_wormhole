@@ -87,7 +87,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
             raise InputError("PrimerIDs in KEEPLIST are not in the correct format! " \
                              "Reformat IDs as <name>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
     
-    if THREADS>N_RUNS:
+    if THREADS is not None and THREADS>N_RUNS:
         print("More THREADS specified than N_RUNS - CPU usage will be limited to the # of runs.")
     # set up output filename if None
     if OUTPATH is None or OUTPATH=="None":
