@@ -4,6 +4,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
                           fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                           rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                           all_combos=FALSE,
+                          THREADS=1,
                           MAX_TARGET_SIZE=600, #max amplicon size is 600 bp
                           EXCLUDE_ENV="$0", #checks box for "exclude environmental samples"
                           PRIMER_SPECIFICITY_DATABASE="nt", #includes core_nt + genomes
@@ -26,24 +27,32 @@ runPrimerTree <- function(primers, organisms, outcsv,
   primers$Sequence <- gsub(fwd_adapter, "", primers$Sequence)
   primers$Sequence <- gsub(rev_adapter, "", primers$Sequence)
   
-  # extract forward sequences
-  forwards <- primers$Sequence[endsWith(primers$PrimerID, ".FWD")]
-  reverses <- primers$Sequence[endsWith(primers$PrimerID, ".REV")]
-  names <- gsub(".FWD", "", primers$PrimerID[endsWith(primers$PrimerID,".FWD")])
+  # extract FWD, REV seqs & pair IDs
+  orig_pairs <- data.frame(ID = gsub(".FWD", "", primers$PrimerID[endsWith(primers$PrimerID,".FWD")]),
+                          FWDseq = primers$Sequence[endsWith(primers$PrimerID, ".FWD")],
+                          REVseq = primers$Sequence[endsWith(primers$PrimerID, ".REV")])
   
   #---------RUN PRIMER-BLAST SPECIFICITY CHECK FOR ALL PRIMERS-----------#
-  all_hits <- data.frame()
-  # loop through forwards
-  for (fwd in 1:length(forwards)){
-    # loop through all reverses
-    for (rev in 1:length(reverses)){
-      if(all_combos | fwd==rev){
-        print(paste("Running PRIMER-BLAST for",names[fwd],names[rev]))
-        # loop through organisms
-        for (o in organisms){
-          skip_to_next <- FALSE
-          tryCatch({
-            search <- primerTree::primer_search(forwards[fwd], reverses[rev], 
+  # set up df of primer pairs to check
+  if(all_combos){
+    pairs <- expand.grid(FWDid=pairs$ID, REVid=pairs$ID)
+    pairs$FWDseq <- orig_pairs$FWDseq[match(pairs$FWDid, orig_pairs$ID)]
+    pairs$REVseq <- orig_pairs$REVseq[match(pairs$REVid, orig_pairs$ID)]
+  }else{
+    pairs <- orig_pairs
+    pairs$FWDid <- pairs$REVid <- pairs$ID
+  }#ifelse
+
+  # sub-function to run primerTree for each primer pair
+  runPair <- function(pair, organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
+                      PRIMER_SPECIFICITY_DATABASE, ...){
+    print(paste("Running PRIMER-BLAST for",pair$FWDid,pair$REVid))
+    all_hits <- data.frame()
+    # loop through organisms
+    for (o in organisms){
+        skip_to_next <- FALSE
+        tryCatch({
+            search <- primerTree::primer_search(pair$FWDseq, pair$REVseq,
                                                 organism=o, 
                                                 max_target_size=MAX_TARGET_SIZE,
                                                 exclude_env=EXCLUDE_ENV,
@@ -52,28 +61,55 @@ runPrimerTree <- function(primers, organisms, outcsv,
             for (l in 1:length(search)){
               hits <- primerTree::parse_primer_hits(search[[l]])
               if (!is.null(hits)){
-                hits$FWD <- paste0(names[fwd], ".FWD")
-                hits$REV <- paste0(names[rev], ".REV")
-                hits$FWDseq <- paste0(forwards[fwd], ".FWD")
-                hits$REVseq <- paste0(reverses[rev], ".REV")
+                hits$FWD <- paste0(pair$FWDid, ".FWD")
+                hits$REV <- paste0(pair$REVid, ".REV")
+                hits$FWDseq <- pair$FWDseq
+                hits$REVseq <- pair$REVseq
                 all_hits <- rbind(all_hits, hits)
-                write.csv(all_hits, outcsv)
               }#if
             }#for l
           },#try, 
           error = function(cond) {
-              message(paste("PRIMER-BLAST failed for this combo:", names[fwd], names[rev]))
-              message("Here's the original error message:")
-              message(conditionMessage(cond))
-              skip_to_next <- TRUE
+            message(paste("PRIMER-BLAST failed for this combo:", pairs$FWDid, pairs$REVid))
+            message("Here's the original error message:")
+            message(conditionMessage(cond))
+            skip_to_next <- TRUE
           })#tryCatch
           # bypass errors
           if(skip_to_next) { next }
-        }#for o
-      }#if
-    }#for rev
-  }#for fwd
+        }#for o in organisms
+    return(all_hits)
+    }#runPair
   
+  # use parallel processing if multiple threads available
+  if (THREADS>1){
+    # set up multi-threading
+    library(parallel)
+    library(doParallel)
+    #check available cores
+    #parallel::detectCores()
+    #initialize thread cluster
+    cluster <- parallel::makeCluster(THREADS)
+    # register the cluster
+    doParallel::registerDoParallel(cluster)
+    # multi-thread primerTree across pairs
+    all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %do% 
+      runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
+              PRIMER_SPECIFICITY_DATABASE, ...)
+    # close cluster
+    parallel::stopCluster(cluster)
+  
+  # if no multi-threading, loop through each primer pair instead,
+  # saving progress as it runs
+  }else{
+    for (i in 1:nrow(pairs)){
+      all_hits <- data.frame()
+      new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
+                          PRIMER_SPECIFICITY_DATABASE, ...)
+      all_hits <- rbind(all_hits, new_hits)
+      write.csv(all_hits, outcsv)
+    }#for
+  }#ifelse
   if (nrow(all_hits)>0){
     #--------PULL TAXONOMY INFORMATION FOR ALL HITS--------------#
     print("Pulling taxonomy information from NCBI.....")
