@@ -199,7 +199,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("")
     logger.info("GENERATING INITIAL PRIMER SET........")
     # make list of unique loci
-    uniq_loci = list(set(primer_loci))# convert to list because new versions of random.sample won't be able to handle sets...
+    uniq_loci = list(set([primer_loci, keeplist_loci]))# convert to list because new versions of random.sample won't be able to handle sets...
     # grab best primer pairs for each locus
     best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
     #nloci = len(uniq_loci)
@@ -897,37 +897,38 @@ def BestPrimers(loci, dimer_sums, keeplist, deltaG, RNG=12345):
     dimer_tallies = dimer_sums['0']
     dimer_primerIDs = dimer_sums['Pair1']
     dimer_loci = [str(x).split(".")[0] for x in dimer_primerIDs]
-    # replace "best" with keeplist pair if in keeplist
-    keeplist_loci = [keeplist[x].split('.')[0] for x in range(len(keeplist))]
     best_primer_pairs = dict()
+    # replace "best" with keeplist pair if in keeplist
+    #keeplist_loci = [keeplist[x].split('.')[0] for x in range(len(keeplist))]
     for locus in loci:
-        if locus in keeplist_loci:
-            # assign keeplist pairs as best
-            keeplist_indx = list(
-                filter(lambda x: keeplist_loci[x] == locus, range(len(keeplist_loci))))
-            bestPair = [keeplist[x] for x in keeplist_indx][0]
-            # extract dimer tally for this pair
-            dimer_idx = list(
-                filter(lambda x: dimer_primerIDs[x] == bestPair, range(len(dimer_primerIDs))))
-            if len(dimer_idx) == 0:
-                min_dimers = float('nan')  # in case pair is missing from DB
-            else:
-                min_dimers = [dimer_tallies[x] for x in dimer_idx][0]
-        else:
-            # extract dimer data for this locus
-            locus_idx = list(
-                filter(lambda x: dimer_loci[x] == locus, range(len(dimer_loci))))
-            ids = [dimer_primerIDs[i] for i in locus_idx]
-            tallies = [dimer_tallies[i] for i in locus_idx]
-            # extract primer pair with worst dimer value
-            min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
-            # if there's more than one 'best' option, randomly choose one...
-            if len(min_idx) > 1:
-                rand.seed(RNG)
-                min_idx = [rand.choice(min_idx)]
-            # extract the ID for the selected pair
-            bestPair = [ids[i] for i in min_idx][0]
-            min_dimers = min(tallies)
+        # this step is no longer necessary - all KEEPLIST pairs are removed from candidates
+        #if locus in keeplist_loci:
+        #    # assign keeplist pairs as best
+        #    keeplist_indx = list(
+        #        filter(lambda x: keeplist_loci[x] == locus, range(len(keeplist_loci))))
+        #    bestPair = [keeplist[x] for x in keeplist_indx][0]
+        #    # extract dimer tally for this pair
+        #    dimer_idx = list(
+        #        filter(lambda x: dimer_primerIDs[x] == bestPair, range(len(dimer_primerIDs))))
+        #    if len(dimer_idx) == 0:
+        #        min_dimers = float('nan')  # in case pair is missing from DB
+        #    else:
+        #        min_dimers = [dimer_tallies[x] for x in dimer_idx][0]
+        #else:
+        # extract dimer data for this locus
+        locus_idx = list(
+            filter(lambda x: dimer_loci[x] == locus, range(len(dimer_loci))))
+        ids = [dimer_primerIDs[i] for i in locus_idx]
+        tallies = [dimer_tallies[i] for i in locus_idx]
+        # extract primer pair with worst dimer value
+        min_idx = list(filter(lambda x: tallies[x] == min(tallies), range(len(tallies))))
+        # if there's more than one 'best' option, randomly choose one...
+        if len(min_idx) > 1:
+            rand.seed(RNG)
+            min_idx = [rand.choice(min_idx)]
+        # extract the ID for the selected pair
+        bestPair = [ids[i] for i in min_idx][0]
+        min_dimers = min(tallies)
         # set up dictionary with locus: (primer pair id, min # dimers)
         best_primer_pairs.update({bestPair: min_dimers})
     return best_primer_pairs
