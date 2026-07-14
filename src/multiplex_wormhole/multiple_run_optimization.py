@@ -87,6 +87,8 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
             raise InputError("PrimerIDs in KEEPLIST are not in the correct format! " \
                              "Reformat IDs as <name>.<#>.<DIR>, e.g., MACA01.0.FWD & MACA01.0.REV")
     
+    if THREADS>N_RUNS:
+        print("More THREADS specified than N_RUNS - CPU usage will be limited to the # of runs.")
     # set up output filename if None
     if OUTPATH is None or OUTPATH=="None":
         OUTPATH = datetime.now().strftime("%d-%m-%Y_%H%M")
@@ -102,7 +104,9 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                      BURNIN=BURNIN, DECAY_RATE=DECAY_RATE, T_INIT=T_INIT, T_FINAL=T_FINAL,
                      PROB_ADJ=PROB_ADJ, MAKEPLOT=MAKEPLOT, dG_END_LIMIT=dG_END_LIMIT,
                      dG_MID_LIMIT=dG_MID_LIMIT, dG_BAD_LIMIT=dG_BAD_LIMIT)
-    CPUs = THREADS if THREADS else (os.cpu_count()-1 or 1)
+    CPUs = THREADS if THREADS else (os.cpu_count()-2) or 1
+    if CPUs>N_RUNS:
+        CPUs=N_RUNS
     with Pool(CPUs) as pool:
         # calc number of runs per thread
         chunksize = ceil(N_RUNS / CPUs)
