@@ -73,25 +73,25 @@ mw.assessPanel(PRIMERS,
 
 #### multiplex-wormhole
 
-**TEMPLATES (-t –templates)** : Path to templates CSV. NLOCI (-n –nloci) : Final panel size (i.e., # primer pairs & # templates amplified). 
+* **TEMPLATES (-t –templates)** : Path to templates CSV. NLOCI (-n –nloci) : Final panel size (i.e., # primer pairs & # templates amplified). 
 
-**OUTDIR (-o –outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure. 
+* **OUTDIR (-o –outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure. 
 
-**PREFIX (-p –prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided] 
+* **PREFIX (-p –prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided] 
 
-**KEEPLIST_FA (-k –keeplist)** : Path to keeplist FASTA. [Default: None] 
+* **KEEPLIST_FA (-k –keeplist)** : Path to keeplist FASTA. [Default: None] 
 
-**N_RUNS (-r –runs)** : Number of optimization runs. [Default: 10] 
+* **N_RUNS (-r –runs)** : Number of optimization runs. [Default: 10] 
 
-**ITERATIONS (-i –iter)** : Number of simulated annealing iterations per cycle. [Default: 1000] 
+* **ITERATIONS (-i –iter)** : Number of simulated annealing iterations per cycle. [Default: 1000] 
 
-**CYCLES (-c –cycles)** : Number of simulated annealing cycles per run. [Default: 10] 
+* **CYCLES (-c –cycles)** : Number of simulated annealing cycles per run. [Default: 10] 
 
-**SIMPLE (-s –simple)** : Number of simple iterative improvement iterations per run. [Default: 5000] 
+* **SIMPLE (-s –simple)** : Number of simple iterative improvement iterations per run. [Default: 5000] 
 
-**deltaG (-d –deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False] 
+* **deltaG (-d –deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False] 
 
-**VERBOSE (-v –verbose)** : Print all steps and swaps at the optimization step. [Default: False]
+* **VERBOSE (-v –verbose)** : Print all steps and swaps at the optimization step. [Default: False]
 
 #### mw-assess-panel
 
