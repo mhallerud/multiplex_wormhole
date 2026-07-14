@@ -398,25 +398,18 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     if new_best_id == orig_swap or new_best_id == orig_best:
                         if VERBOSE:
                             logger.info("     Infinite loop (A) caused by %s! Removing from swap options.", new_best_id)
-                        #blockedlist.append(swap_id)
-                        #blockedlist2.append(swap_id)
                         blockedlist2.append(new_best_id)
-                        #if x > 1:
                         try:
                             allowed_pairs_rmv.remove(new_best_id)
                         except ValueError:
                             pass
                         x = len(allowed_pairs_rmv)
                         continue  # go back to while
-                        # stop if no other options for swapping this pair
-                        #else:
-                        #    break
                     
                     # skip if new_best is the original pair we started with
                     if new_best_id == prev_best and swap_id == prev_worst:
                         if VERBOSE:
                             logger.info("     Infinite loop (B) caused by %s ! Removing from swap options.", new_best_id)
-                        #blockedlist2.append(swap_id)
                         blockedlist2.append(new_best_id)
                         try:
                             allowed_pairs_rmv.remove(new_best_id)
