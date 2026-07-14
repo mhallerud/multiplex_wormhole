@@ -421,7 +421,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     if comparison < 0:
                         update = updateSet(swap_id, new_best_id, new_pairIDs, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total)
                         current_pairIDs, curr_total, curr_dimer_totals, primerset_dimers, nonset_dimers = update #parse output into components
-                        allowed_pairs_rmv = UpdateAllowedPairs(swap_id, allowed_pairs_rmv, primer_loci, primer_pairs)
+                        allowed_pairs = UpdateAllowedPairs(swap_id, allowed_pairs, primer_loci, primer_pairs, new_pair=new_best_id)
                         costs.append([i, Temp, curr_total])
                         break  # exit this loop if a replacement was found
                     else:
@@ -433,6 +433,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             allowed_pairs_rmv.remove(swap_id)
                         except ValueError:
                             pass
+                        x = len(allowed_pairs_rmv)
 
                     # when options run out for replacing this pair, add it to blockedlist to avoid trying to replace
                     if x <= 1:
