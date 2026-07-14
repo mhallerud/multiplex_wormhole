@@ -95,13 +95,13 @@ mw.assessPanel(PRIMERS,
 
 #### mw-assess-panel
 
-**PRIMERS (-i –input)** : FASTA or CSV of primers. Sequence names must match the format .<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
+* **PRIMERS (-i –input)** : FASTA or CSV of primers. Sequence names must match the format .<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
 
-**ALL_DIMERS_dG (-a --alldimers_dg)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8] 
+* **ALL_DIMERS_dG (-a --alldimers_dg)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8] 
 
-**END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4] 
+* **END_DIMERS_dG (-e --enddimers_dg)** : deltaG threshold for predicting 3' end dimers. [Default: -4] 
 
-**BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
+* **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
 These are the basics but multiplex-wormhole has many more options- see [GitHub pages](https://mhallerud.github.io/multiplex_wormhole/](https://mhallerud.github.io/multiplex_wormhole/multiplex-wormhole) for full functionality.
 
