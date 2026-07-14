@@ -47,6 +47,9 @@ primerblast <- runPrimerTree(primers, organisms=c(),
                              fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                              rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                              all_combos=FALSE,
+                             MAX_TARGET_SIZE=600,
+                             EXCLUDE_ENV="$0",
+                             PRIMER_SPECIFICITY_DATABASE="nt",
                              ...)
 # check output
 View(primerblast)
@@ -58,6 +61,18 @@ View(primerblast)
 
 **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take awhile!).
 
+**MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
+
+**EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
+
+**PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
+    * "nt" [Default] : includes NCBI nt database + chromosomes from genome assemblies
+    * "core_nt" : nt database without genomes
+    * "refseq_mrna" : Refseq mRNA database
+    * "refseq_representative_genomes" : RefSeq representative genomes database
+    * "PRIMERDB/genome_selected_species" : Genomes for selected organisms (primary assembly only)
+    * "refseq_rna" : RefSeq RNA database
+    * "Custom" + "CUSTOMSEQFILE"="<filepath>" : Custom BLAST database.
 
 ### 2. Calculate Thermodynamics of Off-target Primer-Binding Sites (in Python)
 This function uses primer3-py to calculate thermodynamic stability of full binding sites and end stability of binding sites. Binding sites are identified from PrimerTree/PRIMER-BLAST outputs.
