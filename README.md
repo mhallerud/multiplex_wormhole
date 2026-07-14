@@ -11,21 +11,14 @@ multiplex_wormhole was built and tested on MacOS with Python v3.9.13 in the Spyd
 conda create -n py39 python=3.9 #create new virtual env w/ python v3.9
 conda activate py39 #enter virtual env
 ```
-Some clusters used pixi instead of conda environments:
-```
-pixi init #initialize virtual env
-pixi add "python=3.9" #set python version
-pixi shell #enter virtual env
-```
 
 ### Install multiplex wormhole
 ```
 pip install multiplex_wormhole
+multiplex-wormhole -h
 ```
 
-Note: Pixi/conda can be finicky... Dependening on your system, you may run into dependency errors here. If that happens, `exit` your virtual env and install the missing dependencies following the instructions below.
-
-### Back-up installation option
+### Or clone the repo
 If pip install doesn't work, you can also install manually by taking the following steps (from the command line):
 ```
 # clone GitHub repo
@@ -36,13 +29,7 @@ pip install -r multiplex_wormhole/requirements.txt
 
 # install as python package
 pip install -e multiplex_wormhole
-
-# check
-multiplex-wormhole -h
 ```
-
-### Configuring the MFE primer binary
-MFEprimer is used for dimer calculations. Multiplex wormhole is set up to automatically download and configure the binary file using the helpers/setup_mfeprimer.py script, take the following steps: Download the MFEprimer v3.2.7 version that fits your operating system [here](https://github.com/quwubin/MFEprimer-3.0/releases). Save the file to your multiplex_wormhole package directory (location can be found by running `pip show multiplex_wormhole`). Unzip the download (if zipped). Ensure the file can be executed by opening terminal or the command line in this directory and running `chmod +x mfeprimer*`.
 
 Now you are ready to run multiplex wormhole!
 
@@ -51,7 +38,7 @@ Now you are ready to run multiplex wormhole!
 ### Command line syntax
 
 ```
-# PANEL DESIGN
+# PANEL DESIGN (minimum inputs)
 # usage: multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
 #                           [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
 #                           [-s SIMPLE] [-d] [-v]
@@ -61,7 +48,7 @@ python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "T
 # PANEL ASSESSMENT
 # usage: mw-assess-panel [-h] -i INPUT [-a ALLDIMERS_DG] [-e ENDDIMERS_DG] [-b BADDIMERS_DG]
 # example with defaults:
-mw-assess-panel -i "Primers.fasta" -a -8 -e -5 -b -10
+mw-assess-panel -i "Primers.fasta" -a -8 -e -4 -b -10
 ```
 
 ### Python syntax
@@ -116,11 +103,7 @@ mw.assessPanel(PRIMERS,
 
 **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
-multiplex-wormhole is a wrapper around the steps described below and uses their defaults. See the multiplex_wormhole page to understand the pipeline steps and output structure.
-
-
-## Full Workflow Example
-See [multiplex_primer_design](multiplex_primer_design.py) to run the full pipeline step by step using the [example templates](examples/Input_Templates.csv).
+These are the basics but multiplex-wormhole has many more options- see [GitHub pages](https://mhallerud.github.io/multiplex_wormhole/](https://mhallerud.github.io/multiplex_wormhole/multiplex-wormhole) for full functionality.
 
 
 ## Comments/Questions/Ideas
