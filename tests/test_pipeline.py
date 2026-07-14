@@ -20,7 +20,7 @@ def _has_mfeprimer():
         return [True, path]
     pkg_dir = os.path.join(os.path.dirname(__file__), "../src/multiplex_wormhole")
     path = glob.glob(os.path.join(pkg_dir, "*mfeprimer*"))
-    return [len(path) > 0, path[0]]
+    return [len(path) > 0, path[0] if len(path)>0 else None]
 
 
 HAS_MFEPRIMER = _has_mfeprimer()
