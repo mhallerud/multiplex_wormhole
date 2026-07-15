@@ -4,7 +4,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
                           fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                           rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",
                           all_combos=FALSE,
-                          THREADS=1,
+                          THREADS=1, 
                           MAX_TARGET_SIZE=600, #max amplicon size is 600 bp
                           EXCLUDE_ENV="$0", #checks box for "exclude environmental samples"
                           PRIMER_SPECIFICITY_DATABASE="nt", #includes core_nt + genomes
@@ -47,7 +47,6 @@ runPrimerTree <- function(primers, organisms, outcsv,
   runPair <- function(pair, organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
                       PRIMER_SPECIFICITY_DATABASE, ...){
     print(paste("Running PRIMER-BLAST for",pair$FWDid,pair$REVid))
-    all_hits <- data.frame()
     # loop through organisms
     for (o in organisms){
         skip_to_next <- FALSE
@@ -58,19 +57,23 @@ runPrimerTree <- function(primers, organisms, outcsv,
                                                 exclude_env=EXCLUDE_ENV,
                                                 primer_specificity_database=PRIMER_SPECIFICITY_DATABASE,
                                                 ...)
-            for (l in 1:length(search)){
-              hits <- primerTree::parse_primer_hits(search[[l]])
-              if (!is.null(hits)){
-                hits$FWD <- paste0(pair$FWDid, ".FWD")
-                hits$REV <- paste0(pair$REVid, ".REV")
-                hits$FWDseq <- pair$FWDseq
-                hits$REVseq <- pair$REVseq
-                all_hits <- rbind(all_hits, hits)
+            # parse hits
+            hits_list <- vector("list", length(search))
+            if(length(search)>1){
+              for (l in 1:length(search)){
+                hits_list[[l]] <- primerTree::parse_primer_hits(search[[l]])
+              }#for l
+              all_hits <- do.call(rbind, Filter(Negate(is.null)), hits_list)
+              if (!is.null(all_hits)){
+                all_hits$FWD <- paste0(pair$FWDid, ".FWD")
+                all_hits$REV <- paste0(pair$REVid, ".REV")
+                all_hits$FWDseq <- pair$FWDseq
+                all_hits$REVseq <- pair$REVseq
               }#if
-            }#for l
+            }#if
           },#try, 
           error = function(cond) {
-            message(paste("PRIMER-BLAST failed for this combo:", pairs$FWDid, pairs$REVid))
+            message(paste("PRIMER-BLAST failed for this combo:", pair$FWDid, pair$REVid))
             message("Here's the original error message:")
             message(conditionMessage(cond))
             skip_to_next <- TRUE
@@ -86,46 +89,49 @@ runPrimerTree <- function(primers, organisms, outcsv,
     # set up multi-threading
     library(parallel)
     library(doParallel)
-    #check available cores
-    #parallel::detectCores()
-    #initialize thread cluster
-    cluster <- parallel::makeCluster(THREADS)
+    #parallel::detectCores() #check available cores
+    # initialize thread cluster
+    cluster <- parallel::makeCluster(THREADS, outfile="")
     # register the cluster
     doParallel::registerDoParallel(cluster)
     # multi-thread primerTree across pairs
-    all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% 
-      runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
-              PRIMER_SPECIFICITY_DATABASE, ...)
+    all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% {
+         result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
+         # save progress...
+         write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"))
+         result
+    }#foreach
     # close cluster
     parallel::stopCluster(cluster)
-  
+
   # if no multi-threading, loop through each primer pair instead,
   # saving progress as it runs
   }else{
+    all_hits <- data.frame()
     for (i in 1:nrow(pairs)){
-      all_hits <- data.frame()
       new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
                           PRIMER_SPECIFICITY_DATABASE, ...)
       all_hits <- rbind(all_hits, new_hits)
       write.csv(all_hits, outcsv)
     }#for
   }#ifelse
+  
   if (nrow(all_hits)>0){
+    unique_accs <- unique(all_hits$accession)
+    
     #--------PULL TAXONOMY INFORMATION FOR ALL HITS--------------#
     print("Pulling taxonomy information from NCBI.....")
-    taxa <- primerTree::get_taxonomy(all_hits$accession)
+    taxa <- primerTree::get_taxonomy(unique_accs)
     all_hits <- merge(all_hits, taxa, by="accession")
 
     #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
     print("Retrieving sequences from NCBI.....")
-    all_hits$Sequence <- NA
-    for (row in 1:nrow(all_hits)){
-      seq <- primerTree::get_sequence(accession = all_hits$accession[row],
-                        start = all_hits$product_start[row],
-                        stop = all_hits$product_stop[row])
-      all_hits$Sequence[row] <- paste(unlist(as.character(seq)), collapse="")
-    }#if
-  }#for
+    seqs <- primerTree::get_sequences(accession = all_hits$accession,
+                                      start = all_hits$product_start,
+                                      stop = all_hits$product_stop)
+    seqs <- lapply(as.character(seqs), function(x) paste(unlist(x), collapse=""))
+    all_hits$Sequence <- as.character(seqs[match(all_hits$accession, names(seqs))])
+  }#if
   
   write.csv(all_hits, outcsv)
   #return(all_hits)

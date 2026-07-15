@@ -26,7 +26,7 @@ The steps and functions provided by mw are:
 1. R - [runPrimerTree](#1_runPrimerTree): Identify off-target amplification for each primer pair
 2. Python/CLI - [mw-specificity](#2_calculate_offtarget_thermodynamics): Calculates deltaG and Tm between each primer and off-target primer-binding site (Optional but highly recommended).
 3. R - [extractPrimerInfo](#3_extractPrimerInfo): Extracts primer binding locations and target amplicons from multiplex wormhole inputs and outputs (Optional but required for plotting amplicons)
-4. R - [plotPrimerBlast]: Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, showing # base pair mismatches.
+4. R - [plotPrimerBlast](#4_plotPrimerBlast): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, showing # base pair mismatches.
 
 ## R Package Dependencies
 For primerTree specificity checks:
@@ -65,9 +65,9 @@ View(primerblast)
 ```
 ### Arguments
 * **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
-* **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi).
+* **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi). Note: increasing the number of organisms drastically increases runtimes! Use more general taxonomic names (e.g., "Plants") and then post-filter the table if needed. 
 * **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take a long time!).
-* **THREADS** : Number of processors for multi-threading [Default: 1 / i.e. no multi-threading]
+* **THREADS** : Number of processors for multi-threading primer_search step.
 * **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
 * **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
 * **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
