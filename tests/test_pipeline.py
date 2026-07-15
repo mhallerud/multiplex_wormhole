@@ -39,7 +39,7 @@ def test_mfeprimer(mfeprimer=HAS_MFEPRIMER[1]):
 def test_multiplex_wormhole(tmp_path, templates=EXAMPLES):
     # test multiplex wormhole - primer design pipeline
     multiplexWormhole(TEMPLATES=templates, N_LOCI=30, OUTDIR=tmp_path, PREFIX='pytest', 
-                      KEEPLIST_FA=None, N_RUNS=1, SIMPLE=30)
+                      KEEPLIST_FA=None, N_RUNS=2, GREEDY=100, ITERATIONS=50, CYCLES=2)
     primer_out = os.path.join(tmp_path, "1_PrimerDesign/FilteredPrimers.fa")
     dimer_out = os.path.join(tmp_path, "2_PredictedDimers/MFEprimerDimers.txt")
     table_out = os.path.join(tmp_path, "2_PredictedDimers/PrimerPairInteractions_wide.csv")
@@ -55,7 +55,7 @@ def test_multiplex_wormhole(tmp_path, templates=EXAMPLES):
     
     # test multiplex wormhole - primer design with keeplist
     multiplexWormhole(TEMPLATES=templates, N_LOCI=40, OUTDIR=tmp_path, PREFIX='pytest_keeplist',
-                      KEEPLIST_FA=opt_out, N_RUNS=1, SIMPLE=30)
+                      KEEPLIST_FA=opt_out, N_RUNS=1, GREEDY=30, ITERATIONS=0, CYCLES=1)
     keeplist_out = os.path.join(tmp_path, "3_OptimizedMultiplexes/pytest_keeplist_Run01_primers.fasta")
     assert os.path.exists(keeplist_out), "Optimization with keeplist failed!"
     
