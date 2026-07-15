@@ -89,7 +89,10 @@ runPrimerTree <- function(primers, organisms, outcsv,
     # set up multi-threading
     library(parallel)
     library(doParallel)
-    #parallel::detectCores() #check available cores
+    # check cores- adjust based on availability / needs
+    nc = parallel::detectCores() #check available cores
+    if (THREADS>nc) THREADS <- nc-1
+    if (THREADS>nrow(pairs)) THREADS <- nrow(pairs)
     # initialize thread cluster
     cluster <- parallel::makeCluster(THREADS, outfile="")
     # register the cluster
@@ -196,8 +199,8 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA,
-                            MAX_AMPLICON_SIZE=500){
+plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
+                            dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1){
   # load dependencies
   library(DECIPHER)
   library(Biostrings)
@@ -212,14 +215,14 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
   print(paste("# Off-target sequences after delta G filtering:", nrow(primerblast)))
   # filter based on amplicon size
   if(!is.na(MAX_AMPLICON_SIZE)){
-    primerblast <- primerblast[-which(primerblast$product_length>MAX_AMPLICON_SIZE),]
+    primerblast <- primerblast[which(primerblast$product_length<=MAX_AMPLICON_SIZE),]
   }#if
   print(paste("# Off-target sequences after amplicon size filtering:", nrow(primerblast)))
-  # configure plotting environment to allow space for labels
-  par(mar=c(1,1,1,16))
-  # run new tree for each primer pair combination
-  names <- unique(gsub(".FWD", "", primerblast$FWD))
-  for (id in names){
+  
+  # set up function to makeTrees
+  plotTree <- function(id){
+    # configure plotting environment to allow space for labels
+    par(mar=c(1,1,1,16))
     # subset results to those associated with this primer pair  
     sub <- primerblast[which(startsWith(primerblast$FWD,id) | startsWith(primerblast$REV,id)),]
     # extract amplicon sequence for pair
@@ -248,10 +251,49 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
         plot(plottree, edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
              main=id, yaxt="n", horiz=TRUE)
         #attr(plottree[[1]], "change") #status changes on first branch left of (virtual) root
-      }#if
-    }#if
-  }#for
-  # reset plot margins
-  par(mar=c(5.1,4.1,4.1,2.1))
+        return(plottree)
+      }else{
+        return(NULL)
+      }#ifelse
+    }else{
+      return(NULL)
+    }#ifelse
+  }#plotTree
+  
+  # run new tree for each primer pair combination
+  names <- unique(gsub(".FWD", "", primerblast$FWD))
+  if (length(names)>0){
+    if(THREADS>1){
+      library(parallel)
+      library(doParallel)
+      # check cores- adjust based on availability / needs
+      nc = parallel::detectCores() #check available cores
+      if (THREADS>nc) THREADS <- nc-1
+      if (THREADS>length(names)) THREADS <- length(names)
+      # set up cluster
+      cluster <- parallel::makeCluster(THREADS, outfile="")
+      doParallel::registerDoParallel(cluster)
+      # multi-thread plotting for each primer pair
+      plots <- foreach::foreach(i=1:length(names)) %dopar% {
+        plotTree(names[i])
+      }#foreach
+      # now plot...
+      for (i in 1:length(plots)){
+        if(!is.null(plots[[i]])){
+          plot(plots[[i]], edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
+             main=names[i], yaxt="n", horiz=TRUE)
+        }else{
+          print(paste("No plot for ", names[i]))
+        }#ifelse
+      }#for
+      # close cluster
+      parallel::stopCluster(cluster)
+    }else{
+        for (id in names){
+          makeTree(id)
+        }#for
+      }#ifelse
+  }#if
 }#plotPrimerBlast  
+
 

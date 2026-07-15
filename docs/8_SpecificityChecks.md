@@ -67,7 +67,7 @@ View(primerblast)
 * **primers** : CSV output by multiplex wormhole optimization step, e.g., {OUTDIR}/3_OptimizedMultiplexes/Final_Primers/{OUTNAME}_Run01_primers.csv
 * **organisms** : Vector or list of organisms to search using GenBank taxid names. For example, to check specificity of marten primers within martens, co-occurring carnivores, diet items, and possible scat/lab contaminants, this list could include: c("Mustelidae", "Carnivora", "Rodents and rabbits", "Aves", "Plethodontidae", "Ericaceae", "Bacteria", "Homo sapiens"). Broader groups are preferred to specific diet items because many species are unlikely to have full genomes represented within GenBank. These names can be explored using the "Add Organism" button on the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi). Note: increasing the number of organisms drastically increases runtimes! Use more general taxonomic names (e.g., "Plants") and then post-filter the table if needed. 
 * **all_combos** : PRIMER-BLAST all FWD/REV combinations (NOTE: This will take a long time!).
-* **THREADS** : Number of processors for multi-threading primer_search step.
+* **THREADS** : Number of processors for multi-threading primer_search step (NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores!)
 * **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
 * **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
 * **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
@@ -122,7 +122,7 @@ This function uses the DECIPHER package's [maximum-likelihood trees with ancestr
 ```
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
-plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600)
+plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600, THREADS=1)
 dev.off() #close PDF
 ```
 ### Arguments
@@ -132,6 +132,7 @@ dev.off() #close PDF
 - **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
 - **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
 - **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. (Default: 600)
+- **THREADS** : Number of processors (for multi-threading). (NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores!)
 
 ### Output
 This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon.
