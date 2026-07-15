@@ -35,7 +35,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
   #---------RUN PRIMER-BLAST SPECIFICITY CHECK FOR ALL PRIMERS-----------#
   # set up df of primer pairs to check
   if(all_combos){
-    pairs <- expand.grid(FWDid=pairs$ID, REVid=pairs$ID)
+    pairs <- expand.grid(FWDid=orig_pairs$ID, REVid=orig_pairs$ID)
     pairs$FWDseq <- orig_pairs$FWDseq[match(pairs$FWDid, orig_pairs$ID)]
     pairs$REVseq <- orig_pairs$REVseq[match(pairs$REVid, orig_pairs$ID)]
   }else{
@@ -47,6 +47,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
   runPair <- function(pair, organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
                       PRIMER_SPECIFICITY_DATABASE, ...){
     print(paste("Running PRIMER-BLAST for",pair$FWDid,pair$REVid))
+    all_hits <- data.frame()
     # loop through organisms
     for (o in organisms){
         skip_to_next <- FALSE
@@ -57,28 +58,32 @@ runPrimerTree <- function(primers, organisms, outcsv,
                                                 exclude_env=EXCLUDE_ENV,
                                                 primer_specificity_database=PRIMER_SPECIFICITY_DATABASE,
                                                 ...)
+            Sys.sleep(0.1)#avoiding overloading NCBI
             # parse hits
             hits_list <- vector("list", length(search))
-            if(length(search)>1){
+            if(length(search)>0){
               for (l in 1:length(search)){
                 hits_list[[l]] <- primerTree::parse_primer_hits(search[[l]])
               }#for l
-              all_hits <- do.call(rbind, Filter(Negate(is.null)), hits_list)
-              if (!is.null(all_hits)){
-                all_hits$FWD <- paste0(pair$FWDid, ".FWD")
-                all_hits$REV <- paste0(pair$REVid, ".REV")
-                all_hits$FWDseq <- pair$FWDseq
-                all_hits$REVseq <- pair$REVseq
+              new_hits <- do.call(rbind, Filter(Negate(is.null), hits_list))
+              if (!is.null(new_hits)){
+                new_hits$FWD <- paste0(pair$FWDid, ".FWD")
+                new_hits$REV <- paste0(pair$REVid, ".REV")
+                new_hits$FWDseq <- pair$FWDseq
+                new_hits$REVseq <- pair$REVseq
+                all_hits <- rbind(all_hits, new_hits)
               }#if
             }#if
           },#try, 
           error = function(cond) {
-            message(paste("PRIMER-BLAST failed for this combo:", pair$FWDid, pair$REVid))
+            message(paste("PRIMER-BLAST failed for this combo:", 
+                          pair$FWDid, pair$REVid, "organism:", o))
             message("Here's the original error message:")
             message(conditionMessage(cond))
             skip_to_next <- TRUE
+            NULL
           })#tryCatch
-          # bypass errors
+          # bypass errors in for loop
           if(skip_to_next) { next }
         }#for o in organisms
     return(all_hits)
@@ -93,32 +98,61 @@ runPrimerTree <- function(primers, organisms, outcsv,
     nc = parallel::detectCores() #check available cores
     if (THREADS>nc) THREADS <- nc-1
     if (THREADS>nrow(pairs)) THREADS <- nrow(pairs)
+    if (THREADS>10){
+      print("WARNING: Running more than 10 threads is not recommended because it's likely to cause issues with the NCBI API!")
+    }#if
     # initialize thread cluster
     cluster <- parallel::makeCluster(THREADS, outfile="")
     # register the cluster
     doParallel::registerDoParallel(cluster)
+    # switching to more flexible option that works on clusters..
     # multi-thread primerTree across pairs
     all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% {
-         result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
-         # save progress...
-         write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"), row.names=FALSE)
-         result
+      result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
+      # save progress...
+      if(nrow(result)>0) write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"), row.names=FALSE)
+      result
     }#foreach
-    write.csv(all_hits, outcsv, row.names=FALSE)
     # close cluster
     parallel::stopCluster(cluster)
-
-  # if no multi-threading, loop through each primer pair instead,
-  # saving progress as it runs
-  }else{
-    all_hits <- data.frame()
-    for (i in 1:nrow(pairs)){
-      new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
-                          PRIMER_SPECIFICITY_DATABASE, ...)
-      all_hits <- rbind(all_hits, new_hits)
-      write.csv(all_hits, outcsv, row.names=FALSE)
-    }#for
-  }#ifelse
+    
+    # if no multi-threading, loop through each primer pair instead,
+    # saving progress as it runs
+    }else{
+      all_hits <- data.frame()
+      for (i in 1:nrow(pairs)){
+        new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
+                            PRIMER_SPECIFICITY_DATABASE, ...)
+        all_hits <- rbind(all_hits, new_hits)
+        if(nrow(all_hits)>0) write.csv(all_hits, outcsv, row.names=FALSE)
+      }#for
+    }#ifelse
+  
+  # alternative cluster-friendly multi-threading
+  #   library(future)
+  #   library(future.apply)
+  #   library(future.batchtools)
+  #   # Detect environment and set plan accordingly
+  #   if (Sys.getenv("SLURM_JOB_ID") != ""){
+  #       #Sys.getenv("PBS_JOBID") != "" |
+  #       #Sys.getenv("LSB_JOBID") != "" ){
+  #   # Running on SLURM cluster
+  #   plan(batchtools_slurm,
+  #        resources = list(ncpus=THREADS, walltime="24:00:00", memory="8gb"))
+  #   }else if(THREADS > 1){
+  #     # Running locally with multiple cores
+  #     plan(multisession, workers=THREADS)
+  #   }else{
+  #     # Single-threaded fallback
+  #     plan(sequential)
+  #   }#ifelse
+  # # run pairs with parallel processing
+  # all_hits <- do.call(rbind, future_lapply(1:nrow(pairs), function(i){
+  #   runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV,
+  #             PRIMER_SPECIFICITY_DATABASE, ...)
+  #   }))#do.call
+  # # save progress
+  # write.csv(all_hits, outcsv, row.names=FALSE)
   
   if (nrow(all_hits)>0){
     unique_accs <- unique(all_hits$accession)
@@ -126,14 +160,17 @@ runPrimerTree <- function(primers, organisms, outcsv,
     #--------PULL TAXONOMY INFORMATION FOR ALL HITS--------------#
     print("Pulling taxonomy information from NCBI.....")
     taxa <- primerTree::get_taxonomy(unique_accs)
+    Sys.sleep(0.1)#avoiding overloading NCBI
     all_hits <- merge(all_hits, taxa, by="accession")
     write.csv(all_hits, outcsv, row.names=FALSE)
 
     #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
     print("Retrieving sequences from NCBI.....")
+    # run with rentrez::entrez_fetch
     seqs <- primerTree::get_sequences(accession = all_hits$accession,
                                       start = all_hits$product_start,
                                       stop = all_hits$product_stop)
+    Sys.sleep(0.1)#avoiding overloading NCBI
     seqs <- lapply(as.character(seqs), function(x) paste(unlist(x), collapse=""))
     all_hits$Sequence <- as.character(seqs[match(all_hits$accession, names(seqs))])
   }#if
