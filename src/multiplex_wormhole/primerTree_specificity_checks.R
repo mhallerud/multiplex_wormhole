@@ -98,9 +98,10 @@ runPrimerTree <- function(primers, organisms, outcsv,
     all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% {
          result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
          # save progress...
-         write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"))
+         write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"), row.names=FALSE)
          result
     }#foreach
+    write.csv(all_hits, outcsv, row.names=FALSE)
     # close cluster
     parallel::stopCluster(cluster)
 
@@ -112,7 +113,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
       new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
                           PRIMER_SPECIFICITY_DATABASE, ...)
       all_hits <- rbind(all_hits, new_hits)
-      write.csv(all_hits, outcsv)
+      write.csv(all_hits, outcsv, row.names=FALSE)
     }#for
   }#ifelse
   
@@ -123,6 +124,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     print("Pulling taxonomy information from NCBI.....")
     taxa <- primerTree::get_taxonomy(unique_accs)
     all_hits <- merge(all_hits, taxa, by="accession")
+    write.csv(all_hits, outcsv, row.names=FALSE)
 
     #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
     print("Retrieving sequences from NCBI.....")
