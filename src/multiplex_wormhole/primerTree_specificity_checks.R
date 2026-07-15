@@ -105,16 +105,21 @@ runPrimerTree <- function(primers, organisms, outcsv,
     cluster <- parallel::makeCluster(THREADS, outfile="")
     # register the cluster
     doParallel::registerDoParallel(cluster)
-    # switching to more flexible option that works on clusters..
+    # set up tmp dir
+    dir.create("tmp")
     # multi-thread primerTree across pairs
     all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% {
       result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
       # save progress...
-      if(nrow(result)>0) write.csv(result, paste0(outcsv, "_pair", i, "_tmp.csv"), row.names=FALSE)
+      tmp_file <- paste0("blast__pair", i, "_tmp.csv")
+      if(nrow(result)>0) write.csv(result, file.path("tmp", tmp_file), row.names=FALSE)
       result
     }#foreach
     # close cluster
     parallel::stopCluster(cluster)
+    # save checkpoint file, remove temps
+    if (nrow(all_hits)>0) write.csv(all_hits, outcsv, row.names=FALSE)
+    unlink("tmp", recursive=TRUE)
     
     # if no multi-threading, loop through each primer pair instead,
     # saving progress as it runs
@@ -175,7 +180,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     all_hits$Sequence <- as.character(seqs[match(all_hits$accession, names(seqs))])
   }#if
   
-  write.csv(all_hits, outcsv)
+  write.csv(all_hits, outcsv, row.names=FALSE)
   #return(all_hits)
 }#runPrimerTree
 
