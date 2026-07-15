@@ -36,7 +36,7 @@ except ImportError:
 
 def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
          deltaG=False, KEEPLIST=None, VERBOSE=False, SEED=None, #TIMEOUT=5,
-         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
+         GREEDY=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, 
          T_INIT=None, T_FINAL=0.001, PROB_ADJ=2, MAKEPLOT=False,
          THREADS=None, dG_END_LIMIT=-4, dG_MID_LIMIT=-8, dG_BAD_LIMIT=-10):
     """
@@ -51,7 +51,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     VERBOSE : Print progress? [Default: False]
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
-    SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
+    GREEDY : # iterations in greedy local search optimization step [default=5000]
     ITERATIONS : # iterations per simulated annealing optimization cycle [default=1000]
     CYCLES : # simulated annealing cycles to run [default: 10]
     BURNIN : # iterations to sample dimer cost space [integer; default=200]
@@ -100,7 +100,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
     # set up arguments as list
     worker = partial(runOpt, PRIMER_FA=PRIMER_FA, DIMER_SUMS=DIMER_SUMS, DIMER_TABLE=DIMER_TABLE,
                      OUTPATH=OUTPATH, N_LOCI=N_LOCI, KEEPLIST=KEEPLIST, deltaG=deltaG, SEED=SEED,
-                     VERBOSE=VERBOSE, SIMPLE=SIMPLE, ITERATIONS=ITERATIONS, CYCLES=CYCLES,
+                     VERBOSE=VERBOSE, GREEDY=GREEDY, ITERATIONS=ITERATIONS, CYCLES=CYCLES,
                      BURNIN=BURNIN, DECAY_RATE=DECAY_RATE, T_INIT=T_INIT, T_FINAL=T_FINAL,
                      PROB_ADJ=PROB_ADJ, MAKEPLOT=MAKEPLOT, dG_END_LIMIT=dG_END_LIMIT,
                      dG_MID_LIMIT=dG_MID_LIMIT, dG_BAD_LIMIT=dG_BAD_LIMIT)
@@ -146,7 +146,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
 
 
 def runOpt(run, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, 
-           KEEPLIST, deltaG, SEED, VERBOSE, SIMPLE, ITERATIONS, CYCLES,
+           KEEPLIST, deltaG, SEED, VERBOSE, GREEDY, ITERATIONS, CYCLES,
            BURNIN, DECAY_RATE, T_INIT, T_FINAL, PROB_ADJ, MAKEPLOT,#TIMEOUT=5, 
            dG_MID_LIMIT, dG_END_LIMIT, dG_BAD_LIMIT):
     """
@@ -169,7 +169,7 @@ def runOpt(run, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                               deltaG=deltaG, 
                               SEED=SEED, 
                               VERBOSE=VERBOSE,
-                              SIMPLE=SIMPLE, 
+                              GREEDY=GREEDY, 
                               ITERATIONS=ITERATIONS, 
                               CYCLES=CYCLES, 
                               BURNIN=BURNIN, 
@@ -257,8 +257,8 @@ def parse_args():
                         help="Path to FASTA of keeplist primer sequences")
     parser.add_argument("--seed", type=str, default=None,
                         help="Path to previous optimization output to use as starting point")
-    parser.add_argument("-s", "--simple", type=int, default=5000,
-                        help="Iterations for simple iterative improvement")
+    parser.add_argument("-s", "--greedy", type=int, default=5000,
+                        help="Iterations for greedy local search")
     parser.add_argument("-i", "--iter", type=int, default=1000,
                         help="Iterations for each cycle of adaptive simulated annealing (ASA)")
     parser.add_argument("-c", "--cycles", type=int, default=10,
@@ -310,7 +310,7 @@ def cli():
          #TIMEOUT = args.timeout, 
          VERBOSE = args.verbose, 
          SEED = args.seed,
-         SIMPLE = args.simple, 
+         GREEDY = args.greedy, 
          ITERATIONS = args.iter, 
          CYCLES = args.cycles,
          BURNIN = args.burnin, 

@@ -15,7 +15,7 @@ A panel that amplifies "N" target loci is selected by minimizing off-target inte
 ### Command line syntax
 ```
 mw-optimize-multiplex -f PRIMER_FASTA -d DIMER_SUMS -t DIMER_TABLE -o OUTPATH -n NLOCI [-k KEEPLIST]
-                      [-e SEED] [-s SIMPLE] [-i ITER] [-c CYCLES] [-b BURNIN]
+                      [-e SEED] [-s GREEDY] [-i ITER] [-c CYCLES] [-b BURNIN]
                       [-r DECAY_RATE] [-x TEMP_INIT] [-l TEMP_FINAL] [-a PROB_ADJ]
                       [-g] [-v] [-m]
 ```
@@ -37,13 +37,13 @@ mw.optimizeMultiplex(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, del
 * **KEEPLIST (-k)** : FASTA containing primer pairs that MUST be included in the multiplex (e.g., primer pairs from a previous set, primer pairs for sex ID, etc.). *Important: These primer pairs must have been considered in dimer formation! Primer IDs must match IDs in the DIMER_SUMS and DIMER_TABLE inputs.* [Default: None]
 * **deltaG (-g)** : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [Default: False]
 * **SEED (-e)** : CSV containing a multiplex primer set to use as a starting point in optimization, in the format output by the present optimization function. [Default: None]
-* **SIMPLE (-s)** : Number of iterations to run simple iterative improvement optimization. [Default: 5000]
+* **GREEDY (-s)** : Number of iterations to run greedy local search algorithm. [Default: 5000]
 * **ITERATIONS (-i)** : Number of iterations to run per simulated annealing cycle, where all steps (accepted and rejected changes) are counted. [Default: 1000]
 * **CYCLES (-c)** : Number of simulated annealing cycles to run. [Default: 10]
 * **BURNIN (-b)** : Number of samples taken of increased dimer costs used to calculate simulated annealing temperature schedule. Only steps that cause increased cost are counted so that this number equals the number of 'mistakes' sampled. [Default: 100]
 * **DECAY_RATE (-r)** : Parameter for exponential decay function of simulated annealing temperatures. Values closer to 1 result in a slower decay from the initial to final temperature (and more "mistakes"), and values closer to 0.5 result in rapid decay towards the final temperature. [default: 0.95]
 * **T_INIT (-x)** : Initial temperature to use in fixed schedule simulated annealing. By default, T_INIT is adaptively set based on the problem at hand. Higher initial temperatures means that more of the cost optimization space is explored, but more "mistakes" will also be allowed in the process. (default: None) By default, T_FINAL is set adaptively based on the problem at hand where: `T_FINAL=MIN_DIMERS + DIMER_ADJ * (MAX_DIMERS - MIN_DIMERS)` with MAX_DIMERS and MIN_DIMERS calculated from changes observed during the BURNIN stage. [Default: None -calculated from data]
-* **T_FINAL (-l)** : Final temperature to use in fixed schedule simulated annealing. As temperatures approach 0, simulated annealing allows fewer 'mistakes' and converges with simple iterative improvement. [Default: 0.1]
+* **T_FINAL (-l)** : Final temperature to use in fixed schedule simulated annealing. As temperatures approach 0, simulated annealing allows fewer 'mistakes' and converges with greedly local search. [Default: 0.1]
 * **PROB_ADJ (-a)** : Multiplier used to adjust dimer acceptance probabilities. Increased values result in lower dimer acceptance probabilities at the cost of exploring less of the cost optimization space. [Default: 2]
 * **VERBOSE (-v)** : Print updates as algorithm proceeds? [Default: False]
 * **MAKEPLOT (-m)** : Make simulated annealing temperature schedule plots? Runs [explore optimization parameters](4A_ExploreOptimParameters.md) function. [Default: False]

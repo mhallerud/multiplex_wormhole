@@ -31,7 +31,7 @@ has_children: true
 ## Description
 **multiplex wormhole is largely an automation of pre-existing protocols for noninvasive SNP panel development (Eriksson et al. 2020). All default parameters for primer design, PCR parameters, and dimer prediction are based on this protocol and assume that the two-step PCR with Illumina Nextera adapters is being used. We recommend that the indexing step use Illumina unique dual indexes to minimize error rates due to index hopping, which is likely to be especially problematic with low-quality samples.**
 
-The heart of multiplex wormhole's contribution to multiplex PCR primer design is its optimization algorithms. The multiplex wormhole `optimize_multiplex.py` function uses a combination of greedy, simple iterative improvement, and simulated annealing algorithms to minimize dimer load in the multiplex primer set. Dimer load can be measured by either: a) tallying pairwise dimers, or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates needed for designing larger panels. See [Optimization Details](7_OptimizationProcess.md) for a full descriptions of the optimization algorithms and parameter settings.
+The heart of multiplex wormhole's contribution to multiplex PCR primer design is its optimization algorithms. The multiplex wormhole `optimize_multiplex.py` function uses a combination of greedy, greedy local search, and simulated annealing algorithms to minimize dimer load in the multiplex primer set. Dimer load can be measured by either: a) tallying pairwise dimers, or b) maximizing mean Gibbs free energy (deltaG; a meeasure of dimer strength) of pairwise dimers. The optimization process heavily relies on having abundant candidates relative to the number of target loci, and more templates needed for designing larger panels. See [Optimization Details](7_OptimizationProcess.md) for a full descriptions of the optimization algorithms and parameter settings.
 
 
 ## Installation
@@ -159,7 +159,7 @@ For example, I use the following steps to prepare input data for applications fo
 # PANEL DESIGN
 # usage: multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
 #                           [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
-#                           [-s SIMPLE] [-d] [-v]
+#                           [-s GREEDY] [-d] [-v]
 # example for standard optimization with defaults:
 python3.9 multiplexWormhole.py -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa"
 
@@ -180,7 +180,7 @@ mw.multiplexWormhole(TEMPLATES="Input_Templates.csv",
                      OUTDIR="Test_MW", 
                      PREFIX="Test_MW_default",
                      KEEPLIST_FA="Keeplist.fa",
-                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)#optional
+                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, GREEDY=5000, deltaG=False, VERBOSE=False)#optional
 
 # panel assessment example (showing defaults)
 mw.assessPanel(PRIMERS,
@@ -197,7 +197,7 @@ mw.assessPanel(PRIMERS,
 **N_RUNS (-r --runs)** : Number of optimization runs. [Default: 10]
 **ITERATIONS (-i --iter)** : Number of simulated annealing iterations per cycle. [Default: 1000]
 **CYCLES (-c --cycles) ** : Number of simulated annealing cycles per run. [Default: 10]
-**SIMPLE (-s --simple)** : Number of simple iterative improvement iterations per run. [Default: 5000]
+**GREEDY (-s --greedy)** : Number of greedy local search iterations per run. [Default: 5000]
 **deltaG (-d --deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False]
 **VERBOSE (-v --verbose)** : Print all steps and swaps at the optimization step. [Default: False]
 

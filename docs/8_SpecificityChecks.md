@@ -49,8 +49,12 @@ source("~primerTree_specificity_checks.R")
 
 ## 1. runPrimerTree
 This function loops through each primer pair and organism combination and runs PRIMER-BLAST using primerTree::primer_search, merging results into a single dataframe. Taxonomy and sequences are then pulled from NCBI for each record using the primerTree::get_taxonomy and primerTree::get_sequence commands. The output is a dataframe containing the query primer pair (FWD & REV) and full PRIMER-BLAST outputs. [Details on full functionality of primerTree](https://cran.r-project.org/web/packages/primerTree/refman/primerTree.html).
+
+Note: This function is limited to 3 calls/second by NCBI. You can substantially increase speeds to 10 calls/second by requesting an API key from NCBI at [https://www.ncbi.nlm.nih.gov/account](https://www.ncbi.nlm.nih.gov/account).
+
 ### Usage in R
 ```
+#options(ENTREZ_KEY="your_ncbi_api_key")
 primerblast <- runPrimerTree(primers, organisms=c(),  
                              fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                              rev_adapter="gtctcgtgggctcggagatgtgtataagagacag",

@@ -38,7 +38,7 @@ except ImportError:
 
 
 def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, deltaG=False, SEED=None, VERBOSE=False,
-         SIMPLE=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.001, 
+         GREEDY=5000, ITERATIONS=1000, CYCLES=10, BURNIN=200, DECAY_RATE=0.95, T_INIT=None, T_FINAL=0.001, 
          PROB_ADJ=2, MAKEPLOT=False, RNG=12345):
     """
     PRIMER_FASTA : Contains primer IDs and sequences [FASTA]
@@ -50,7 +50,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     deltaG : Minimize mean deltaG [True] or count of dimers- requires deltaG dimer tables! [Default: False]
     SEED : Initial primer set to start with from previous multiplex_wormhole run [CSV]
     -------SIMULATED ANNEALING PARAMETERS-----
-    SIMPLE : # iterations in simple iterative improvement optimization step [default=5000]
+    GREEDY : # iterations in greedy local search optimization step [default=5000]
     ITERATIONS : # iterations per simulated annealing cycle [Default: 1000]
     CYCLES : # Simulated annealing cycles to run [Default: 10]
     BURNIN : # iterations to sample dimer cost space [integer; default=1000]
@@ -64,7 +64,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     T_INIT : Starting temperature for simulated annealing [Default: None, i.e. set adaptively]
         -values closer to T_FINAL will reduce dimer acceptance probabilities
     T_FINAL : Ending temperature for simulated annealing [Default: 0.1]
-        -0 is equivalent to simple iterative improvement, higher values allow more costs
+        -0 is equivalent to greedy local search, higher values allow more costs
     PROB_ADJ : Parameter used to adjust dimer acceptance probabilities [Default: 2]
         -Try increasing to 2 or 3 if too many dimers are being accepted during simulated annealing
     VERBOSE : Print progress? [Default: False]
@@ -84,7 +84,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     CheckInputFile(SEED, "SEED")    
     CheckInputNumber(N_LOCI, "N_LOCI","--")
     CheckInputNumber(ITERATIONS, "ITERATIONS", "1000")
-    CheckInputNumber(SIMPLE, "SIMPLE", "5000")
+    CheckInputNumber(GREEDY, "GREEDY", "5000")
     # check ASA params
     if ITERATIONS>0:
         CheckInputNumber(BURNIN, "BURNIN", "1000")
@@ -124,7 +124,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("     deltaG: %s", deltaG)
     logger.info("     SEED: %s", SEED)
     logger.info("     VERBOSE: %s", VERBOSE)
-    logger.info("     SIMPLE: %s", SIMPLE)
+    logger.info("     GREEDY: %s", GREEDY)
     logger.info("     ITERATIONS: %s", ITERATIONS)
     logger.info("     CYCLES: %s", CYCLES)
     logger.info("     BURNIN: %s", BURNIN)
@@ -298,21 +298,21 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
         logger.warning("     # loci used: %s", str(len(initial_pairs)))
         # set iterations to zero- no optimization possible
         ITERATIONS = 0
-        SIMPLE = 0
+        GREEDY = 0
 
     if curr_total==0:
         logger.warning("Initial primer set already has 0 predicted dimers! Skipping optimization process.")
         ITERATIONS=0
-        SIMPLE=0
+        GREEDY=0
         
-    ## ------------------STEP 2: RUN SIMPLE ITERATIVE IMPROVEMENT OPTIMIZATION----------------##
+    ## ------------------STEP 2: RUN FIRST IMPROVEMENT LOCAL SEARCH OPTIMIZATION----------------##
     # i.e., swap loci only if dimer load is reduced
     # only attempt iterative improvement if no final solution found with simulated annealing
     Temp = 0 #SII = SA w. T=0
     i = 0
-    if SIMPLE>0:
+    if GREEDY>0:
         logger.info("")
-        logger.info("STARTING SIMPLE ITERATIVE IMPROVEMENT.....")
+        logger.info("STARTING GREEDY LOCAL SEARCH.....")
         if deltaG:
             logger.info("Initial mean deltaG: %s", str(-curr_total))
         else:
@@ -322,7 +322,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             blockedlist = keeplist_pairs
         else:
             blockedlist = []
-        while i < SIMPLE:
+        while i < GREEDY:
             i+=1
             # if current total dimers = 0, STOP because we're optimized already
             if curr_total == 0:
@@ -457,7 +457,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             if (i)%1000==0:
                 logger.info("          finished %s iterations -- dimer load: %s", str(i), str(curr_total))
             # progress tracking
-            if i==SIMPLE:
+            if i==GREEDY:
                 costs.append([i, Temp, curr_total])
                 logger.info("STOPPED - MAX ITERATIONS REACHED!")
     
@@ -469,7 +469,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 logger.info("\t\t %s", blockedlist[b])
 
         logger.info("")
-        logger.info("Dimer load after simple iterative improvement %s", curr_total)
+        logger.info("Dimer load after greedy local search %s", curr_total)
     
             
     # set minimum primer pairs as the current minimum, in case no optimization is possible during ASA
@@ -640,7 +640,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     logger.info("")
     logger.info("EXPORTING OPTIMIZED PRIMER SET....")
     ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, 
-               primer_seqs, keeplist_IDs, keeplist_seqs, costs, SIMPLE)
+               primer_seqs, keeplist_IDs, keeplist_seqs, costs, GREEDY)
     
     logger.info("EXPORTING DIMER TABLES FOR PRIMER PAIRS....")
     final_dimers = SubsetDimerTable(current_pairIDs, dimer_table, return_complement=False)
@@ -1167,8 +1167,8 @@ def parse_args():
                         help="Filepath to FASTA containing keeplist primers")
     parser.add_argument("-e", "--seed", type=str, default=None,
                         help="Filepath to previous optimized panel CSV to use as starting point")
-    parser.add_argument("-s", "--simple", type=int, default=5000,
-                        help="Iterations for simple iterative improvement")
+    parser.add_argument("-s", "--greedy", type=int, default=5000,
+                        help="Iterations for greedy local search")
     parser.add_argument("-i", "--iter", type=int, default=1000,
                         help="Iterations for each adaptive simulated annealing (ASA) cycle")
     parser.add_argument("-c", "--cycles", type=int, default=10,
@@ -1207,7 +1207,7 @@ def cli():
          deltaG = args.deltaG, 
          SEED = args.seed, 
          VERBOSE = args.verbose,
-         SIMPLE = args.simple, 
+         GREEDY = args.greedy, 
          ITERATIONS = args.iter, 
          CYCLES = args.cycles,
          BURNIN = args.burnin, 

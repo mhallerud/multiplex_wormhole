@@ -28,23 +28,23 @@ An initial set of primer pairs is selected by using a pseudo-greedy algorithm th
 3. Then, an initial set of `N_LOCI` primer pairs is selected by choosing the "best" from the above sorted list of "best" per-template primer pairs. If a keeplist is provided, the keeplist primer pairs are included in the initial set and `N_LOCI`-`N_KEEPLIST_PAIRS` "bests" are chosen.
 
 
-## 2. Minimizing dimer load: Simple iterative improvement algorithm
-The initial set is then used as input for a simple iterative improvement algorithm. At each iteration, the total and per-pair costs (i.e., dimer load) are calculated for the current multiplex. Then, the following steps are taken:
+## 2. Minimizing dimer load: Greedy Local Search algorithm
+The initial set is then used as input for a greedy local search algorithm. At each iteration, the total and per-pair costs (i.e., dimer load) are calculated for the current multiplex. Then, the following steps are taken:
 
 1. The "worst" primer pair within the current set is identified and swapped with a random alternative. The total cost is calculated for this new set.
 2. If the new total cost is lower than the previous total cost, then the change is kept and the algorithm proceeds to the next iteration.
 3. If cost is not reduced, then the algorithm will test other alternatives to replace the current worst pair until either 1) an improvement is made or 2) alternatives are exhausted. If alternatives are exhausted, the algorithm will proceed to try to replace the "next worst" primer pair at the next step, and so on.
 4. When an alternative is found, the algorithm will proceed to the next iteration. Each iteration starts by trying to replace the "worst" primer pair.
-5. This process continues until either A) the primer set is fully optimized (0 dimers), B) no alternatives can improve the set further, or C) the user-defined number of iterations `SIMPLE` have been run.
+5. This process continues until either A) the primer set is fully optimized (0 dimers), B) no alternatives can improve the set further, or C) the user-defined number of iterations `GREEDY` have been run.
 
 This step is where the bulk of reduction in dimer load will occur.
 
 
-## 3.Overcoming local minima: Adaptive simulated annealing algorithm
+## 3.Overcoming local minima: Adaptive Simulated Annealing algorithm
 *Simulated annealing* is an optimization procedure that allows the algorithm to make "mistakes" as it proceeds. Short-term "mistakes" (i.e., changes that result in higher cost) enable the algorithm to overcome local minima in the optimization space using "hill-climbing" behavior. Simulated annealing proceeds along a schedule where riskier decisions (i.e., those resulting in increased cost) are allowed with higher probability in early iterations in order to explore the search space, and with decreasing probability as the algorithm proceeds. Simulated annealing takes the following steps:
 
 ### The Process
-1. Similar to simple iterative improvement, primer pairs are swapped at each iteration. However, in the simulated annealing algorithm, the primer pairs that are swapped are selected randomly.
+1. Similar to greedy local search, primer pairs are swapped at each iteration. However, in the simulated annealing algorithm, the primer pairs that are swapped are selected randomly.
 2. The total dimer load (i.e., cost) of the new primer set is calculated and compared to the cost of the previous set. All changes that improve the primer set (i.e., lower dimer cost) are accepted, while changes that increase cost will be accepted based on a probability function that is defined by the simulated annealing temperature schedule and the change in cost:
       `p = e^(-_PROB_ADJ_ * delta_cost / T)`
 where `T` is the simulated annealing temperature at the current iteration, `delta_cost` is the new cost minus the previous cost, and `PROB_ADJ` is a scaling parameter set by the user (Default=2).
@@ -66,7 +66,7 @@ In multiplex_wormhole, an *adaptive* simulated annealing approach is used to set
 
      For `deltaG=True` : `T_INIT = [-2*log10(MEAN_DIMER / MAX_DIMER) + 1] / 10`, `T_INIT<0.03 --> T_INIT=0.03`
    Values are given these lower limits to allow some hill-climbing.
-5. The final temperature is set as provided. By default, this value is nearly 0 so that the end of each cycle is running simple iterative improvement:
+5. The final temperature is set as provided. By default, this value is nearly 0 so that the end of each cycle is running a greedy algorithm:
     `T_FINAL = 0.001`
 
 Here's a plot showing the functional form of `T_INIT` based on common `MEAN_DIMER` & `MAX_DIMER` values:
@@ -83,7 +83,7 @@ Users may also choose to set a fixed temperature schedule using the `T_INIT` and
 
 
 ## Understanding the Dimer Trace Plot
-Each multiplex wormhole run will output a dimer trace plot, with the number of iterations based on the total iterations passed (SIMPLE + ITERATIONS), which allows visualization of the contributions of each algorithm. This can also be plotted in R using the `_costTrace.csv` output. The trace plot can help troubleshoot simulated annealing parameterization:
+Each multiplex wormhole run will output a dimer trace plot, with the number of iterations based on the total iterations passed (GREEDY + ITERATIONS), which allows visualization of the contributions of each algorithm. This can also be plotted in R using the `_costTrace.csv` output. The trace plot can help troubleshoot simulated annealing parameterization:
 * **Were local optima overcome?** Are there small "hills" in the plot at the iterations corresponding to the start of each simulated annealing cycle? If so, hill-climbing is working. Otherwise, if there are no hills or the hills are small, try increasing `T_INIT` to allow higher hills to be climbed at the start of each cycle. To extend the hill-climbing period of each cycle, increase the `DECAY_RATE` (e.g., 0.98).
 * **Was hill-climbing excessive?** If the trace plot shows runaways cost increases as simulated annealing progresses, too many cost increases are being accepted. This can be rectified by reducing `T_INIT` or `PROB_ADJ` to reduce the probability of accepting large cost increases, or reducing the `DECAY_RATE` (e.g., 0.90) to make the hill-climbing period of each cycle shorter.
 * **Is further optimization warranted?** There should be less change in cost as the algorithm proceeds (i.e., the plot should start looking more and more like a flat line. If this is not the case, then more optimization is possible. You can run the output back through the optimization step using the `SEED` argument in both the multipleOptimizations and optimizeMultiplex functions.
@@ -94,7 +94,7 @@ Each multiplex wormhole run will output a dimer trace plot, with the number of i
 ## Additional Tips & Tricks
 * See the `plot_SA_temps` script to test the effects of `DECAY_RATE`, `T_INIT`, `T_FINAL`, and `PROB_ADJ` on the probability of accepting a range of dimer values as the simulated annealing algorithm proceeds.
 * The optimization process is inherently random and results will vary across runs. As such, it's recommended to run multiple times and select the "best" result. `multiple_run_optimization` provides an easy wrapper for running and summarizing across multiple runs with standard inputs. Variability in results will increase with problem complexity, and more runs are recommended for very complex problems.
-* For simple problems (e.g., selecting 50 primer pairs from 200 candidates), the iterative improvement is sufficient and more efficient. To run the simple iterative improvement algorithm, set `SIMPLE` high and `ITERATIONS=0` to bypass simulated annealing. 
+* For simple problems (e.g., selecting 50 primer pairs from 200 candidates), greedy local search is sufficient and more efficient. To run the greedy local search algorithm, set `GREEDY` high and `ITERATIONS=0` to bypass simulated annealing. 
 * For challenging problems (e.g., many options and/or many `N_LOCI`), you may consider successive optimization runs. The `SEED` argument in the `optimizeMultiplex` function is provided to allow an output from a previous run to be used as the "initial panel" for a new optimization run. This is not the same as just increasing the number of iterations because the simulated annealing temperature schedule will be recalculated for this set and simulated annealing will possibly allow local minima to be overcome.
 * When panels are designed to provide multiple levels of information (e.g., individual ID + sex + hybrid status), multiple optimization runs will be necessary to get the desired information content for each inferential objective. 
 * Optimization is constrained by the number of options available relative to the number of primer pairs desired. The number of candidates required to design a panel with minimal dimer load drastically increases as desired panel size increases.

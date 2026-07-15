@@ -50,7 +50,7 @@ except ImportError:
 
 
 def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10, 
-         ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False, 
+         ITERATIONS=1000, CYCLES=10, GREEDY=5000, deltaG=False, VERBOSE=False, 
          # primer design options                      
          Tm_LIMIT=45, dG_HAIRPINS=-2, dG_END_LIMIT=-4,  dG_MID_LIMIT=-8, 
          ENABLE_BROAD=False, PRIMER3_SETTINGS=None, 
@@ -70,7 +70,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     N_RUNS : Number of optimization runs. [Default: 10]
     ITERATIONS : Iterations per simulated annealing cycle. [Default: 1000]
     CYCLES : Number of simulated annealing cycles to run. [Default: 10]
-    SIMPLE : Iterations to run simple iterative improvement optimization. [Default: 5000]
+    GREEDY : Iterations to run greedy local search optimization. [Default: 5000]
     deltaG : True (deltaG optimization) / False (standard optimization). [Default: False]
     VERBOSE : Print updates as function runs? (Default: False)
     -------
@@ -114,7 +114,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     mwlogger.info("     PREFIX: %s", PREFIX)
     mwlogger.info("     KEEPLIST_FA: %s", KEEPLIST_FA)
     mwlogger.info("     N_RUNS: %s", N_RUNS)
-    mwlogger.info("     SIMPLE: %s", SIMPLE)
+    mwlogger.info("     GREEDY: %s", GREEDY)
     mwlogger.info("     ITERATIONS: %s", ITERATIONS)
     mwlogger.info("     deltaG: %s", deltaG)
     mwlogger.info("     VERBOSE: %s", VERBOSE)
@@ -137,7 +137,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
     N_LOCI = int(N_LOCI)
     N_RUNS = int(N_RUNS)
     ITERATIONS = int(ITERATIONS)
-    SIMPLE = int(SIMPLE)
+    GREEDY = int(GREEDY)
     
     ## Step 0: Set up output directory structure & copy inputs to it
     mwlogger.info("-----SETTING UP OUTPUT DIRECTORY STRUCTURE------")
@@ -299,7 +299,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                           KEEPLIST = KEEPLIST_FA, 
                           VERBOSE=VERBOSE,#set to true to print dimers at each change
                           SEED=None,#primer set from previous optimization run to start with, in CSV format
-                          SIMPLE=SIMPLE, # iterations for simple iterative improvement optimization (default=5000)
+                          GREEDY=GREEDY, # iterations for greedy local search optimization (default=5000)
                           ITERATIONS=ITERATIONS, # iterations per simulated annealing optimization cycle (default=1000) 
                           CYCLES=CYCLES, #simulated annealing cycles to run (default=10)
                           BURNIN=BURNIN, # iterations for sampling dimer cost space to adaptively set SA temps (default=100)
@@ -309,7 +309,7 @@ def main(TEMPLATES, N_LOCI, OUTDIR, PREFIX=None, KEEPLIST_FA=None, N_RUNS=10,
                               # recommendations: 0.90-0.98, higher with fewer iterations
                           T_INIT=T_INIT, # starting temp for fixed SA schedule (default=None, i.e., adaptively set based on costs observed in BURNIN)
                           T_FINAL=T_FINAL, # ending temp for fixed SA schedule (default=0.1)
-                              # temperatures=0 is equivalent to simple iterative improvement, while 
+                              # temperatures=0 is equivalent to greedy local search, while 
                               # higher temperatures explore more of the cost space at higher risk of accepting dimers
                               # recommended initial fixed schedule is T_INIT~2 and T_FINAL=0.1
                           PROB_ADJ=PROB_ADJ,# adjusts dimer acceptance probabilities (default=2)
@@ -372,8 +372,8 @@ def parse_args():
                         help="Filepath to FASTA containing keeplist primer sequences")
     parser.add_argument("-r", "--runs", type=int, default=10,
                         help="Number of optimization runs")
-    parser.add_argument("-s", "--simple", type=int, default=5000,
-                        help="Number of iterations in simple iterative improvement")
+    parser.add_argument("-s", "--greedy", type=int, default=5000,
+                        help="Number of iterations in greedy local search")
     parser.add_argument("-i", "--iter", type=int, default=1000,
                         help="Number of iterations in each adaptive simulated annealing (ASA) cycle")
     parser.add_argument("-c", "--cycles", type=int, default=10,
@@ -428,7 +428,7 @@ def cli():
          N_RUNS = args.runs,
          ITERATIONS = args.iter,
          CYCLES = args.cycles,
-         SIMPLE = args.simple,
+         GREEDY = args.greedy,
          deltaG = args.deltaG,
          VERBOSE = args.verbose,
          Tm_LIMIT=args.tm_limit,
