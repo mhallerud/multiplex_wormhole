@@ -339,3 +339,16 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
 }#plotPrimerBlast
 
 
+
+
+
+# function to convert FASTA to CSV
+FASTA2CSV <- function(infa, outcsv){
+  fa <- read.table(infa)
+  names <- fa$V1[startsWith(fa$V1, ">")]
+  seqs <- fa$V1[!startsWith(fa$V1, ">")]
+  out <- data.frame(PrimerID=names, Sequence=seqs)
+  write.csv(out, outcsv)
+}#FAST2CSV
+
+
