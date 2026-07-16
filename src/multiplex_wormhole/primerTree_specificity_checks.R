@@ -264,11 +264,10 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
   # set up function to makeTrees
   plotTree <- function(id){
     # configure plotting environment to allow space for labels
-    par(mar=c(1,1,1,16))
     # subset results to those associated with this primer pair  
     sub <- primerblast[which(startsWith(primerblast$FWD,id) | startsWith(primerblast$REV,id)),]
     # extract amplicon sequence for pair
-    if(!is.na(primerinfo)){
+    if(is.logical(nrow(primerinfo))){
       amp <- primerinfo[primerinfo$PairID==id, c("LocusID","AmpliconSeq")][1,]#keep FWD record
       names(amp) <- c("accession","Sequence")
       amp$species <- species
@@ -298,6 +297,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
         return(NULL)
       }#ifelse
     }else{
+      print("No sequences passed filtering to plot!")
       return(NULL)
     }#ifelse
   }#plotTree
@@ -335,7 +335,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
           plotTree(id)
         }#for
       }#ifelse
-  }#if
-}#plotPrimerBlast  
+  }#else
+}#plotPrimerBlast
 
 
