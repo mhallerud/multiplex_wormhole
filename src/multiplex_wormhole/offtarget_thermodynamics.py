@@ -72,27 +72,33 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
                 REV = inputs.REVseq[row]
             
             # calculate dG / Tm for each primer binding site
-            fwd_binding = primer3.calc_heterodimer(FWD, inputs.forward_binding[row],
-                                                   temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
-                                                   dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            fwd_end = primer3.calc_end_stability(FWD, inputs.forward_binding[row], 
-                                                 temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
-                                                 dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            rev_binding = primer3.calc_heterodimer(REV, inputs.reverse_binding[row], 
-                                                   temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
-                                                   dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            rev_end = primer3.calc_end_stability(REV, inputs.reverse_binding[row], 
-                                                 temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
-                                                 dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
-            inputs.Tm_FWD[row] = fwd_binding.tm
-            inputs.dG_FWD[row] = fwd_binding.dg/1000
-            inputs.Tm_REV[row] = rev_binding.tm
-            inputs.dG_REV[row] = rev_binding.dg/1000
-            inputs.Tm_FWD_END[row] = fwd_end.tm
-            inputs.dG_FWD_END[row] = fwd_end.dg/1000
-            inputs.Tm_REV_END[row] = rev_end.tm
-            inputs.dG_REV_END[row] = rev_end.dg/1000
-
+            if len(inputs.forward_binding[row])>0:
+                fwd_binding = primer3.calc_heterodimer(FWD, inputs.forward_binding[row],
+                                                       temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
+                                                       dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
+                fwd_end = primer3.calc_end_stability(FWD, inputs.forward_binding[row], 
+                                                     temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
+                                                     dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
+                inputs.Tm_FWD[row] = fwd_binding.tm
+                inputs.dG_FWD[row] = fwd_binding.dg/1000
+                inputs.Tm_FWD_END[row] = fwd_end.tm
+                inputs.dG_FWD_END[row] = fwd_end.dg/1000
+            else:
+                warnings.warn("FWD binding region not found for row %s "%row)
+            if len(inputs.reverse_binding[row])>0:
+                rev_binding = primer3.calc_heterodimer(REV, inputs.reverse_binding[row], 
+                                                       temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
+                                                       dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
+                rev_end = primer3.calc_end_stability(REV, inputs.reverse_binding[row], 
+                                                     temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
+                                                     dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
+                inputs.Tm_REV[row] = rev_binding.tm
+                inputs.dG_REV[row] = rev_binding.dg/1000
+                inputs.Tm_REV_END[row] = rev_end.tm
+                inputs.dG_REV_END[row] = rev_end.dg/1000
+            else:
+                warnings.warn("REV binding regions not found for row %s "%row)
+            
         else:
             warnings.warn("Sequence not present for row %s in " % row + INFILE)
      
