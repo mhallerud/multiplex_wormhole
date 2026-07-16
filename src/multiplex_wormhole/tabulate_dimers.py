@@ -290,7 +290,8 @@ def ReadDimerTXT(infile):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Converts MFEprimer dimer predictions into CSVs. "+
-                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/tabulate-dimers")
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/tabulate-dimers",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-a", "--all_dimers", type=str, required=True,
                         help="Filepath to MFEprimer dimer output for all dimers")

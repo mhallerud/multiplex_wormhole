@@ -122,7 +122,8 @@ class InputError(Exception):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Calculates thermodynamics for off-target amplification sequences from runPrimerTree. "+
-                                                  "Full documentation: https://mhallerud.github.io/multiplex_wormhole/specificity-check#2-calculate-thermodynamics-of-off-target-primer-binding-sites-in-python")
+                                                  "Full documentation: https://mhallerud.github.io/multiplex_wormhole/specificity-check#2-calculate-thermodynamics-of-off-target-primer-binding-sites-in-python",
+                                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-i", "--infile", type=str, required=True,
                         help="Filepath to CSV of primerTree outputs")

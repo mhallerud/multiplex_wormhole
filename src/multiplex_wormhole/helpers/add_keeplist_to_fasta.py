@@ -98,7 +98,8 @@ class InputError(Exception):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Combines FASTAs of keeplist and candidate primer sequences. "+
-                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/add-keeplist-to-fasta")
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/add-keeplist-to-fasta",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-i", "--input", type=str, required=True)
     parser.add_argument("-k", "--keeplist", type=str, required=True)

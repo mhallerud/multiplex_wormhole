@@ -1150,7 +1150,8 @@ class InputError(Exception):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Optimizes a multiplex PCR panel for minimum dimer load from input primers and dimer information. "+
-                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/optimize-multiplex-pcr")
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/optimize-multiplex-pcr",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-f", "--primer_fasta", type=str, required=True,
                         help="Filepath to FASTA containing primer sequences")

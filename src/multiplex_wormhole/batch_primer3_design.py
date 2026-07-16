@@ -670,7 +670,8 @@ class OutputError(Exception):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Batch designs primers for each input template sequence using primer3. "+
-                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/primer-design")
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/primer-design",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-t", "--templates", type=str, required=True,
                         help="Filepath to templates CSV containing SEQUENCE_ID, SEQUENCE_TEMPLATE, and SEQUENCE_TARGET fields")

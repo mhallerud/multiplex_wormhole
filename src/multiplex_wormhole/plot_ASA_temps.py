@@ -552,7 +552,8 @@ def parse_args():
                         help="Multiplier for adjusting simulated annealing acceptance probabilities")
     # add flags
     parser.add_argument("-g", "--deltaG", action="store_true",
-                        help="Use deltaG optimization algorithm")
+                        help="Use deltaG optimization algorithm",
+                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     return parser.parse_args()
 
 

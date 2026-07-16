@@ -84,7 +84,8 @@ class InputError(Exception):
 def parse_args():
     # initialize argparser
     parser = argparse.ArgumentParser(description="Converts a CSV of primers to a FASTA. "+
-                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/csv-to-fasta")
+                                     "Full documentation: https://mhallerud.github.io/multiplex_wormhole/csv-to-fasta",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # add required arguments
     parser.add_argument("-i", "--incsv", type=str, required=True)
     parser.add_argument("-o", "--outfa", type=str, required=True)
