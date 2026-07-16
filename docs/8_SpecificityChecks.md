@@ -126,17 +126,17 @@ This function uses the DECIPHER package's [maximum-likelihood trees with ancestr
 ```
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
-plotPrimerBlast(primerblast, primerinfo, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600, THREADS=1)
+plotPrimerBlast(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600, THREADS=1)
 dev.off() #close PDF
 ```
 ### Arguments
 - **primerblast** : Table output by runPrimerTree. May use other BLAST-like specificity check results as long as the table contains "FWD", "REV", "Sequence", "accession", and "species" fields, with sequences trimmed at the primer binding sites. 
-- **primerinfo** : Table output by extractPrimerInfo. May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields. Can be NA. 
-- **species** : Prefix for amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots. Can be NA.
-- **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use 'NA' to skip, or if thermodynamics haven't been calculated. (Default: 0)
-- **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. (Default: NA)
-- **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. (Default: 600)
-- **THREADS** : Number of processors (for multi-threading). (NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores!)
+- **primerinfo** : Table output by extractPrimerInfo (required to plot target amplicon). May use other inputs as longs as they contain "LocusID" and "AmpliconSeq" fields. [Default: NA].
+- **species** : Prefix for target amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots. [Default: NA]
+- **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use NA if thermodynamics haven't been calculated. [Default: 0]
+- **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. [Default: NA]
+- **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. [Default: 600]
+- **THREADS** : Number of processors (for multi-threading). [NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores! Will likely fail on a supercomputing cluster]
 
 ### Output
 This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon.
