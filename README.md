@@ -41,7 +41,7 @@ Now you are ready to run multiplex wormhole!
 # PANEL DESIGN (minimum inputs)
 # usage: multiplex-wormhole [-h] -t TEMPLATES -n NLOCI -o OUTDIR [-p PREFIX]
 #                           [-k KEEPLIST] [-r RUNS] [-i ITER] [-c CYCLES]
-#                           [-s SIMPLE] [-d] [-v]
+#                           [-s GREEDY] [-d] [-v]
 # example for standard optimization with minimum settings + prefix & keeplist:
 multiplex-wormhole -t "Input_Templates.csv" -n 20 -o "Test_MW" -p "Test_MW_default" -k "Keeplist.fa"
 
@@ -62,7 +62,7 @@ mw.multiplexWormhole(TEMPLATES="Input_Templates.csv",
                      OUTDIR="Test_MW", 
                      PREFIX="Test_MW_default",
                      KEEPLIST_FA="Keeplist.fa",
-                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, SIMPLE=5000, deltaG=False, VERBOSE=False)#optional
+                     N_RUNS=10, ITERATIONS=1000, CYCLES=10, GREEDY=5000, deltaG=False, VERBOSE=False)#optional
 
 # panel assessment example (showing defaults)
 mw.assessPanel(PRIMERS,
@@ -73,29 +73,29 @@ mw.assessPanel(PRIMERS,
 
 #### multiplex-wormhole
 
-* **TEMPLATES (-t –templates)** : Path to templates CSV. NLOCI (-n –nloci) : Final panel size (i.e., # primer pairs & # templates amplified). 
+* **TEMPLATES (-t –-templates)** : Path to templates CSV. NLOCI (-n –nloci) : Final panel size (i.e., # primer pairs & # templates amplified). 
 
-* **OUTDIR (-o –outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure. 
+* **OUTDIR (-o –-outdir)** : Filepath where output directory will be created and all outputs saved within a generated folder structure. 
 
-* **PREFIX (-p –prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided] 
+* **PREFIX (-p –-prefix)** : Prefix for all outputs. [Defaults to a timestamp if None provided] 
 
-* **KEEPLIST_FA (-k –keeplist)** : Path to keeplist FASTA. [Default: None] 
+* **KEEPLIST_FA (-k –-keeplist)** : Path to keeplist FASTA. [Default: None] 
 
-* **N_RUNS (-r –runs)** : Number of optimization runs. [Default: 10] 
+* **N_RUNS (-r –-runs)** : Number of optimization runs. [Default: 10] 
 
-* **ITERATIONS (-i –iter)** : Number of simulated annealing iterations per cycle. [Default: 1000] 
+* **ITERATIONS (-i –-iter)** : Number of simulated annealing iterations per cycle. [Default: 1000] 
 
-* **CYCLES (-c –cycles)** : Number of simulated annealing cycles per run. [Default: 10] 
+* **CYCLES (-c –-cycles)** : Number of simulated annealing cycles per run. [Default: 10] 
 
-* **SIMPLE (-s –simple)** : Number of simple iterative improvement iterations per run. [Default: 5000] 
+* **GREEDY (-s --simple)** : Number of simple iterative improvement iterations per run. [Default: 5000] 
 
-* **deltaG (-d –deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False] 
+* **deltaG (-d –-deltaG)** : Optimize for mean overall deltaG of dimers [True] or total dimer tally [False]? [Default: False] 
 
-* **VERBOSE (-v –verbose)** : Print all steps and swaps at the optimization step. [Default: False]
+* **VERBOSE (-v –-verbose)** : Print all steps and swaps at the optimization step. [Default: False]
 
 #### mw-assess-panel
 
-* **PRIMERS (-i –input)** : FASTA or CSV of primers. Sequence names must match the format .<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
+* **PRIMERS (-i –-input)** : FASTA or CSV of primers. Sequence names must match the format .<#>.<FWD/REV> e.g., MACA01.0.FWD and MACA01.0.REV. If a CSV is provided, it must include 'PrimerID' and 'Sequence' fieldnames. 
 
 * **ALL_DIMERS_dG (-a --alldimers_dg)** : Lower Gibbs free energy (deltaG) threshold for predicting non-end dimers. [Default: -8] 
 
