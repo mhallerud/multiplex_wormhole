@@ -332,7 +332,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
       parallel::stopCluster(cluster)
     }else{
         for (id in names){
-          makeTree(id)
+          plotTree(id)
         }#for
       }#ifelse
   }#if
