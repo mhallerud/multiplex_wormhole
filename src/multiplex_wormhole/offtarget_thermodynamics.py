@@ -62,13 +62,13 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
             # depends on whether fwd is 5' or 3' end of sequence...
             if fwd1 < fwd2:
                 inputs.forward_binding[row] = inputs.loc[row,'Sequence'][:(fwd2-fwd1+1)]
-                inputs.reverse_binding[row] = inputs.loc[row,'Sequence'][rev2:rev1]
+                inputs.reverse_binding[row] = rc(inputs.loc[row,'Sequence'][-(rev1-rev2+1):])
                 FWD = inputs.FWDseq[row]
-                REV = rc(inputs.REVseq[row])
+                REV = inputs.REVseq[row]
             else:
-                inputs.forward_binding[row] = inputs.loc[row,'Sequence'][-(fwd1-fwd2+1):]
-                inputs.reverse_binding[row] = inputs.loc[row,'Sequence'][rev1:rev2]
-                FWD = rc(inputs.FWDseq[row])
+                inputs.forward_binding[row] = rc(inputs.loc[row,'Sequence'][-(fwd1-fwd2+1):])
+                inputs.reverse_binding[row] = inputs.loc[row,'Sequence'][:(rev2-rev1+1)]
+                FWD = inputs.FWDseq[row]
                 REV = inputs.REVseq[row]
             if len(inputs.forward_binding[row])>0:
                 # calculate dG / Tm for each primer binding site
