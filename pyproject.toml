@@ -43,6 +43,9 @@ mw-csv2fasta = "multiplex_wormhole.helpers.CSVtoFasta:cli"
 mw-add-keeplist = "multiplex_wormhole.helpers.add_keeplist_to_fasta:cli"
 mw-setup-mfeprimer = "multiplex_wormhole.helpers._setup_mfeprimer:main"
 
+[tool.setuptools.package-data]
+multiplex_wormhole = ["*.R"]
+
 # add tests
 [project.optional-dependencies]
 dev = ["pytest"]

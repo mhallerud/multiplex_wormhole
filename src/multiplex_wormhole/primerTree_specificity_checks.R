@@ -22,12 +22,12 @@ runPrimerTree <- function(primers, organisms, outcsv,
   #---------READ INPUTS ----------#
   # load multiplex_wormhole output
   primers <- read.csv(primers)
-  if (sum(grepl(fwd_adapter, primers$Sequence))<1) stop("fwd_adapter not found in primer sequences!")
-  if (sum(grepl(rev_adapter, primers$Sequence))<1) stop("rev_adapter not found in primer sequences!")
   # make everything lowercase
   primers$Sequence <- tolower(primers$Sequence)
   fwd_adapter <- tolower(fwd_adapter)
   rev_adapter <- tolower(rev_adapter)
+  if (sum(grepl(fwd_adapter, primers$Sequence))<1) stop("fwd_adapter not found in primer sequences!")
+  if (sum(grepl(rev_adapter, primers$Sequence))<1) stop("rev_adapter not found in primer sequences!")
   # remove Illumina Nextera adapters from primer sequences
   primers$Sequence <- gsub(fwd_adapter, "", primers$Sequence)
   primers$Sequence <- gsub(rev_adapter, "", primers$Sequence)
@@ -108,20 +108,21 @@ runPrimerTree <- function(primers, organisms, outcsv,
     # register the cluster
     doParallel::registerDoParallel(cluster)
     # set up tmp dir
-    dir.create("tmp")
+    tmp_dir <- file.path(tempdir(), "mw_primerblast")
+    dir.create(tmp_dir, showWarnings=FALSE)
     # multi-thread primerTree across pairs
     all_hits <- foreach::foreach(i=1:nrow(pairs), .combine=rbind) %dopar% {
       result <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, PRIMER_SPECIFICITY_DATABASE, ...)
       # save progress...
       tmp_file <- paste0("blast__pair", i, "_tmp.csv")
-      if(nrow(result)>0) write.csv(result, file.path("tmp", tmp_file), row.names=FALSE)
+      if(nrow(result)>0) write.csv(result, file.path(tmp_dir, tmp_file), row.names=FALSE)
       result
     }#foreach
     # close cluster
     parallel::stopCluster(cluster)
     # save checkpoint file, remove temps
     if (nrow(all_hits)>0) write.csv(all_hits, outcsv, row.names=FALSE)
-    unlink("tmp", recursive=TRUE)
+    unlink(tmp_dir, recursive=TRUE)
   # if no multi-threading, loop through each primer pair instead,
   # saving progress as it runs
   }else{
@@ -193,12 +194,12 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
   if (!file.exists(templates)) stop(paste0(templates," file could not be found!"))
   if (!file.exists(filtprimers)) stop(paste0(filtprimers," file could not be found!"))
   if (!file.exists(finalprimers)) stop(paste0(finalprimers," file could not be found!"))
-  if (!sum(grepl(fwd_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("fwd_adapter not found in finalprimer sequences!" = )
-  if (!sum(grepl(rev_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("rev_adapter not found in finalprimer sequences!")
   # First, load all datasets
   templates <- read.csv(templates)
   filtprimers <- read.csv(filtprimers)
   finalprimers <- read.csv(finalprimers)
+  if (!sum(grepl(fwd_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("fwd_adapter not found in finalprimer sequences!")
+  if (!sum(grepl(rev_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("rev_adapter not found in finalprimer sequences!")
   # ensure all names are character format
   templates$SEQUENCE_ID <- as.character(templates$SEQUENCE_ID)
   filtprimers$LocusID <- as.character(filtprimers$LocusID)
@@ -274,12 +275,12 @@ plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0
   print(paste("# Off-target sequences after amplicon size filtering:", nrow(primerblast)))
   
   #-------SUB-FUNCTION TO PLOTTREE FOR SINGLE PRIMER PAIR-------#
-  plotTree <- function(id){
+  plotTree <- function(id, ...){
     # configure plotting environment to allow space for labels
     # subset results to those associated with this primer pair  
     sub <- primerblast[which(startsWith(primerblast$FWD,id) | startsWith(primerblast$REV,id)),]
     # extract amplicon sequence for pair
-    if(is.logical(nrow(primerinfo))){
+    if(!is.na(primerinfo) && is.data.frame(primerinfo)){
       amp <- primerinfo[primerinfo$PairID==id, c("LocusID","AmpliconSeq")][1,]#keep FWD record
       names(amp) <- c("accession","Sequence")
       amp$species <- species
@@ -408,10 +409,9 @@ plotMismatches <- function(primerblast, group, title=element_blank()){
 
 # function to convert FASTA to CSV
 FASTA2CSV <- function(infa, outcsv){
-  fa <- read.table(infa)
-  names <- fa$V1[startsWith(fa$V1, ">")]
-  names <- gsub(">","",names) 
-  seqs <- fa$V1[!startsWith(fa$V1, ">")]
+  lines <- readLines(infa)
+  names <- gsub("^>", "", lines[startsWith(lines, ">")])
+  seqs <- lines[!startsWith(lines, ">")]
   out <- data.frame(PrimerID=names, Sequence=seqs)
   write.csv(out, outcsv)
 }#FAST2CSV
