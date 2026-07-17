@@ -9,29 +9,32 @@ runPrimerTree <- function(primers, organisms, outcsv,
                           EXCLUDE_ENV="$0", #checks box for "exclude environmental samples"
                           PRIMER_SPECIFICITY_DATABASE="nt", #includes core_nt + genomes
                           ...){
+  # check inputs
+  if (!file.exists(primers)) stop(paste0(primers," file could not be found!"))
+  if (!all_combos%in%c(TRUE,FALSE)) stop("all combos must be TRUE or FALSE")
+  if (!is.numeric(MAX_TARGET_SIZE)) stop("MAX_TARGET_SIZE is not numeric!")
+  if (!is.numeric(THREADS)) stop("THREADS is not numeric!")
+  if (!EXCLUDE_ENV%in%c("$0","")) stop("EXCLUDE_ENV must be '$0' or ''")
   # load packages
   library(primerTree)
   library(plyr)
   library(dplyr)
-
   #---------READ INPUTS ----------#
   # load multiplex_wormhole output
   primers <- read.csv(primers)
-  
+  if (sum(grepl(fwd_adapter, primers$Sequence))<1) stop("fwd_adapter not found in primer sequences!")
+  if (sum(grepl(rev_adapter, primers$Sequence))<1) stop("rev_adapter not found in primer sequences!")
   # make everything lowercase
   primers$Sequence <- tolower(primers$Sequence)
   fwd_adapter <- tolower(fwd_adapter)
   rev_adapter <- tolower(rev_adapter)
-  
   # remove Illumina Nextera adapters from primer sequences
   primers$Sequence <- gsub(fwd_adapter, "", primers$Sequence)
   primers$Sequence <- gsub(rev_adapter, "", primers$Sequence)
-  
   # extract FWD, REV seqs & pair IDs
   orig_pairs <- data.frame(ID = gsub(".FWD", "", primers$PrimerID[endsWith(primers$PrimerID,".FWD")]),
                           FWDseq = primers$Sequence[endsWith(primers$PrimerID, ".FWD")],
                           REVseq = primers$Sequence[endsWith(primers$PrimerID, ".REV")])
-  
   #---------RUN PRIMER-BLAST SPECIFICITY CHECK FOR ALL PRIMERS-----------#
   # set up df of primer pairs to check
   if(all_combos){
@@ -42,8 +45,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     pairs <- orig_pairs
     pairs$FWDid <- pairs$REVid <- pairs$ID
   }#ifelse
-
-  # sub-function to run primerTree for each primer pair
+  #------SUB-FUNCTION TO RUN PRIMERTREE FOR EACH PRIMER PAIR ---------
   runPair <- function(pair, organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
                       PRIMER_SPECIFICITY_DATABASE, ...){
     print(paste("Running PRIMER-BLAST for",pair$FWDid,pair$REVid))
@@ -88,8 +90,8 @@ runPrimerTree <- function(primers, organisms, outcsv,
         }#for o in organisms
     return(all_hits)
     }#runPair
-  
-  # use parallel processing if multiple threads available
+  #----------LOOP THROUGH PRIMER PAIRS & RUN PRIMERBLAST---------#
+  # use multi-threading if available
   if (THREADS>1){
     # set up multi-threading
     library(parallel)
@@ -120,10 +122,9 @@ runPrimerTree <- function(primers, organisms, outcsv,
     # save checkpoint file, remove temps
     if (nrow(all_hits)>0) write.csv(all_hits, outcsv, row.names=FALSE)
     unlink("tmp", recursive=TRUE)
-    
-    # if no multi-threading, loop through each primer pair instead,
-    # saving progress as it runs
-    }else{
+  # if no multi-threading, loop through each primer pair instead,
+  # saving progress as it runs
+  }else{
       all_hits <- data.frame()
       for (i in 1:nrow(pairs)){
         new_hits <- runPair(pairs[i,], organisms, MAX_TARGET_SIZE, EXCLUDE_ENV, 
@@ -132,7 +133,6 @@ runPrimerTree <- function(primers, organisms, outcsv,
         if(nrow(all_hits)>0) write.csv(all_hits, outcsv, row.names=FALSE)
       }#for
     }#ifelse
-  
   # alternative cluster-friendly multi-threading
   #   library(future)
   #   library(future.apply)
@@ -158,17 +158,14 @@ runPrimerTree <- function(primers, organisms, outcsv,
   #   }))#do.call
   # # save progress
   # write.csv(all_hits, outcsv, row.names=FALSE)
-  
   if (nrow(all_hits)>0){
     unique_accs <- unique(all_hits$accession)
-    
     #--------PULL TAXONOMY INFORMATION FOR ALL HITS--------------#
     print("Pulling taxonomy information from NCBI.....")
     taxa <- primerTree::get_taxonomy(unique_accs)
     Sys.sleep(0.1)#avoiding overloading NCBI
     all_hits <- merge(all_hits, taxa, by="accession")
     write.csv(all_hits, outcsv, row.names=FALSE)
-
     #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
     print("Retrieving sequences from NCBI.....")
     # run with rentrez::entrez_fetch
@@ -179,7 +176,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     seqs <- lapply(as.character(seqs), function(x) paste(unlist(x), collapse=""))
     all_hits$Sequence <- as.character(seqs[match(all_hits$accession, names(seqs))])
   }#if
-  
+  #-----SAVE FINAL OUTPUT-------#
   write.csv(all_hits, outcsv, row.names=FALSE)
   #return(all_hits)
 }#runPrimerTree
@@ -192,6 +189,12 @@ runPrimerTree <- function(primers, organisms, outcsv,
 extractPrimerInfo <- function(templates, filtprimers, finalprimers,
                               fwd_adapter="tcgtcggcagcgtcagatgtgtataagagacag",
                               rev_adapter="gtctcgtgggctcggagatgtgtataagagacag"){
+  # check inputs
+  if (!file.exists(templates)) stop(paste0(templates," file could not be found!"))
+  if (!file.exists(filtprimers)) stop(paste0(filtprimers," file could not be found!"))
+  if (!file.exists(finalprimers)) stop(paste0(finalprimers," file could not be found!"))
+  if (!sum(grepl(fwd_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("fwd_adapter not found in finalprimer sequences!" = )
+  if (!sum(grepl(rev_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("rev_adapter not found in finalprimer sequences!")
   # First, load all datasets
   templates <- read.csv(templates)
   filtprimers <- read.csv(filtprimers)
@@ -242,7 +245,15 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
 plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
-                            dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1){
+                            dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1, ...){
+  # check for proper inputs...
+  if(!is.data.frame(primerblast)) stop("primerblast must be a dataframe!")
+  if(!is.na(primerinfo)) if(!is.data.frame(primerinfo)) stop("primerinfo must be a dataframe!")
+  if(!is.na(dG)) if(!is.numeric(dg)) stop("dG must be numeric!")
+  if(!is.na(dG_end)) if(!is.numeric(dG_end)) stop("dG must be numeric!")
+  if(!is.character(species)) stop("species must be characterformat!")
+  if(!is.numeric(MAX_AMPLICON_SIZE)) stop("MAX_AMPLICON_SIZE must be numeric!")
+  if(!is.numeric(THREADS)) stop("THREADS must be numeric!")
   # load dependencies
   library(DECIPHER)
   library(Biostrings)
@@ -290,7 +301,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
         #  attr(x, "edgetext") <- paste(attr(x,"edgetext"),"\n")
         #})#dendrapply
         plot(plottree, edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
-             main=id, yaxt="n", horiz=TRUE)
+             main=id, yaxt="n", horiz=TRUE, ...)
         #attr(plottree[[1]], "change") #status changes on first branch left of (virtual) root
         return(plottree)
       }else{
@@ -323,7 +334,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
       for (i in 1:length(plots)){
         if(!is.null(plots[[i]])){
           plot(plots[[i]], edgePar=list(p.col=NA, p.border=NA, t.col="#55CC99", t.cex=0.8, t.font=2), 
-             main=names[i], yaxt="n", horiz=TRUE)
+             main=names[i], yaxt="n", horiz=TRUE, ...)
         }else{
           print(paste("No plot for ", names[i]))
         }#ifelse
@@ -332,7 +343,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
       parallel::stopCluster(cluster)
     }else{
         for (id in names){
-          plotTree(id)
+          plotTree(id, ...)
         }#for
       }#ifelse
   }#else
@@ -342,10 +353,64 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
 
 
 
+plotMismatches <- function(primerblast, group, title=element_blank()){
+  if(!is.data.frame(primerblast)) stop("primerblast must be a data frame!")
+  if(!group%in%names(primerblast)) stop("'group' is not a field in primerblast!")
+  library(ggplot2)
+  # calc overall mismatches
+  primerblast$mismatch_forward <- as.numeric(primerblast$mismatch_forward)
+  primerblast$mismatch_reverse <- as.numeric(primerblast$mismatch_reverse)
+  primerblast$mismatches <- sapply(1:nrow(primerblast), 
+                                   function(x) (primerblast[x,"mismatch_forward"]+
+                                                  primerblast[x,"mismatch_reverse"]) / 2)
+  # find "worst" off-target for each group
+  group <- primerblast[,group]
+  names <- sapply(unique(primerblast$FWD), function(x) strsplit(x,"\\.")[[1]][1])
+  mm_out <- expand.grid(Primer=names, Group=unique(group))
+  mm_out$Primer <- as.character(mm_out$Primer)
+  # mm_out$MinMean <- sapply(1:nrow(mm_out), function(x){
+  #   sub <- primerblast$mismatches[which(startsWith(primerblast$FWD, mm_out$Primer[x])
+  #                                       & group==mm_out$Group[x])]
+  #   ifelse(length(sub)>0, return(min(sub)), return(NA))
+  # })#sapply
+  mm_out$MinFWD <- sapply(1:nrow(mm_out), function(x){
+    sub <- primerblast$mismatch_forward[which(startsWith(primerblast$FWD, mm_out$Primer[x])
+                                        & group==mm_out$Group[x])]
+    ifelse(length(sub)>0, return(min(sub)), return(NA))
+  })#sapply
+  mm_out$MinREV <- sapply(1:nrow(mm_out), function(x){
+    sub <- primerblast$mismatch_reverse[which(startsWith(primerblast$FWD, mm_out$Primer[x])
+                                        & group==mm_out$Group[x])]
+    ifelse(length(sub)>0, return(min(sub)), return(NA))
+  })#sapply
+  # reshape FWD/REV mismatches into rows
+  mm_out_fwd <- mm_out[,c("Primer","Group","MinFWD")]
+  mm_out_rev <- mm_out[,c("Primer","Group","MinREV")]
+  mm_out_fwd$Primer <- paste0(mm_out_fwd$Primer, "-FWD")
+  mm_out_rev$Primer <- paste0(mm_out_rev$Primer, "-REV")
+  names(mm_out_fwd)[3] <- names(mm_out_rev)[3] <- "Mismatches"
+  mm_out <- rbind(mm_out_fwd, mm_out_rev)
+  mm_out$Primer <- factor(mm_out$Primer, levels=sort(unique(mm_out$Primer)))
+  # plot mean mismatches per primer pair x group
+  plot <- ggplot2::ggplot(mm_out)+
+    geom_tile(aes(x=Primer, y=Group, fill=Mismatches),col='black',lwd=0.2)+
+    theme(axis.text.x=element_text(angle=90, hjust=1))+
+    scale_fill_gradient2(low="darkred", mid="orange", high="yellow", na.value="white",
+                         midpoint=2.5)+#median(mm_out$Mismatches,na.rm=T))+
+    xlab(element_blank())+ylab(element_blank())+
+    ggtitle(title)
+  print(plot)
+}#plotMismatches
+
+
+
+
+
 # function to convert FASTA to CSV
 FASTA2CSV <- function(infa, outcsv){
   fa <- read.table(infa)
   names <- fa$V1[startsWith(fa$V1, ">")]
+  names <- gsub(">","",names) 
   seqs <- fa$V1[!startsWith(fa$V1, ">")]
   out <- data.frame(PrimerID=names, Sequence=seqs)
   write.csv(out, outcsv)

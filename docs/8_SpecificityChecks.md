@@ -132,7 +132,9 @@ For each group in the specified grouping field, finds and plots the minimum prim
 ### Usage in R
 ```
 primerblast <- read.csv("primertree_output.csv")
-plotMismatches(primerblast, group="genus", title="mytitle")
+plotMismatches(primerblast, group="genus", title="your title")
+#may also be added to as a ggplot, e.g.:
+plotMismatches(primerblast, group="genus")+coord_flip()+ggtitle("your title")
 ```
 ### Arguments
 - **primerblast** : Output from runPrimerTree, loaded into R as a dataframe.
