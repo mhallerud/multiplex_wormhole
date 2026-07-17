@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Removed
 
-## [1.0.6] - 2026-07-16
+## [1.1.0] - 2026-07-16
 ### Added
 - plotMismatches function in primerTree_specificity_checks.R
 - multi-threading in runPrimerTree and plotAmpliconTrees
