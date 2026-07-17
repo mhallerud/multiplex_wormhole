@@ -61,18 +61,17 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
         if inputs.Sequence[row] is not None:
             # depends on whether fwd is 5' or 3' end of sequence...
             if fwd1 < fwd2:
-                inputs.forward_binding[row] = inputs.loc[row,'Sequence'][fwd1:fwd2]
+                inputs.forward_binding[row] = inputs.loc[row,'Sequence'][:(fwd2-fwd1+1)]
                 inputs.reverse_binding[row] = inputs.loc[row,'Sequence'][rev2:rev1]
                 FWD = inputs.FWDseq[row]
                 REV = rc(inputs.REVseq[row])
             else:
-                inputs.forward_binding[row] = inputs.loc[row,'Sequence'][fwd2:fwd1]
+                inputs.forward_binding[row] = inputs.loc[row,'Sequence'][-(fwd1-fwd2+1):]
                 inputs.reverse_binding[row] = inputs.loc[row,'Sequence'][rev1:rev2]
                 FWD = rc(inputs.FWDseq[row])
                 REV = inputs.REVseq[row]
-            
-            # calculate dG / Tm for each primer binding site
             if len(inputs.forward_binding[row])>0:
+                # calculate dG / Tm for each primer binding site
                 fwd_binding = primer3.calc_heterodimer(FWD, inputs.forward_binding[row],
                                                        temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
                                                        dna_conc=DNA_CONC, dntp_conc=DNTP_CONC)
@@ -84,7 +83,8 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
                 inputs.Tm_FWD_END[row] = fwd_end.tm
                 inputs.dG_FWD_END[row] = fwd_end.dg/1000
             else:
-                warnings.warn("FWD binding region not found for row %s "%row)
+                warnings.warn("FWD primer binding region could not be found for row %s" %row)
+            
             if len(inputs.reverse_binding[row])>0:
                 rev_binding = primer3.calc_heterodimer(REV, inputs.reverse_binding[row], 
                                                        temp_c=ANNEAL_TEMP, mv_conc=MV_CONC, dv_conc=DV_CONC,
@@ -97,7 +97,7 @@ def main(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CONC=3.8, DNTP_CONC=0
                 inputs.Tm_REV_END[row] = rev_end.tm
                 inputs.dG_REV_END[row] = rev_end.dg/1000
             else:
-                warnings.warn("REV binding regions not found for row %s "%row)
+                warnings.warn("REV primer binding region could not be found for row %s" %row)
             
         else:
             warnings.warn("Sequence not present for row %s in " % row + INFILE)

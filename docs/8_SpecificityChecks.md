@@ -27,7 +27,7 @@ The steps and functions provided by mw are:
 2. Python/CLI - [mw-specificity](#2_calculate_offtarget_thermodynamics): Calculates deltaG and Tm between each primer and off-target primer-binding site (Optional but highly recommended).
 3. R - [extractPrimerInfo](#3_extractPrimerInfo): Extracts primer binding locations and target amplicons from multiplex wormhole inputs and outputs (Optional but required for plotting amplicons)
 4. R - [plotMismatches](#4_plotMismatches): Visualizes cumulative worst off-target interactions in a single figure by plotting the minimum number of mismatches per primer-taxa combination. 
-5. R - [plotPrimerBlast](#5_plotPrimerBlast): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, for visualizing genetic distance between off-target amplicons.
+5. R - [plotAmpliconTrees](#5_plotAmpliconTrees): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, for visualizing genetic distance between off-target amplicons.
 
 ## R Package Dependencies
 For primerTree specificity checks:
@@ -146,7 +146,7 @@ Example showing primer mismatches for predicted amplification of a panel.
 ![primer_mismatches](assets/images/primer_mismatches_example.png)
 
 
-## 5. plotPrimerBlast
+## 5. plotAmpliconTrees
 This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). `TreeLine` infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair. Off-target sequences can be optionally filtered by delta G values from mw.offtargetThermodynamics results. To be conservative, the default is to plot all off-target sequences with deltaG<0 of the full binding site.
 ### Usage in R
 ```
@@ -155,7 +155,7 @@ primerblast <- read.csv("primerblast_thermodynamics.csv")
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
 par(mar=c(1,1,1,16)) # adjust plotting margins
-plotPrimerBlast(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1)
+plotAmpliconTrees(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1)
 dev.off() #close PDF
 ```
 ### Arguments
@@ -167,10 +167,10 @@ dev.off() #close PDF
 - **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. [Default: 500]
 - **THREADS** : Number of processors (for multi-threading). [NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores! Will likely fail on a supercomputing cluster]
 
-_Note: If you are having problems with the PDF output, you can just run the raw plotPrimerBlast command- it will just make a ton of plots._
+_Note: If you are having problems with the PDF output, you can just run the raw plotAmpliconTrees command- it will just make a ton of plots._
 
 ### Output
-This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon.
+This example shows predicted off-target amplification of *Mustela*, with a 51-bp difference in the *Mustela* sequence compared to the target *Martes caurina* amplicon. See the [DECIPHER vignette](https://decipher.codes/Documentation-GrowingTrees.html) for more details on interpreting ancestral reconstruction output.
 
 ![phylogenetic reconstruction](assets/images/primerblast_phylogeny.png)
 

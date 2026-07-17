@@ -244,8 +244,9 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
-                            dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1, ...){
+plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
+                              dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1, ...){
+  #-------READ INPUTS----------#
   # check for proper inputs...
   if(!is.data.frame(primerblast)) stop("primerblast must be a dataframe!")
   if(!is.na(primerinfo)) if(!is.data.frame(primerinfo)) stop("primerinfo must be a dataframe!")
@@ -272,7 +273,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
   }#if
   print(paste("# Off-target sequences after amplicon size filtering:", nrow(primerblast)))
   
-  # set up function to makeTrees
+  #-------SUB-FUNCTION TO PLOTTREE FOR SINGLE PRIMER PAIR-------#
   plotTree <- function(id){
     # configure plotting environment to allow space for labels
     # subset results to those associated with this primer pair  
@@ -312,8 +313,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
       return(NULL)
     }#ifelse
   }#plotTree
-  
-  # run new tree for each primer pair combination
+  #--------LOOP THROUGH PRIMER PAIRS TO PLOT TREES----------#
   names <- unique(gsub(".FWD", "", primerblast$FWD))
   if (length(names)>0){
     if(THREADS>1){
@@ -347,7 +347,7 @@ plotPrimerBlast <- function(primerblast, primerinfo=NA, species="TARGET", dG=0,
         }#for
       }#ifelse
   }#else
-}#plotPrimerBlast
+}#plotAmpliconTrees
 
 
 
