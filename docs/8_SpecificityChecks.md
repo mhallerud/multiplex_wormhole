@@ -26,7 +26,8 @@ The steps and functions provided by mw are:
 1. R - [runPrimerTree](#1_runPrimerTree): Identify off-target amplification for each primer pair
 2. Python/CLI - [mw-specificity](#2_calculate_offtarget_thermodynamics): Calculates deltaG and Tm between each primer and off-target primer-binding site (Optional but highly recommended).
 3. R - [extractPrimerInfo](#3_extractPrimerInfo): Extracts primer binding locations and target amplicons from multiplex wormhole inputs and outputs (Optional but required for plotting amplicons)
-4. R - [plotPrimerBlast](#4_plotPrimerBlast): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, showing # base pair mismatches.
+4. R - [plotMismatches](#4_plotMismatches): Visualizes cumulative worst off-target interactions in a single figure by plotting the minimum number of mismatches per primer-taxa combination. 
+5. R - [plotPrimerBlast](#5_plotPrimerBlast): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, for visualizing genetic distance between off-target amplicons.
 
 ## R Package Dependencies
 For primerTree specificity checks:
@@ -110,7 +111,7 @@ mw.offtargetThermodynamics(INFILE, OUTFILE, ANNEAL_TEMP=52.0, MV_CONC=50, DV_CON
 
 
 ## 3. extractPrimerInfo
-This function extracts the amplicon sequence and primer information for an optimized multiplex based on the input, intermediate, and output files from multiplex wormhole. The output is a dataframe containing the primer information, template sequences and targets, and amplicon sequences and targets (i.e., the shifted target position relative to the full template).
+This function extracts the amplicon sequence and primer information for an optimized multiplex based on the input, intermediate, and output files from multiplex wormhole. 
 ### Usage in R
 ```
 primerinfo <- extractPrimerInfo(templates, filtprimers, finalprimers, 
@@ -122,9 +123,28 @@ View(primerinfo)
 - **filtprimers** : CSV output by the [primer3BatchDesign](1_BatchPrimerDesign) of multiplex wormhole (e.g., 1_PrimerDesign/FilteredPrimers.csv). 
 - **finalprimers** : CSV of primers in optimized multiplex (e.g., 3_Optimized_Multiplexes/Final_Primers/{OUTNAME)_Run01_primers.csv)
 - **fwd_adapter** & **rev_adapter** : FWD & REV primer adapter sequences (5'-->3'), default is Illumina Nextera i5 & i7. 
+### Output
+The output is a dataframe containing the primer information, template sequences and targets, and amplicon sequences and targets (i.e., the shifted target position relative to the full template).
 
 
-## 4. plotPrimerBlast
+## 4. plotMismatches
+For each group in the specified grouping field, finds and plots the minimum primer mismatches found across off-target amplicons. This allows for a quick one-figure evaluation of the extent of off-target amplification, with the caveat that this approach will likely overestimate off-target amplification when broad groups are used because primers are considered independently (i.e., the sequence/taxa with minimum mismatches for FWD may be different from that of REV). Requires ggplot2.
+### Usage in R
+```
+primerblast <- read.csv("primertree_output.csv")
+plotMismatches(primerblast, group="genus", title="mytitle")
+```
+### Arguments
+- **primerblast** : Output from runPrimerTree, loaded into R as a dataframe.
+- **group** : Field used to group outputs. 
+- **title** : Plot title [default: element_blank]
+### Output
+Example showing primer mismatches for predicted amplification of a panel.
+
+![primer_mismatches](assets/images/primer_mismatches_example.png)
+
+
+## 5. plotPrimerBlast
 This function uses the DECIPHER package's [maximum-likelihood trees with ancestral state reconstruction](https://decipher.codes/AncestralStates.html) to visualize the number of mismatches between the target amplicon and sequences produced by *in silico* off-target amplification. For each primer pair, the target amplicon is aligned to off-target sequences with DECIPHER::DECIPHER::AlignSeqs, then a maximum likelihood dendrogram is constructed with DECIPHER::TreeLine(method="ML", reconstruct=True). `TreeLine` infers ancestral sequences for each node in the tree, then the number of mismatches can be calculated at each split. These state transitions are plotted at each node of the dendrogram and represent the number of mismatches between sequences or clusters. A sequence tree plot is made for each primer pair. Off-target sequences can be optionally filtered by delta G values from mw.offtargetThermodynamics results. To be conservative, the default is to plot all off-target sequences with deltaG<0 of the full binding site.
 ### Usage in R
 ```
@@ -133,7 +153,7 @@ primerblast <- read.csv("primerblast_thermodynamics.csv")
 # save to a PDF since this will be a bunch of plots
 pdf("PRIMERBLAST_Trees.pdf") #open PDF
 par(mar=c(1,1,1,16)) # adjust plotting margins
-plotPrimerBlast(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=600, THREADS=1)
+plotPrimerBlast(primerblast, primerinfo=NA, species="TARGET", dG=0, dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1)
 dev.off() #close PDF
 ```
 ### Arguments
@@ -142,7 +162,7 @@ dev.off() #close PDF
 - **species** : Prefix for target amplicon sequences in plot. Recommended to fully capitalize to facilitate identification of target sequences within plots. [Default: NA]
 - **dG** : Upper DeltaG threshold to include primer-binding sites. Both the FWD and REV primer-binding site must meet this threshold for the sequence to be plotted. Use NA if thermodynamics haven't been calculated. [Default: 0]
 - **dG_end** : Upper DeltaG threshold for 3' ends to include primer-binding sites. Both the FWD and REV primer-binding sites must meet this threshold for the sequence to be plotted. [Default: NA]
-- **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. [Default: 600]
+- **MAX_AMPLICON_SIZE** : Max off-target amplicon size to include in plots. Requires "product_length" field output by offtarget_thermodynamics above, otherwise set to NA to skip. [Default: 500]
 - **THREADS** : Number of processors (for multi-threading). [NOTE: This is multi-threading on a single machine, not multiprocessing across nodes/cores! Will likely fail on a supercomputing cluster]
 
 _Note: If you are having problems with the PDF output, you can just run the raw plotPrimerBlast command- it will just make a ton of plots._
