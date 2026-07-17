@@ -1,6 +1,7 @@
 # multiplex_wormhole
 *In silico* optimization for multiplex PCR assays that minimized predicted primer dimer loads. The pipeline was developed for genotyping by amplicon sequencing (i.e., reduced SNP panel) applications, however, the process is transferable to any multiplex PCR targeted sequencing approach. The impetus for multiplex_wormhole was genotyping noninvasive wildlife genetic samples. Default primer design settings are therefore conservative and tailored towards amplifying low concentration and degraded DNA such as that found in fecal and hair samples. 
 
+Latest version on PyPi: [https://pypi.org/project/multiplex-wormhole/](https://pypi.org/project/multiplex-wormhole/)
 Full documentation: [https://mhallerud.github.io/multiplex_wormhole](https://mhallerud.github.io/multiplex_wormhole/)
 
 
@@ -103,7 +104,7 @@ mw.assessPanel(PRIMERS,
 
 * **BAD_DIMERS_dG (-b --baddimers_dg)** : deltaG threshold for counting dimers as particularly "bad". [Default: -10]
 
-These are the basics but multiplex-wormhole has many more options- see [GitHub pages](https://mhallerud.github.io/multiplex_wormhole/](https://mhallerud.github.io/multiplex_wormhole/multiplex-wormhole) for full functionality.
+These are the basics but multiplex-wormhole has many more options- see [GitHub pages](https://mhallerud.github.io/multiplex_wormhole/multiplex-wormhole) for full functionality.
 
 
 ## Comments/Questions/Ideas
