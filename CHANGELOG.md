@@ -6,20 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- multi-processing in multiplex-wormhole, which is carried into mw-primer-design, MFEprimer dimer, and mw-mult-optimization steps
-
 ### Fixed
+### Removed
+
+## [1.0.6] - 2026-07-16
+### Added
+- plotMismatches function in primerTree_specificity_checks.R
+- multi-threading in runPrimerTree and plotAmpliconTrees
+- multi-processing in multiplex-wormhole, which is carried into mw-primer-design, MFEprimer dimer, and mw-mult-optimization steps
+### Fixed
+- Fixed erroneous thermodynamic calculations in mw-specificity
 - Fixed issues with KEEPLIST in mw-optimize-multiplex
 - Improved functionality of inner loop in simple iterative improvement
 - primerTree R script writes to an output file to save progress intermittently
 - Improved compatibility with Windows
 - Other minor bugs that occurred in niche cases
-
 ### Removed
 - multiplex_primer_design.py script which was a deprecated duplicate of multiplexWormhole.py
 
 ## [1.0.5] - 2026-07-03
-## Fixes
+## Fixed
 - Lots of minor bug fixes to improve documentation and stability across various use cases.
 
 ## [1.0.1] - 2026-06-25
