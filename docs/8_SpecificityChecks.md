@@ -24,7 +24,7 @@ Ensuring primer specificity is an important and oft-neglected step towards succe
 
 The steps and functions provided by mw are:
 1. R - [runPrimerTree](#1_runPrimerTree): Identify off-target amplification for each primer pair
-2. Python/CLI - [mw-specificity](#2_calculate_offtarget_thermodynamics): Calculates deltaG and Tm between each primer and off-target primer-binding site (Optional but highly recommended).
+2. Python/CLI - [mw-specificity](#2_calculate_offtarget_thermodynamics): Calculates deltaG and Tm between each primer and off-target primer-binding site (Optional but highly recommended). 
 3. R - [extractPrimerInfo](#3_extractPrimerInfo): Extracts primer binding locations and target amplicons from multiplex wormhole inputs and outputs (Optional but required for plotting amplicons)
 4. R - [plotMismatches](#4_plotMismatches): Visualizes cumulative worst off-target interactions in a single figure by plotting the minimum number of mismatches per primer-taxa combination. 
 5. R - [plotAmpliconTrees](#5_plotAmpliconTrees): Plots a phylogeny of off-target amplicons, filtered by deltaG if step 2 was run and including the target amplicon if step 3 was run, for visualizing genetic distance between off-target amplicons.
@@ -41,6 +41,8 @@ For parallel processing:
 - parallel
 - doParallel
 - foreach
+
+      Note: runPrimerTree also requires internet connection to access NCBI.
 
 ## Loading R functions
 Within R (replace "~" with location of your primerTree_specificity_checks.R script- [DOWNLOAD HERE](https://github.com/mhallerud/multiplex_wormhole/edit/main/docs/8_SpecificityChecks.md#:~:text=primerTree_specificity_checks.R):
