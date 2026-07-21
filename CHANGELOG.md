@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-### Added
+## 1.1.1 - 2026-07-21
 ### Fixed
-### Removed
+- Added cap to sampling iterations for SetTemps in the optimize_multiplex step. This is required to avoid stalling in instances where few options are available or changes are almost always good.
+- Typo in plotAmpliconTrees that caused function to crash
 
 ## [1.1.0] - 2026-07-16
 ### Added
