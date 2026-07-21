@@ -251,7 +251,7 @@ plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0
   # check for proper inputs...
   if(!is.data.frame(primerblast)) stop("primerblast must be a dataframe!")
   if(!is.na(primerinfo)) if(!is.data.frame(primerinfo)) stop("primerinfo must be a dataframe!")
-  if(!is.na(dG)) if(!is.numeric(dg)) stop("dG must be numeric!")
+  if(!is.na(dG)) if(!is.numeric(dG)) stop("dG must be numeric!")
   if(!is.na(dG_end)) if(!is.numeric(dG_end)) stop("dG must be numeric!")
   if(!is.character(species)) stop("species must be characterformat!")
   if(!is.numeric(MAX_AMPLICON_SIZE)) stop("MAX_AMPLICON_SIZE must be numeric!")
