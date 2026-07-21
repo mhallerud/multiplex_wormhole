@@ -2,7 +2,7 @@
 name = "multiplex_wormhole"
 #pytest version = 1.0.26
 #pypi version = 1.1.0
-version = "1.1.0"
+version = "1.1.1"
 authors = [
 	{ name="Maggie Hallerud", email="hallerum@oregonstate.edu" }
 ]
