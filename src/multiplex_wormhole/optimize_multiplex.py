@@ -489,7 +489,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
             ## ------------------STEP 2A: Sample cost space for adaptive temperature schedule----------------##
             if (T_INIT is None) and BURNIN>0 and ITERATIONS>0:
-                T_init, MIN_DIMER, MAX_DIMER = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                T_init, MIN_DIMER, MAX_DIMER = setTemps(current_pairIDs, uniq_loci, curr_dimer_totals, nonset_dimers, 
                                  primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                  keeplist_seqs, keeplist_pairs=keeplist_pairs, RNG=RNG, 
                                  curr_total=curr_total, dimer_table=dimer_table, dimer_sums=dimer_sums, 
@@ -544,10 +544,10 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     if cycle==0:
                         Temp = T_init
                     else:
-                        Temp, maxd, mind = setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+                        Temp, maxd, mind = setTemps(current_pairIDs, uniq_loci, curr_dimer_totals, nonset_dimers, 
                                                     primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
                                                     keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
-                                                    deltaG, logger, BURNIN=200)
+                                                    deltaG, logger, BURNIN=BURNIN)
                 # always use set T_INIT if provided
                 else:
                     Temp = T_INIT
@@ -768,15 +768,24 @@ def MakeNewSet(pairIDs, allowed, curr_dimer_totals, nonset_dimers, blockedlist,
 
 
 
-def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, 
+def setTemps(current_pairIDs, uniq_loci, curr_dimer_totals, nonset_dimers, 
              primer_pairs, primer_loci, OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, 
              keeplist_seqs, keeplist_pairs, RNG, curr_total, dimer_table, dimer_sums, 
              deltaG, logger, BURNIN=200):
+    """
+    Calculates adaptive simulated annealing T_INIT based on current state.
+    """
     logger.info("     Sampling cost space to set initial temp....")
-    change = []
+    # Rebuild allowed_pairs from scratch based on current state
+    current_locusIDs = set(GetLocusID(p) for p in current_pairIDs)
+    allowed_loci = [l for l in uniq_loci if l not in current_locusIDs]
+    allowed_idx = [i for i in range(len(primer_loci)) if primer_loci[i] in allowed_loci]
+    allowed_pairs = list(set(primer_pairs[i] for i in allowed_idx))    
+    change = []    
+    # sample cost space
     i = 0
+    max_i = BURNIN*10 #set cap on sampling (in case all changes are 0)
     while len(change) < BURNIN:
-        i =i+1
         # make a new set by randomly swapping a primer pair
         # newset: 1) replaced ID, 2) new ID, 3) current pair list
         newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
@@ -789,8 +798,12 @@ def setTemps(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers,
             # compare newSet to original set
             comparison, new_primerset_dimers, new_nonset_dimers, new_dimer_totals, new_total = \
                 compareSets(new_pairIDs, curr_total, swap_id, new_id, dimer_table, dimer_sums, deltaG=deltaG)
+                
             change.append(comparison)
-    
+        i=i+1
+        # stop if max iterations reached
+        if (i>max_i):
+            break
     # set temperatures based on burnin results
     neg_changes = [x for x in change if x>0]
     if len(neg_changes)==0: neg_changes = [0.01]
