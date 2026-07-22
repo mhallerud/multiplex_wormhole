@@ -374,7 +374,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 # keep track of pairs that should not be added to allowed list
                 blockedlist2 = []
                 inner_loop = 0
-                while x > 0 and inner_loop<=100: #only attempt 100 swaps for this pair
+                while x > 0 and inner_loop<=20: #only attempt 100 swaps for this pair
                     # set these to avoid infinite loops
                     prev_worst = swap_id
                     prev_best = new_best_id
@@ -450,9 +450,9 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             blockedlist.append(swap_id)
                             i+=1
                     # add to blockedlist if 100 swaps attempted
-                    if inner_loop==100:
+                    if inner_loop==20:
                         if VERBOSE: 
-                            logger.info("     Attempted 100 swaps for replacing %s without success- added to blockedlist." % swap_id)
+                            logger.info("     Attempted 20 swaps for replacing %s without success- added to blockedlist." % swap_id)
                         blockedlist.append(swap_id)
                         i+=1
 
