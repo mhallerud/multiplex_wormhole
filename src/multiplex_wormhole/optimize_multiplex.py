@@ -373,10 +373,12 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                 x = len(allowed_pairs_rmv)
                 # keep track of pairs that should not be added to allowed list
                 blockedlist2 = []
-                while x > 0:
+                inner_loop = 0
+                while x > 0 and inner_loop<=100: #only attempt 100 swaps for this pair
                     # set these to avoid infinite loops
                     prev_worst = swap_id
                     prev_best = new_best_id
+                    inner_loop+=1
                     # make new set
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                         primer_pairs, primer_loci, 
@@ -400,7 +402,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     if new_best_id == orig_swap or new_best_id == orig_best:
                         if VERBOSE:
                             logger.info("     Infinite loop (A) caused by %s! Removing from swap options.", new_best_id)
-                        blockedlist2.append(new_best_id)
+                        blockedlist2.append(new_best_id)                    
                         try:
                             allowed_pairs_rmv.remove(new_best_id)
                         except ValueError:

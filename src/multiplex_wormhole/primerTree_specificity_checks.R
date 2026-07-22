@@ -7,7 +7,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
                           THREADS=1, 
                           MAX_TARGET_SIZE=600, #max amplicon size is 600 bp
                           EXCLUDE_ENV="$0", #checks box for "exclude environmental samples"
-                          PRIMER_SPECIFICITY_DATABASE="PRIMER_DB/genome_selected_species", 
+                          PRIMER_SPECIFICITY_DATABASE="PRIMERDB/genome_selected_species", 
                           ...){
   # check inputs
   if (!file.exists(primers)) stop(paste0(primers," file could not be found!"))

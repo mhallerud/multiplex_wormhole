@@ -82,11 +82,11 @@ View(primerblast)
 * **MAX_TARGET_SIZE** : Maximum off-target amplicon size to return [Default: 600 bp]
 * **EXCLUDE_ENV** : Exclude environmental samples? Yes="$0", No="". [Default: "$0"]
 * **PRIMER_SPECIFICITY_DATABASE** : NCBI database to search, options:
-  * "nt" [Default] : includes NCBI nt database + chromosomes from genome assemblies
+  * "PRIMERDB/genome_selected_species" [Default]: Genomes for selected organisms (primary assembly only)
+  * "nt" : NCBI nt database
   * "core_nt" : nt database without genomes
   * "refseq_mrna" : Refseq mRNA database
   * "refseq_representative_genomes" : RefSeq representative genomes database
-  * "PRIMERDB/genome_selected_species" : Genomes for selected organisms (primary assembly only)
   * "refseq_rna" : RefSeq RNA database
   * "Custom" + "CUSTOMSEQFILE"="<filepath>" : Custom BLAST database.
 * **...** : Additional PRIMER-BLAST arguments will be passed to primerTree::primer_search. These can be explored by visiting the [PRIMER-BLAST website](https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi) and, at settings of interest, right-clicking and selecting "inspect element". Options and their defaults can be retrieved in R by loading the XML and httr packages, all functions from the [primerTree::primer_search source code](https://github.com/MVesuviusC/primerTree/blob/master/R/search.R), and then running lines 130-135 in that same file.
