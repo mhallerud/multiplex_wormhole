@@ -383,7 +383,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                         primer_pairs, primer_loci, 
                                         OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger,
-                                        blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+1)
+                                        blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+inner_loop)
                         
                     # if no new sets possible, break while loop & blocklist this swap pair
                     if newSet is None:
@@ -448,6 +448,14 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             if VERBOSE:
                                 logger.info("     Ran out of options for replacing %s. Added to blockedlist.", swap_id)
                             blockedlist.append(swap_id)
+                            i+=1
+                    # add to blockedlist if 100 swaps attempted
+                    if inner_loop==100:
+                        if VERBOSE: 
+                            logger.info("     Attempted 100 swaps for replacing %s without success- added to blockedlist." % swap_id)
+                        blockedlist.append(swap_id)
+                        i+=1
+
     
             # stop iterating if no new sets can be made in the previous while loop
             if (newSet is None) or (newSet==0):
