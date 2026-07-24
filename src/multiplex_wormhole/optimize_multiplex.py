@@ -483,11 +483,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
             
     # set minimum primer pairs as the current minimum, in case no optimization is possible during ASA
-    min_pairIDs = current_pairIDs
+    min_pairIDs = current_pairIDs.copy()
     min_dimers = curr_total
-    min_dimer_totals = curr_dimer_totals
-    min_primerset_dimers = primerset_dimers
-    min_nonset_dimers = nonset_dimers
+    min_dimer_totals = curr_dimer_totals.copy()
+    min_primerset_dimers = primerset_dimers.copy()
+    min_nonset_dimers = nonset_dimers.copy()
                   
 
     ## -----------------------STEP 3: RUN SIMULATED ANNEALING OPTIMIZATION-----------------------##
@@ -591,11 +591,11 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                             # keep track of set with minimum dimers
                             # this allows the best set to be kept while the algorithm continues to explore more of the space
                             if curr_total <= min_dimers:
-                                min_pairIDs = current_pairIDs
+                                min_pairIDs = current_pairIDs.copy()
                                 min_dimers = curr_total
-                                min_dimer_totals = curr_dimer_totals
-                                min_primerset_dimers = primerset_dimers 
-                                min_nonset_dimers = nonset_dimers
+                                min_dimer_totals = curr_dimer_totals.copy()
+                                min_primerset_dimers = primerset_dimers.copy()
+                                min_nonset_dimers = nonset_dimers.copy()
                             # STOP if 0 dimers in set
                             if curr_total == 0:
                                 logger.info("Solution with 0 dimers found!")
@@ -622,23 +622,23 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                         break
 
                 # proceed with best set found during simulated annealing- which isn't necessarily the final set
-                current_pairIDs = min_pairIDs
+                current_pairIDs = min_pairIDs.copy()
                 curr_total = min_dimers
-                curr_dimer_totals = min_dimer_totals
-                primerset_dimers = min_primerset_dimers 
-                nonset_dimers = min_nonset_dimers
-                cycle+=1
+                curr_dimer_totals = min_dimer_totals.copy()
+                primerset_dimers = min_primerset_dimers .copy()
+                nonset_dimers = min_nonset_dimers.copy()
 
                 # grab locus IDs for current primer pairs
                 #current_pairIDs = list(curr_dimer_totals.keys())
                 current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
                 # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
-                allowed_loci = [uniq_loci[i] for i in range(
-                    len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
+                allowed_loci = [uniq_loci[j] for j in range(
+                    len(uniq_loci)) if uniq_loci[j] not in current_locusIDs]
                 allowed_idx = list(
                     filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
-                allowed_pairs = [primer_pairs[i] for i in allowed_idx]
+                allowed_pairs = [primer_pairs[j] for j in allowed_idx]
                 allowed_pairs = list(set(allowed_pairs))
+                cycle+=1
             
 
     ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
