@@ -201,7 +201,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     # make list of unique loci
     uniq_loci = list(set(primer_loci))# convert to list because new versions of random.sample won't be able to handle sets...
     # grab best primer pairs for each locus
-    best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG)
+    best_primer_pairs = BestPrimers(uniq_loci, dimer_sums, keeplist_pairs, deltaG, RNG=RNG)
     #nloci = len(uniq_loci)
     if SEED is None:
         # if KEEPLIST provided, add additional "best" loci to keeplist to fill out panel
@@ -334,7 +334,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, blockedlist,
                                 primer_pairs, primer_loci, 
                                 OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger,
-                                [], random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i)
+                                [], random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=RNG+i)
             if newSet is None:
                 comparison = False
             elif newSet==0:
@@ -383,7 +383,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs_rmv, curr_dimer_totals, nonset_dimers, blockedlist,
                                         primer_pairs, primer_loci, 
                                         OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger,
-                                        blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=12345+i+inner_loop)
+                                        blockedlist2, random=False, keeplist=keeplist_pairs, n_iter=i, Temp=Temp, curr_total=curr_total, RNG=RNG+i+inner_loop)
                         
                     # if no new sets possible, break while loop & blocklist this swap pair
                     if newSet is None:
@@ -545,7 +545,6 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
             asa_costs = []
             Temp = T_init
             cycle = 0
-            min_dimers = curr_total
             # start running cycles
             while cycle < CYCLES:
                 logger.info("Running cycle %s", cycle+1)
@@ -571,7 +570,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     newSet = MakeNewSet(current_pairIDs, allowed_pairs, curr_dimer_totals, nonset_dimers, [],
                                         primer_pairs, primer_loci,
                                         OUTPATH, primer_IDs, primer_seqs, keeplist_IDs, keeplist_seqs, costs, logger, [], 
-                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=12345+i)
+                                        random=True, keeplist=keeplist_pairs, n_iter=n_iter, Temp=Temp, curr_total=curr_total, RNG=RNG+i)
                     if newSet == 0:
                         break
                     if newSet is not None:
@@ -622,38 +621,34 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
                     if newSet==0:
                         break
 
-                # Whenever T_iter is hit, move to the next cycle
-                if newSet==0:
-                    break
-                else:
-                    cycle+=1
-    
-        # proceed with best set found during simulated annealing- which isn't necessarily the final set
-        current_pairIDs = min_pairIDs
-        curr_total = min_dimers
-        curr_dimer_totals = min_dimer_totals
-        primerset_dimers = min_primerset_dimers 
-        nonset_dimers = min_nonset_dimers
-        # grab locus IDs for current primer pairs
-        current_pairIDs = list(curr_dimer_totals.keys())
-        current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
-        # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
-        allowed_loci = [uniq_loci[i] for i in range(
-            len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
-        allowed_idx = list(
-            filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
-        allowed_pairs = [primer_pairs[i] for i in allowed_idx]
-        allowed_pairs = list(set(allowed_pairs))
+                # proceed with best set found during simulated annealing- which isn't necessarily the final set
+                current_pairIDs = min_pairIDs
+                curr_total = min_dimers
+                curr_dimer_totals = min_dimer_totals
+                primerset_dimers = min_primerset_dimers 
+                nonset_dimers = min_nonset_dimers
+                cycle+=1
+
+                # grab locus IDs for current primer pairs
+                #current_pairIDs = list(curr_dimer_totals.keys())
+                current_locusIDs = [GetLocusID(pair) for pair in current_pairIDs]
+                # get initial list of allowed alternative primer pairs (i.e., primer pairs for loci not currently in set)
+                allowed_loci = [uniq_loci[i] for i in range(
+                    len(uniq_loci)) if uniq_loci[i] not in current_locusIDs]
+                allowed_idx = list(
+                    filter(lambda x: primer_loci[x] in allowed_loci, range(len(primer_loci))))
+                allowed_pairs = [primer_pairs[i] for i in allowed_idx]
+                allowed_pairs = list(set(allowed_pairs))
             
 
     ## ------------------STEP 4: EXPORT FINAL PRIMER SETS AND TRACE OF DIMER LOAD----------------##
     logger.info("")
     logger.info("EXPORTING OPTIMIZED PRIMER SET....")
-    ExportCSVs(OUTPATH, primer_pairs, current_pairIDs, primer_IDs, 
+    ExportCSVs(OUTPATH, primer_pairs, min_pairIDs, primer_IDs, 
                primer_seqs, keeplist_IDs, keeplist_seqs, costs, GREEDY)
     
     logger.info("EXPORTING DIMER TABLES FOR PRIMER PAIRS....")
-    final_dimers = SubsetDimerTable(current_pairIDs, dimer_table, return_complement=False)
+    final_dimers = SubsetDimerTable(min_pairIDs, dimer_table, return_complement=False)
     # export the current dimers and their totals as CSV
     final_dimers.to_csv(OUTPATH+'_dimers.csv')
     

@@ -140,7 +140,7 @@ def main(N_RUNS, PRIMER_FA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI,
                  os.path.join(OUTDIR, "Trace_Dimer_Load"))
     moveAllFiles(os.path.join(OUTDIR, "*_DimerLoad.png"), 
                  os.path.join(OUTDIR, "Plots_Dimer_Load"))
-    moveAllFiles(os.path.join(OUTDIR, "*log"), 
+    moveAllFiles(os.path.join(OUTDIR, "*.log"), 
                  os.path.join(OUTDIR, "Logfiles"))
 
 
