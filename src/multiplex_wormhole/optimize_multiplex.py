@@ -143,11 +143,8 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
 
     # read in dimer info
     #dimer_table, dimer_primerIDs, dimer_loci, dimer_tallies, dimer_pairID = LoadDimers(DIMER_SUMS, DIMER_TABLE)
-    dimer_table = pd.read_csv(DIMER_TABLE)
-    dimer_sums = pd.read_csv(DIMER_SUMS)
-    # convert primer names to string (in case names can be confused for float)
-    dimer_table['Pair1'] = [str(x) for x in dimer_table['Pair1']]
-    dimer_sums['Pair1'] = [str(x) for x in dimer_sums['Pair1']]
+    dimer_table = pd.read_csv(DIMER_TABLE, dtype={'Pair1': str})
+    dimer_sums = pd.read_csv(DIMER_SUMS, dtype={'Pair1': str})
     # check that values match those expected
     neg_sums = dimer_sums['0']<0
     neg_table = dimer_table.iloc[:,1:]<0
@@ -473,7 +470,7 @@ def main(PRIMER_FASTA, DIMER_SUMS, DIMER_TABLE, OUTPATH, N_LOCI, KEEPLIST=None, 
     
         # report the blockedlisted loci
         if len(blockedlist)>0:
-            logger.info("The following loci could not be improved with available replacements. If primer loads are high, consider removing these from the input file and rerunning.")
+            logger.info("The following loci could not be improved with available replacements. If dimer loads are high, consider removing these from the input file and rerunning.")
             blockedlist = list(set(blockedlist))
             for b in range(len(blockedlist)):
                 logger.info("\t\t %s", blockedlist[b])
