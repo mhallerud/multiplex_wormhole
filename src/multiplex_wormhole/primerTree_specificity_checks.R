@@ -165,7 +165,7 @@ runPrimerTree <- function(primers, organisms, outcsv,
     print("Pulling taxonomy information from NCBI.....")
     taxa <- primerTree::get_taxonomy(unique_accs)
     Sys.sleep(0.1)#avoiding overloading NCBI
-    all_hits <- merge(all_hits, taxa, by="accession")
+    all_hits <- merge(all_hits, taxa, by="accession", all.x=TRUE)
     write.csv(all_hits, outcsv, row.names=FALSE)
     #--------PULL SEQUENCE INFORMATION FOR ALL HITS--------------#
     print("Retrieving sequences from NCBI.....")
