@@ -59,15 +59,15 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     # double complement: primer dimer- primers anneal directly to one another
     # mis-primes: i.e., off-target amplification
     for i in range(len(idx1)):
-        ontarget.append(lines[(idx1[i]+2) : idx2[i]])
-        doublecompl.append(lines[(idx2[i]+1) : idx3[i]])
-        fwdrevmisprime.append(lines[(idx3[i]+1) : idx4[i]])
-        fwdfwdmisprime.append(lines[(idx4[i]+1) : idx5[i]])
-        revfwdmisprime.append(lines[(idx5[i]+1) : idx6[i]])
-        if i<len(idx1):
-            revrevmisprime.append(lines[(idx6[i]+1) : idx1[i+1]])
+        ontarget.extend(lines[(idx1[i]+2) : idx2[i]])
+        doublecompl.extend(lines[(idx2[i]+1) : idx3[i]])
+        fwdrevmisprime.extend(lines[(idx3[i]+1) : idx4[i]])
+        fwdfwdmisprime.extend(lines[(idx4[i]+1) : idx5[i]])
+        revfwdmisprime.extend(lines[(idx5[i]+1) : idx6[i]])
+        if i<(len(idx1)-1):
+            revrevmisprime.extend(lines[(idx6[i]+1) : idx1[i+1]])
         else:
-            revrevmisprime.append(lines[(idx6[i]+1) : len(lines)])
+            revrevmisprime.extend(lines[(idx6[i]+1) : len(lines)])
     
     # combine misprimes
     misprimes = fwdrevmisprime + fwdfwdmisprime + revfwdmisprime + revrevmisprime
@@ -83,9 +83,9 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     misprimes_matrix.to_csv(OUTPREFIX + "_misprimes_matrix.csv")
     
     # log outputs
-    print("On-target count:", ontarget_matrix.shape)
-    print("Double-complement matrix shape:", doublecompl_matrix.shape)
-    print("Mis-primes matrix shape:", misprimes_matrix.shape)
+    print("On-target read count:", ontarget_matrix.sum().sum())
+    print("Double-complement primer read count:", doublecompl_matrix.sum().sum().sum,)
+    print("Mis-priming read count:", misprimes_matrix.sum().sum())
 
 
 
@@ -151,7 +151,7 @@ def cli():
     args = parse_args()
     # run main
     main(GTSEQ_DIMERS = args.gtseq_dimers,
-         OUTFILE = args.outpath,
+         OUTPREFIX = args.outpath,
          FILELIST = args.filelist)
 
 
