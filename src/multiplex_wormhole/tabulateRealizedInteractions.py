@@ -65,7 +65,7 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
         fwdfwdmisprime.extend(lines[(idx4[i]+1) : idx5[i]])
         revfwdmisprime.extend(lines[(idx5[i]+1) : idx6[i]])
         if i<(len(idx1)-1):
-            revrevmisprime.extend(lines[(idx6[i]+1) : idx1[i+1]])
+            revrevmisprime.extend(lines[(idx6[i]+1) : (idx1[i+1]-2)])
         else:
             revrevmisprime.extend(lines[(idx6[i]+1) : len(lines)])
     
@@ -119,7 +119,7 @@ def parseLines(section_lines):
         line = line.strip()
         if not line:
             continue
-        combo, count = line.split("\t")
+        combo, count = line.split("\t")[x]
         primer1, primer2 = combo.split(" ", 1)  # split on first space only
         records.append((primer1, primer2, int(count)))
     return pd.DataFrame(records, columns=["primer1", "primer2", "count"])
