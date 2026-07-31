@@ -83,9 +83,13 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     misprimes_matrix.to_csv(OUTPREFIX + "_misprimes_matrix.csv")
     
     # log outputs
-    print("On-target read count:", int(ontarget_matrix.sum().sum()))
-    print("Double-complement primer read count:", int(doublecompl_matrix.sum().sum()))
-    print("Mis-priming read count:", int(misprimes_matrix.sum().sum()))
+    otr = int(ontarget_matrix.sum().sum())
+    dcl = int(doublecompl_matrix.sum().sum())
+    msp = int(misprimes_matrix.sum().sum())
+    tot = otr + dcl + msp
+    print("On-target read count:", otr, "--", f"{otr/tot}%")
+    print("Double-complement primer read count:", dcl, "--", f"{dcl/tot}%")
+    print("Mis-priming read count:", msp, "--", f"{msp/tot}%")
 
 
 
