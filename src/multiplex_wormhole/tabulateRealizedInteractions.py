@@ -119,7 +119,7 @@ def parseLines(section_lines):
         line = line.strip()
         if not line:
             continue
-        combo, count = line.split("\t")[x]
+        combo, count = line.split("\t")
         primer1, primer2 = combo.split(" ", 1)  # split on first space only
         records.append((primer1, primer2, int(count)))
     return pd.DataFrame(records, columns=["primer1", "primer2", "count"])
