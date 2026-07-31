@@ -148,7 +148,7 @@ def parse_args():
 
 def cli():
     # parse command line arguments
-    args = argparse.parse_args()
+    args = parse_args()
     # run main
     main(GTSEQ_DIMERS = args.gtseq_dimers,
          OUTFILE = args.outpath,
