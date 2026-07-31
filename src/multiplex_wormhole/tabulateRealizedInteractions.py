@@ -35,7 +35,7 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
             raise InputError("Files not found at: "+GTSEQ_DIMERS)
         lines = []
         for f in files:
-            with open(f, 'r'):
+            with open(f, 'r') as file:
                 lines.append(file.readlines())
     
     # find index for each component (multiples possible- esp. with mult. files)
