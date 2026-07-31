@@ -87,9 +87,9 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     dcl = int(doublecompl_matrix.sum().sum())
     msp = int(misprimes_matrix.sum().sum())
     tot = otr + dcl + msp
-    print("On-target read count:", otr, "--", f"{otr*100/tot}%")
-    print("Double-complement primer read count:", dcl, "--", f"{dcl*100/tot}%")
-    print("Mis-priming read count:", msp, "--", f"{msp*100/tot}%")
+    print("On-target read count:", otr, "--", f"{otr/tot:.1%}")
+    print("Double-complement primer read count:", dcl, "--", f"{dcl/tot:.1%}")
+    print("Mis-priming read count:", msp, "--", f"{msp/tot:.1%}")
 
 
 
