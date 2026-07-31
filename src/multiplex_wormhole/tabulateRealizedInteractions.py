@@ -36,7 +36,7 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
         lines = []
         for f in files:
             with open(f, 'r') as file:
-                lines.append(file.readlines())
+                lines.extend(file.readlines())
     
     # find index for each component (multiples possible- esp. with mult. files)
     idx1 = [x for x in range(len(lines)) if lines[x]=="***Proper On-Target Primer combinations\n"]
