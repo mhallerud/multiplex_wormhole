@@ -84,7 +84,7 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     
     # log outputs
     print("On-target read count:", int(ontarget_matrix.sum().sum()))
-    print("Double-complement primer read count:", int(doublecompl_matrix.sum().sum().sum))
+    print("Double-complement primer read count:", int(doublecompl_matrix.sum().sum()))
     print("Mis-priming read count:", int(misprimes_matrix.sum().sum()))
 
 
