@@ -58,6 +58,14 @@ def main(GTSEQ_DIMERS, OUTPREFIX, FILELIST=False):
     # on-target: matches probe
     # double complement: primer dimer- primers anneal directly to one another
     # mis-primes: i.e., off-target amplification
+    ## actual perl rules in GTseq-Primer-Interaction-Test:
+    # 1. Does the read contain the full, complete reverse-complement of locus B's 
+    # reverse primer (the entire rev_RC_Full, not a fragment)? And is locus B different from locus A? 
+    # → Double-Complement Primer-Artifact
+    # 2. Otherwise, does the read contain just the last 10 bp of locus B's rev_RC 
+    # (a short anchor, not the whole thing), and B ≠ A? → FWD-REV mis-prime
+    # 3. Otherwise, does that same short 10-bp anchor match locus A's own reverse primer (B == A)? 
+    # → Proper on-target
     for i in range(len(idx1)):
         ontarget.extend(lines[(idx1[i]+2) : idx2[i]])
         doublecompl.extend(lines[(idx2[i]+1) : idx3[i]])
