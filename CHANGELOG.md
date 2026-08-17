@@ -5,8 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 1.1.2 - 2026-07-21
+### Added
+- tabulateRealizedInteractions.py: Tabulates primer dimers in sequencing data, after processing w/ GTseq-Primer-Interaction-Test.pl
+- calcDistToTarget in runPrimerTree_specificity_check.R: Calculates distances between on-target and off-target sequences.
+### Changed
+- runPrimerTree in primerTree_specificity_checks.R: Default MAX_AMPLICON_SIZE switched to 300 (since most sequencing is 2x150 bp).
+- plotAmpliconTrees in primerTree_specificity_checks.R: Improved alignments to consider reverse complements when distance is large, added parameter to provide sequence names for plotting.
 ### Fixed
 - Added cap to inner loop of GLS in the optimize_multiplex step. This is required to avoid getting stuck on one primer swap.
+- plotAmpliconTree in primerTree_specificity_checks.R: Fixed how unique sequences were constructed (previously collapsed unique sequences across unique taxa).
 
 ## 1.1.1 - 2026-07-21
 ### Fixed
