@@ -109,4 +109,4 @@ These are the basics but multiplex-wormhole has many more options- see [GitHub p
 
 
 ## Comments/Questions/Ideas
-Please report any problems, questions, or potential enhancements in the [GitHub Issues](https://github.com/mhallerud/multiplex_wormhole/issues) page.
+Please report any problems or bugs to the [GitHub Issues](https://github.com/mhallerud/multiplex_wormhole/issues) page, and questions or ideas for discussion to the [Github Discussions](https://github.com/mhallerud/multiplex_wormhole/discussions) page.
