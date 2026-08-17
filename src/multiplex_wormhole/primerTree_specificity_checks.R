@@ -200,6 +200,7 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
   templates <- read.csv(templates)
   filtprimers <- read.csv(filtprimers)
   finalprimers <- read.csv(finalprimers)
+  names(finalprimers)[which(names(finalprimers)%in%c("sequence","SEQUENCE","Sequence"))] <- "SEQUENCE"
   if (!sum(grepl(fwd_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("fwd_adapter not found in finalprimer sequences!")
   if (!sum(grepl(rev_adapter, tolower(finalprimers$SEQUENCE)))>0) stop("rev_adapter not found in finalprimer sequences!")
   # ensure all names are character format
@@ -247,8 +248,8 @@ extractPrimerInfo <- function(templates, filtprimers, finalprimers,
 
 
 #-------------------PLOT PRIMER-BLAST RESULTS ALIGNED TO TARGETS----------------#
-plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0, 
-                              dG_end=NA, MAX_AMPLICON_SIZE=500, THREADS=1, ...){
+plotAmpliconTrees <- function(primerblast, seqnames, primerinfo=NA, species="TARGET", dG=0, 
+                              dG_end=NA, MAX_AMPLICON_SIZE=300, THREADS=1, derep=TRUE, ...){
   #-------READ INPUTS----------#
   # check for proper inputs...
   if(!is.data.frame(primerblast)) stop("primerblast must be a dataframe!")
@@ -277,7 +278,7 @@ plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0
   print(paste("# Off-target sequences after amplicon size filtering:", nrow(primerblast)))
   
   #-------SUB-FUNCTION TO PLOTTREE FOR SINGLE PRIMER PAIR-------#
-  plotTree <- function(id, ...){
+  plotTree <- function(id, uniq=derep, ...){
     # configure plotting environment to allow space for labels
     # subset results to those associated with this primer pair  
     sub <- primerblast[which(startsWith(primerblast$FWD,id) | startsWith(primerblast$REV,id)),]
@@ -295,11 +296,21 @@ plotAmpliconTrees <- function(primerblast, primerinfo=NA, species="TARGET", dG=0
       sub$DNAseqs <- calcStringDist(sub$DNAseqs, MAX_DIFF=20, TARGET=FALSE)$Sequences
       # convert sequences to DNAstringset
       dnaseqs <- as.character(sub$DNAseqs)
-      names(dnaseqs) <- paste(sub$species, sub$accession)
+      names(dnaseqs) <- seqnames[which(primerblast$FWD==id)]
       dnas <- Biostrings::DNAStringSet(dnaseqs, use.names=TRUE)
-      if(length(unique(dnas))>1){
+      # filter by unique sequences
+      if (derep){
+        uniq_dnas <- c()
+        for (s in unique(names(dnas))){
+          spp_seqs <- unique(dnas[names(dnas)==s])
+          uniq_dnas <- append(uniq_dnas, spp_seqs)
+        }#for
+      }else{
+        uniq_dnas <- dnas
+      }#ifelse
+      if(length(uniq_dnas)>1){
         # align (unique) sequences
-        align <- DECIPHER::AlignSeqs(unique(dnas))
+        align <- DECIPHER::AlignSeqs(uniq_dnas)
         # run maximum likelihood tree with ancestral state reconstruction
         mltree <- DECIPHER::TreeLine(align, method="ML", reconstruct=TRUE, type="dendrogram")
         # plot trees with number of state transitions
@@ -424,66 +435,82 @@ FASTA2CSV <- function(infa, outcsv){
 
 
 calcStringDist <- function(seqs, MAX_DIFF=20, TARGET=FALSE){
-  if(length(seqs)==1) return(list(Sequences=seqs, DistMat=as.matrix(0), MinDist=c(0)))
-  # align sequences...
-  aligns <- DECIPHER::AlignSeqs(seqs, verbose=FALSE)
-  # calculate distances
-  dist <- Biostrings::stringDist(aligns)
-  dist <- as.matrix(dist)
-  diag(dist) <- NA
-  if(TARGET){
-    min_dist <- dist[1,]
+  if(length(seqs)==1){
+    return(list(Sequences=seqs, DistMat=as.matrix(0), MinDist=c(0)))
   }else{
-    min_dist <- apply(dist, 1, function(x) min(x,na.rm=TRUE))
-  }#ifelse
-  # if min dist is large, try rerunning with RC
-  for (i in unique(which(min_dist>MAX_DIFF))){
-    new_seqs <- seqs
-    new_seqs[i] <- Biostrings::reverseComplement(seqs[i])
-    new_aligns <- DECIPHER::AlignSeqs(new_seqs, verbose=FALSE)
-    new_dist <- as.matrix(Biostrings::stringDist(new_aligns))
-    diag(new_dist) <- NA
+    # align sequences...
+    aligns <- DECIPHER::AlignSeqs(seqs, verbose=FALSE)
+    # calculate distances
+    dist <- Biostrings::stringDist(seqs)
+    dist <- as.matrix(dist)
+    diag(dist) <- NA
     if(TARGET){
-      new_min <- new_dist[1,]
+      min_dist <- dist[1,]
     }else{
-      new_min <- apply(new_dist, 1, function(x) min(x,na.rm=TRUE))
+      min_dist <- apply(dist, 1, function(x) min(x,na.rm=TRUE))
     }#ifelse
-    if(new_min[i]<min_dist[i]){
-      print(paste0(names(seqs)[i], " reverse complemented for distance calcs"))
-      min_dist[i] <- new_min[i]
-      dist[i,] <- new_dist[i,]
-      dist[,i] <- new_dist[,i]
-      seqs[i] <- new_seqs[i]
-    }#if
-  }#for
-  return(list(Sequences=seqs, DistMat=dist, MinDist=min_dist))
+    # if min dist is large, try rerunning with RC
+    for (i in unique(which(min_dist>MAX_DIFF))){
+      #print(i)
+      new_seqs <- seqs
+      new_seqs[i] <- Biostrings::reverseComplement(seqs[i])
+      new_aligns <- DECIPHER::AlignSeqs(new_seqs[c(1,i)], verbose=FALSE)
+      new_dist <- as.matrix(Biostrings::stringDist(new_aligns))
+      diag(new_dist) <- NA
+      if(TARGET){
+        new_min <- new_dist[1,]
+      }else{
+        new_min <- apply(new_dist, 1, function(x) min(x,na.rm=TRUE))
+      }#ifelse
+      if(new_min[2]<min_dist[i]){
+        print(paste0(names(seqs)[i], " reverse complemented for distance calcs"))
+        min_dist[i] <- new_min[2]
+        #dist[i,] <- new_dist[i,]
+        #dist[,i] <- new_dist[,i]
+        seqs[i] <- new_seqs[i]
+      }#if
+    }#for
+    return(list(Sequences=seqs, DistMat=dist, MinDist=min_dist))
+  }#ifelse
 }#calcStringDist
 
 
+
 calcDistToTarget <- function(on_seqs, off_seqs){
+  # rc likely suspects
+  off_seqs$Seq <- Biostrings::DNAStringSet(off_seqs$Sequence)
+  off_seqs$Sequence[which(off_seqs$forward_start>off_seqs$reverse_start)] <-
+    as.character(Biostrings::reverseComplement(
+      off_seqs$Seq[which(off_seqs$forward_start>off_seqs$reverse_start)]))
   # add empty field to store distance info
   off_seqs$Dist2Target <- NA
   # loop through targets to calculate distances
   n=0#start counter
-  for (pair in unique(on_seqs$FWD)){
+  for (pair in unique(off_seqs$FWD)){
     n=n+1
     print(paste("Primer pair",n,"-", pair))
     # calculate distance among ontarget seqs
     on_sub <- on_seqs[on_seqs$FWD==pair,]
-    dists <- calcStringDist(on_sub$Seq)
-    on_sub$MinDist <- dists$MinDist
-    # only proceed if all ontarget seqs are very similar
-    # (i.e., actual target is identifiable)
-    if(max(on_sub$MinDist)<=5){
-      # find seq with fewest diffs... will use this as our target seq
-      target <- on_sub$Seq[which(min_dist==min(min_dist))[1]]
-      # calculate distance of offtarget seqs
-      off_sub <- off_seqs$Seq[off_seqs$FWD==pair]
-      if(length(off_sub)>0){
-        off_dist <- calcStringDist(c(target, off_sub), TARGET=TRUE)
-        off_seqs$Dist2Target[off_seqs$FWD==pair] <- off_dist$MinDist[-1]
-      }#if
-    }#if
+    # only proceed if ontarget found...
+    if (nrow(on_sub)>0){
+      dists <- calcStringDist(on_sub$Seq)
+      on_sub$MinDist <- dists$MinDist
+      # only proceed if all ontarget seqs are very similar
+      # (i.e., actual target is identifiable)
+      if(max(on_sub$MinDist)<=5){
+        # find seq with fewest diffs... will use this as our target seq
+        target <- on_sub$Seq[which(on_sub$MinDist==min(on_sub$MinDist))[1]]
+        # calculate distance of offtarget seqs
+        off_sub <- off_seqs$Seq[off_seqs$FWD==pair]
+        if(length(off_sub)>0){
+          off_dist <- calcStringDist(c(target, off_sub), TARGET=TRUE)
+          off_seqs$Dist2Target[off_seqs$FWD==pair] <- off_dist$MinDist[-1]
+          #for (s in unique(as.character(off_dist$Sequences))){
+          #  off_seqs$Dist2Target[off_seqs$Sequence==s] <- off_dist$MinDist[off_dist$Sequences==s]
+          #}#for s
+        }#if off_sub
+      }#if target
+    }#if on_sub
   }#for pair
   return(off_seqs)
 }#calcDistToTarget
