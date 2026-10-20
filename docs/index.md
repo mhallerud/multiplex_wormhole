@@ -233,6 +233,7 @@ Helper Functions:
 * [Convert CSV to FASTA](CSVtoFASTA.md) with `mw-csv2fasta`
 * [Add Keeplist to FASTA](AddKeeplistToFASTA.md) with `mw-add-keeplist`
 * [Configure MFEprimer](setup_mfeprimer.md) with `mw-setup-mfeprimer`
+* [Tabulate Realized Dimers tool](9_TabulateRealizedDimers.md) *NEW, for panel evaluation with sequencing data.
 
 ![diagram showing mw workflow](assets/images/diagram.png)
 
@@ -272,6 +273,8 @@ We recommend the protocol in Eriksson et al. (2020) for lab testing:
 1. Initial lab test in equimolar multiplex (0.2 uM per primer) on a range of sample qualities. Primer pairs that fail to amplify at this step and/or primers forming strong secondary structures that consume sequencing depth should be removed. Primer concentrations can also be adjusted to improve evenness of sequencing depth across targets.
 2. The second round of optimization should test specificity and genotyping error rates. These can be assessed using matched samples from the same individual (e.g., scat, hair, and tissue from the same animal) and testing on off-target species (e.g., diet items and closely related co-occurring species). Note that technical replicates are better than nothing, but are insufficient for assessing specificity and error issues specific to low-quality samples.
 
+### Assessing Realized Dimer Loads
+To facilitate the above steps, see the [Tabulate Realized Dimers tool](9_TabulateRealizedDimers.md).
 
 ## Problems? Questions?
 Problems/bugs, questions, or ideas for enhancement can be directed to the [GitHub Issues page](https://github.com/mhallerud/multiplex_wormhole/issues). You can also directly contact Maggie Hallerud (hallerum@oregonstate.edu).
