@@ -34,7 +34,7 @@ done
 ```
 
 Run from the command line via:
-```
+```ruby
 # syntax: make_hashes.sh OUTPUT_DIR GTSEQ_DIR
 # example:
 make_hashes.sh Test01 ../../GTseq-Pipeline
@@ -61,7 +61,7 @@ done
 ```
 
 Run from the command line via:
-```
+```ruby
 # syntax: run_interactions.sh OUTPUT_DIR GTSEQ_DIR PRIMERINFO
 run_interactions.sh Test01 ../../GTseq-Pipeline Assay_PrimerInfo.tsv
 ```
@@ -73,7 +73,7 @@ For each of your original sequencing files, this will return read counts associa
 Now we're going to combine the above interactions files into something much more readable.
 
 ### Syntax
-```
+```ruby
 # move into directory holding your interactions files:
 cd Test01/outputs/interactions
 
@@ -99,7 +99,7 @@ Note: you may have to change the path to reflect where you downloaded the `tabul
 ## Now what?
 I load these into R and generate some plots on on-target rates as well as read count contributions:
 
-```
+```ruby
 library(tidyverse)
 library(ggplot2)
 library(viridis)
