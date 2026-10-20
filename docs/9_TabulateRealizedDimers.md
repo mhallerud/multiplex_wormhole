@@ -197,8 +197,8 @@ ggplot(offtarget)+
 
 Example outputs:
 
-![panel_logreads.png](./assets/images/panel_logreads.png)
+![Panel_Log_Read_Counts](assets/images/panel_logreads.png)
 
-![panel_propreads.png](./assets/images/panel_propreads.png)
+![Panel_Proportion_Read_Counts](assets/images/panel_propreads.png)
 
-![panel_offtarget.png](./assets/images/panel_offtarget.png)
+![Panel_Offtarget_Summary](assets/images/panel_offtarget.png)
